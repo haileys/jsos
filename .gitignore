@@ -1,7 +1,9 @@
 *.img
 *.o
+*.a
 *.dSYM
 vm/disasm
 vm/runner
+userland
 *crap*
 
