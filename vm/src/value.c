@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
+#include "string.h"
 #include "value.h"
 #include "object.h"
 #include "scope.h"
@@ -323,23 +324,8 @@ VAL js_to_string(VAL value)
             return js_value_make_cstring("null");
         case JS_T_BOOLEAN:
             return js_value_make_cstring(js_value_is_truthy(value) ? "true" : "false");
-        case JS_T_NUMBER: {
-            char buff[64];
-            size_t i;
-            snprintf(buff, 63, "%lf", js_value_get_double(value));
-            if(strchr(buff, '.')) {
-                for(i = strlen(buff) - 1;; i--) {
-                    if(buff[i] == '0') {
-                        buff[i] = 0;
-                    }
-                    if(buff[i] == '.') {
-                        buff[i] = 0;
-                        break;
-                    }
-                }
-            }
-            return js_value_make_cstring(buff);
-        }
+        case JS_T_NUMBER:
+            return js_value_wrap_string(js_string_from_double(js_value_get_double(value)));
         case JS_T_STRING:
             return value;
         default:
