@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-__asm__(".globl start \n start: \n jmp _main");
+__asm__(".globl _start \n _start: \n jmp main");
 
 int main()
 {
