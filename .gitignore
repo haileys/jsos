@@ -1,3 +1,7 @@
 *.img
 *.o
 *.dSYM
+vm/disasm
+vm/runner
+*crap*
+
