@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #include <math.h>
@@ -393,7 +392,6 @@ VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv)
     js_function_t* function;
     if(js_value_get_type(fn) != JS_T_FUNCTION) {
         js_panic("js_call precondition failed - expected function!");
-        exit(-1);
     }
     function = (js_function_t*)js_value_get_pointer(fn);
     if(function->is_native) {

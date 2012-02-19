@@ -28,7 +28,7 @@ void js_panic_impl(const char* func, char* file, int line, char* fmt, ...)
     va_start(va, fmt);
     vsnprintf(buff, 1023, fmt, va);
     va_end(va);
-    fprintf(stderr, "[PANIC] %s\n        in %s() at %s:%d\n", buff, func, file, line);
+    printf("[PANIC] %s\n        in %s() at %s:%d\n", buff, func, file, line);
     exit(-1);
 }
 

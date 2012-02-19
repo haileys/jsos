@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include "object.h"
 #include "st.h"
 #include "gc.h"
