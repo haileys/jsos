@@ -2,7 +2,6 @@
 
 /* static	char	sccsid[] = "@(#) st.c 5.1 89/12/14 Crucible"; */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "st.h"
@@ -126,19 +125,6 @@ unsigned int size;
     return -1;                                    /* should raise exception */
     #endif
 }
-
-#ifdef HASH_LOG
-static int collision = 0;
-static int init_st = 0;
-
-static void
-stat_col()
-{
-    FILE *f = fopen("/tmp/col", "w");
-    fprintf(f, "collision: %d\n", collision);
-    fclose(f);
-}
-#endif
 
 st_table*
 st_init_table_with_size(type, size)
