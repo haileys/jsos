@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <setjmp.h>
 #include "vm.h"
 #include "gc.h"

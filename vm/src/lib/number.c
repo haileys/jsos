@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <ctype.h>
 #include <math.h>
 #include "lib.h"
 #include "object.h"
@@ -73,6 +72,11 @@ void js_lib_number_initialize(js_vm_t* vm)
     js_object_put(vm->lib.Number_prototype, js_cstring("valueOf"), js_value_make_native_function(vm, NULL, js_cstring("valueOf"), Number_prototype_valueOf, NULL));
 }
 
+static bool is_char_whitespace(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
 double js_number_parse(js_string_t* str)
 {
     // parse str according to ECMA-262 Section 9.3.1
@@ -82,7 +86,7 @@ double js_number_parse(js_string_t* str)
     bool neg = false, negexp = false;
     uint32_t i;
     for(i = 0; i < str->length; i++) {
-        if(!isspace(str->buff[i])) {
+        if(is_char_whitespace(str->buff[i])) {
             break;
         }
     }
@@ -101,7 +105,7 @@ double js_number_parse(js_string_t* str)
                 number += 10 + str->buff[i] - 'a';
             } else if(str->buff[i] >= 'A' && str->buff[i] <= 'F') {
                 number += 10 + str->buff[i] - 'A';
-            } else if(isspace(str->buff[i])) {
+            } else if(is_char_whitespace(str->buff[i])) {
                 goto whitespace_only;
             } else {
                 return NAN;
@@ -182,7 +186,7 @@ double js_number_parse(js_string_t* str)
     
 whitespace_only:
     while(i < str->length) {
-        if(!isspace(str->buff[i])) {
+        if(!is_char_whitespace(str->buff[i])) {
             return NAN;
         }
     }

@@ -8,8 +8,6 @@ static VAL Function_call(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
 {
     // @TODO: throw error
     js_panic("new functions may not be created at runtime\n");
-    exit(-1);
-    return js_value_null();
 }
 
 static VAL Empty_call(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
