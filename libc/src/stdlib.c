@@ -49,9 +49,13 @@ void exit(int code)
 {
     #ifdef __APPLE__
         __asm__ volatile("andl $0xFFFFFFF0, %esp \n pushl $0 \n movl $1, %eax \n pushl $0 \n int $0x80\n");
-        // this is never reached, but it's useful to shutup gcc's "warning: ‘noreturn’ function does return"
-        for(;;);
     #else
-        #error exit() not implemented
+        #ifdef __linux__
+            __asm__ volatile("movl $0, %ebx \n movl $1, %eax \n int $0x80");
+        #else
+            #error exit() not implemented
+        #endif
     #endif
+    // this is never reached, but it's useful to shutup gcc's "warning: ‘noreturn’ function does return"
+    for(;;);
 }

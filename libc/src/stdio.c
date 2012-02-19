@@ -23,7 +23,14 @@ int printf(char* fmt, ...)
             "retn_to_here: \n"
             "addl $12, %%esp \n" :: "c"(&buff), "d"(bytes));
     #else
-        #error printf() not implemented
+        #ifdef __linux__
+            __asm__ volatile(
+                "movl $1, %%ebx\n"
+                "movl $4, %%eax\n"
+                "int $0x80\n" :: "c"(&buff), "d"(bytes));
+        #else
+            #error exit() not implemented
+        #endif
     #endif
     
     return bytes;
