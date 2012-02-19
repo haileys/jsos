@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "scope.h"
 #include "gc.h"
 #include "exception.h"
