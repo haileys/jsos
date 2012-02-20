@@ -91,6 +91,7 @@ void* js_alloc(size_t sz)
         js_panic("js_alloc() called before js_gc_init()");
     }
     ptr = malloc(sz);
+    memset(ptr, 0, sz);
     memory_usage += sz;
     if(ptr == NULL) {
         js_panic("malloc(%lu) failed!", sz);
@@ -99,6 +100,8 @@ void* js_alloc(size_t sz)
     #ifdef JS_GC_DEBUG
         alloc->file = file;
         alloc->line = line;
+    #else
+        (void)alloc;
     #endif
     return ptr;
 }
