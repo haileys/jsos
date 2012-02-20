@@ -24,8 +24,9 @@ int strcmp(const char* a, const char* b)
 void* memset(void* ptr, char c, size_t bytes)
 {
     char* p = (char*)ptr;
-    while(bytes > 0) {
-        *p++ = c;
+    size_t i;
+    for(i = 0; i < bytes; i++) {
+        p[i] = c;
     }
     return ptr;
 }

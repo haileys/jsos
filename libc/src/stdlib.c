@@ -27,6 +27,28 @@ char* itoa(int value, char* buff, int base)
     return ret;
 }
 
+char* utoa(unsigned int value, char* buff, int base)
+{
+    char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char* ret = buff;
+    char scratch[64];
+    int idx = 0;
+    if(value == 0) {
+        *buff++ = '0';
+        *buff = 0;
+        return ret;
+    }
+    while(value > 0) {
+        scratch[idx++] = charset[value % base];
+        value /= base;
+    }
+    while(idx > 0) {
+        *buff++ = scratch[--idx];
+    }
+    *buff = 0;
+    return ret;
+}
+
 int atoi(char* str)
 {
     int i = 0;

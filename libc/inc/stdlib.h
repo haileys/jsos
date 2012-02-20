@@ -4,6 +4,7 @@
 #include "stddef.h"
 
 char* itoa(int value, char* buff, int base);
+char* utoa(unsigned int value, char* buff, int base);
 int atoi(char* str);
 
 void* malloc(size_t size);

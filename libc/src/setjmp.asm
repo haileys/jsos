@@ -1,5 +1,5 @@
-global _setjmp
-global _longjmp
+global setjmp
+global longjmp
 
 section .data
 ; this is used to easily dump the registers before having to load up arguments into registers
@@ -18,7 +18,7 @@ setjmp_temp:
     .eflags dd 0
 
 section .text
-_setjmp:
+setjmp:
     ; save registers before doing anything else
     mov [setjmp_temp.eax], eax
     mov [setjmp_temp.ecx], ecx
@@ -44,7 +44,7 @@ _setjmp:
     mov eax, 0 ; return 0 from direct invocation
     ret
 
-_longjmp:    
+longjmp:    
     mov esi, [esp+4] ; pointer to struct __jmp_buf_tag
     mov edi, setjmp_temp
     mov ecx, 10
