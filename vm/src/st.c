@@ -51,9 +51,9 @@ static void rehash(st_table *);
 
 /* js modification, change malloc to js_alloc */
 /* #define alloc(type) (type*)malloc((unsigned)sizeof(type))
-#define Calloc(n,s) (char*)calloc((n),(s)) */
+#define Calloc(n,s) (char*)memset(js_alloc((n)*(s)), 0, (n)*(s))*/
+#define Calloc(n,s) (char*)js_alloc((n)*(s)) 
 #define alloc(type) (type*)js_alloc((unsigned)sizeof(type))
-#define Calloc(n,s) (char*)memset(js_alloc((n)*(s)), 0, (n)*(s))
 
 #define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((x),(y)) == 0)
 
