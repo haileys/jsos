@@ -46,6 +46,7 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             continue;
         }
         
+    retry_format_char:
         fmt++;
         switch(*fmt) {
             case 0:
@@ -53,8 +54,7 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
                 goto end_of_loop;
             case 's': {
                 char* s = va_arg(ap, char*);
-                size_t len = strlen(s);
-                while(*s && i < len - 1) {
+                while(*s && i < size - 1) {
                     str[i++] = *s++;
                 }
                 break;
@@ -75,6 +75,22 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
                 }
                 i += len;
                 break;
+            }
+            case 'u': {
+                char buff[64];
+                int len;
+                utoa(va_arg(ap, unsigned int), buff, 10);
+                len = strlen(buff);
+                if(i + len < size - 1) {
+                    memcpy(str + i, buff, len);
+                } else {
+                    goto end_of_loop;
+                }
+                i += len;
+                break;
+            }
+            case 'l': {
+                goto retry_format_char;
             }
             case 'x': {
                 char buff[64];
