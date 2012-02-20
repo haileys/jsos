@@ -4,8 +4,6 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 
 OBJS=	src/loader.o src/main.o
 
-DISK_IMAGE_SIZE=33546240 # that's 32MB
-
 hdd.img: build/kernel.sys
 	cp hdd.base.img hdd.img
 	sudo rm -rf mnt
