@@ -36,6 +36,16 @@ int printf(char* fmt, ...)
     return bytes;
 }
 
+int snprintf(char* str, size_t size, const char* format, ...)
+{
+    int bytes;
+    va_list va;
+    va_start(va, format);
+    bytes = vsnprintf(str, size, format, va);
+    va_end(va);
+    return bytes;
+}
+
 int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
 {
     size_t i;
