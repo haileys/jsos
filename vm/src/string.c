@@ -180,12 +180,15 @@ js_string_t* js_string_from_double(double number)
     char buff[200];
     int len, i;
     ftoa((float)number, buff);
-    for(i = 1; i <= len; i++) {
-        if(buff[i] == '0') {
-            buff[i] = 0;
-        } else if(buff[i] == '.') {
-            buff[i] = 0;
-            break;
+    len = strlen(buff);
+    if(memchr(buff, '.', len)) {
+        for(i = 1; i <= len; i++) {
+            if(buff[len - i] == '0') {
+                buff[len - i] = 0;
+            } else if(buff[len - i] == '.') {
+                buff[len - i] = 0;
+                break;
+            }
         }
     }
     return js_cstring(buff);
