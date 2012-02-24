@@ -45,10 +45,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     kprintf("JSOS\n");
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length);
-    cli();
     gdt_init();
-    idt_init();
-    sti();
     
     js_gc_init(&dummy);
     js_vm_t* vm = js_vm_new();
@@ -60,6 +57,10 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     VAL Kernel = js_make_object(vm);
     js_object_put(vm->global_scope->global_object, js_cstring("Kernel"), Kernel);
+    
+    cli();
+    idt_init(vm);
+    sti();
     
     VAL modules = js_make_object(vm);
     js_object_put(Kernel, js_cstring("modules"), modules);
