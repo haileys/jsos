@@ -1,7 +1,6 @@
 #include "gdt.h"
 
 static gdt_entry_t gdt[3];
-
 static gdtr_t gdtr;
 
 void gdt_init()
