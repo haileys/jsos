@@ -45,6 +45,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     js_gc_init(&dummy);
     js_vm_t* vm = js_vm_new();
+    js_set_panic_handler(js_panic_handler);
     
     VAL console = js_make_object(vm);
     js_object_put(console, js_cstring("log"), js_value_make_native_function(vm, NULL, js_cstring("log"), console_log, NULL));

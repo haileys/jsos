@@ -17,7 +17,7 @@ void panicf(char* fmt, ...)
     va_start(va, fmt);
     vsnprintf(buff, 2047, fmt, va);
     va_end(va);
-    panic(fmt);
+    panic(buff);
 }
 
 void js_panic_handler(const char* func, char* file, int line, char* message)
