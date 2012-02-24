@@ -60,6 +60,7 @@ module JSOS
       tst:        35,
       tld:        36,
       index:      37,
+      setindex:   38,
     }
 
   private
