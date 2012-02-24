@@ -11,6 +11,8 @@ typedef struct exception_handler {
     VAL exception;
 } js_exception_handler_t;
 
+void js_set_panic_handler(void(*panic_handler)(const char*, char*, int, char*));
+
 void js_panic_impl(const char* func, char* file, int line, char* fmt, ...)
 #ifdef __GNUC__
     __attribute__ ((noreturn))
