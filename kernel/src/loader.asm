@@ -1,4 +1,5 @@
 global loader
+global end_of_image
 extern kmain
 
 ; setting up the Multiboot header - see GRUB docs for details
@@ -25,11 +26,11 @@ loader:
 
     push 0
     jmp kmain                       ; call kernel proper
-
-    cli
-    hlt
  
 section .bss
 align 4
 kstack:
     resb STACKSIZE                     ; reserve 16k stack on a doubleword boundary
+
+section .end_of_image
+end_of_image:
