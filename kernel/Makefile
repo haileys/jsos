@@ -4,14 +4,18 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 
 LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
-OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o
+OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
+		src/helpers.o src/gdt.o
 
 JSOBJS=	js/init.o
 
-.SUFFIXES: .js .o
+.SUFFIXES: .js .o .asm .o
 
 .js.o:
 	ruby ../compiler/compile.rb $< > $@
+
+.asm.o:
+	nasm -f elf -o $@ $<
 
 hdd.img: build/kernel.sys
 	cp hdd.base.img hdd.img
@@ -34,6 +38,3 @@ build/kernel.sys: $(OBJS) build/boot/grub/menu.lst build/kernel/init.jmg
 
 build/kernel/init.jmg: js/init.o
 	cp $< $@
-
-src/loader.o: src/loader.asm
-	nasm -f elf -o src/loader.o src/loader.asm
