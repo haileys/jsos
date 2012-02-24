@@ -64,16 +64,14 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     js_value_t* sinit = js_value_get_pointer(vinit);
     js_image_t* image = js_image_parse(sinit->string.buff, sinit->string.length);
     
-    kprintf("Loaded /kernel/init.jmg\n");
+    kprintf("Handing over control to JavaScript:\n\n");
     
-    VAL exception, retn;
+    VAL exception;
     JS_TRY({
-        retn = js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
+        js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
     }, exception, {
         panicf("Unhandled exception: %s", js_value_get_pointer(js_to_string(exception))->string.buff);
     });
-    
-    kprintf("Executed init.jmg, returned: %s\n", js_value_get_pointer(js_to_string(retn))->string.buff);
 }
 
 void kmain(struct multiboot_info* mbd, uint32_t magic)
