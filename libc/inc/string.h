@@ -11,5 +11,6 @@ void* memset(void* ptr, char c, size_t bytes);
 void* memcpy(void* dest, const void* source, size_t bytes);
 void* memmove(void* dest, const void* source, size_t bytes);
 int memcmp(const void* a, const void* b, size_t bytes);
+void* memchr(void* ptr, int value, size_t bytes);
 
 #endif
