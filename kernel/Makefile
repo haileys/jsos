@@ -1,10 +1,10 @@
 CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
-		-fno-stack-protector -I../libc/inc -fno-pic
+		-fno-stack-protector -I../libc/inc -I../vm/inc -fno-pic
 
-LDFLAGS=../libc/src/*.o
+LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
-OBJS=	src/loader.o src/main.o
+OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o
 
 hdd.img: build/kernel.sys
 	cp hdd.base.img hdd.img
@@ -21,7 +21,7 @@ clean:
 	rm -f src/*.o
 
 build/kernel.sys: $(OBJS)
-	$(LD) -T linker.ld -o build/kernel.sys $(LDFLAGS) $(OBJS)
+	$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
 src/loader.o: src/loader.asm
 	nasm -f elf -o src/loader.o src/loader.asm
