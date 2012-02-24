@@ -71,3 +71,16 @@ int memcmp(const void* a, const void* b, size_t bytes)
     }
     return 0;
 }
+
+void* memchr(void* ptr, int value, size_t bytes)
+{
+    size_t i;
+    uint8_t* p = (uint8_t*)ptr;
+    uint8_t c = (uint8_t)value;
+    for(i = 0; i < bytes; i++, p++) {
+        if(*p == c) {
+            return p;
+        }
+    }
+    return NULL;
+}
