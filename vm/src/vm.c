@@ -131,8 +131,8 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL r = js_to_primitive(POP());
                 VAL l = js_to_primitive(POP());
                 if(js_value_get_type(l) == JS_T_STRING || js_value_get_type(r) == JS_T_STRING) {
-                    js_string_t* sl = &js_value_get_pointer(l)->string;
-                    js_string_t* sr = &js_value_get_pointer(r)->string;
+                    js_string_t* sl = &js_value_get_pointer(js_to_string(l))->string;
+                    js_string_t* sr = &js_value_get_pointer(js_to_string(r))->string;
                     PUSH(js_value_wrap_string(js_string_concat(sl, sr)));
                 } else {
                     PUSH(js_value_make_double(js_value_get_double(js_to_number(l)) + js_value_get_double(js_to_number(r))));
