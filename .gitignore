@@ -7,3 +7,5 @@ vm/runner
 userland
 *crap*
 ._*
+.gdbinit
+.sys
