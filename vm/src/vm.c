@@ -46,6 +46,7 @@ static js_instruction_t insns[] = {
     { "tst",        OPERAND_NONE },
     { "tld",        OPERAND_NONE },
     { "index",      OPERAND_NONE },
+    { "setindex",   OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -391,6 +392,18 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                     object = js_to_object(vm, object);
                 }
                 PUSH(js_object_get(object, &js_value_get_pointer(index)->string));
+                break;
+            }
+            
+            case JS_OP_SETINDEX: {
+                VAL val = POP();
+                VAL idx = js_to_string(POP());
+                VAL obj = POP();
+                if(js_value_is_primitive(obj)) {
+                    obj = js_to_object(vm, obj);
+                }
+                js_object_put(obj, &js_value_get_pointer(idx)->string, val);
+                PUSH(val);
                 break;
             }
             
