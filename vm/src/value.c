@@ -249,8 +249,7 @@ VAL js_to_object(js_vm_t* vm, VAL value)
             return js_make_number_object(vm, js_value_get_double(value));
             // @TODO convert to Number object
         case JS_T_STRING:
-            js_panic("converting string to object not yet supported");
-            // @TODO convert to String object
+            return js_make_string_object(vm, &js_value_get_pointer(value)->string);
             
         case JS_T_OBJECT:
         case JS_T_FUNCTION:

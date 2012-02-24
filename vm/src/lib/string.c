@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
+#include "lib.h"
+#include "object.h"
+#include "gc.h"
+#include "exception.h"
+
+typedef struct {
+    js_value_t base;
+    js_string_t string;
+} js_string_object_t;
+
+static VAL String_call(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(argc == 0) {
+        return js_value_make_cstring("");
+    } else {
+        return js_to_string(argv[0]);
+    }
+}
+
+static VAL String_construct(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(argc == 0) {
+        return js_make_string_object(vm, js_cstring(""));
+    } else {
+        js_value_t* val = js_value_get_pointer(js_to_string(argv[1]));
+        return js_make_string_object(vm, &val->string);
+    }
+}
+
+VAL js_make_string_object(js_vm_t* vm, js_string_t* string)
+{
+    js_string_object_t* str = js_alloc(sizeof(js_string_object_t));
+    str->base.type = JS_T_STRING_OBJECT;
+    str->base.object.vtable = js_object_base_vtable();
+    str->base.object.prototype = vm->lib.String_prototype;
+    str->base.object.class = vm->lib.String;
+    str->base.object.properties = js_st_table_new();
+    str->string.buff = string->buff;
+    str->string.length = string->length;
+    VAL v = js_value_make_pointer((js_value_t*)str);
+    js_object_put(v, js_cstring("length"), js_value_make_double(str->string.length));
+    return v;
+}
+
+static VAL String_prototype_toString(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
+        // @TODO throw exception
+        js_panic("String.prototype.toString() is not generic");
+    }
+    js_string_object_t* strobj = ((js_string_object_t*)js_value_get_pointer(this));
+    return js_value_wrap_string(&strobj->string);
+}
+
+static VAL String_prototype_valueOf(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
+        // @TODO throw exception
+        js_panic("String.prototype.valueOf() is not generic");
+    }
+    js_string_object_t* strobj = ((js_string_object_t*)js_value_get_pointer(this));
+    return js_value_wrap_string(&strobj->string);
+}
+
+void js_lib_string_initialize(js_vm_t* vm)
+{
+    vm->lib.String = js_value_make_native_function(vm, NULL, js_cstring("String"), String_call, String_construct);
+    js_object_put(vm->global_scope->global_object, js_cstring("String"), vm->lib.String);
+    
+    vm->lib.String_prototype = js_value_make_object(vm->lib.Object_prototype, vm->lib.String);
+    js_object_put(vm->lib.String, js_cstring("prototype"), vm->lib.String_prototype);
+    
+    js_object_put(vm->lib.String_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), String_prototype_toString, NULL));
+    js_object_put(vm->lib.String_prototype, js_cstring("valueOf"), js_value_make_native_function(vm, NULL, js_cstring("valueOf"), String_prototype_valueOf, NULL));
+}
