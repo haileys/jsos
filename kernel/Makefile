@@ -6,22 +6,34 @@ LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o
 
+JSOBJS=	js/init.o
+
+.SUFFIXES: .js .o
+
+.js.o:
+	ruby ../compiler/compile.rb $< > $@
+
 hdd.img: build/kernel.sys
 	cp hdd.base.img hdd.img
 	sudo rm -rf mnt
 	sudo mkdir mnt
 	sudo mount -o loop,offset=512 hdd.img mnt
-	sudo cp build/kernel.sys mnt/
+	sudo cp -R build/* mnt/
 	sudo umount mnt
 	sudo rm -rf mnt
 
 clean:
 	rm -f hdd.img
-	rm -f build/*
+	rm -f build/kernel.sys
+	rm -f build/kernel/*.jmg
 	rm -f src/*.o
+	rm -f js/*.o
 
-build/kernel.sys: $(OBJS)
+build/kernel.sys: $(OBJS) build/boot/grub/menu.lst build/kernel/init.jmg
 	$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
+
+build/kernel/init.jmg: js/init.o
+	cp $< $@
 
 src/loader.o: src/loader.asm
 	nasm -f elf -o src/loader.o src/loader.asm
