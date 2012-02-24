@@ -22,4 +22,8 @@ SECTIONS {
         *(.bss)
         ebss = .;
     }
+    
+    .end_of_image : {
+        *(.end_of_image)
+    }
 }
