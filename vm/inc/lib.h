@@ -12,6 +12,8 @@ typedef struct {
     VAL Array_prototype;
     VAL Number;
     VAL Number_prototype;
+    VAL String;
+    VAL String_prototype;
     VAL Error;
     VAL Error_prototype;
     VAL RangeError;
@@ -41,6 +43,10 @@ VAL js_make_array(struct js_vm* vm, uint32_t count, VAL* items);
 void js_lib_number_initialize(struct js_vm* vm);
 VAL js_make_number_object(struct js_vm* vm, double number);
 double js_number_parse(js_string_t* str);
+
+/* String */
+void js_lib_string_initialize(struct js_vm* vm);
+VAL js_make_string_object(struct js_vm* vm, js_string_t* number);
 
 /* Error */
 void js_lib_error_initialize(struct js_vm* vm);
