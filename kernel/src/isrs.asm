@@ -68,10 +68,7 @@ asm_isr_init:
 
 	isr 30
 	isr 31
-;;
-;; interrupt 32 is not subscribed the normal way as it is the special interrupt to trigger a task switch.
 	isr 32
-
 	isr 33
 	isr 34
 	isr 35
