@@ -16,6 +16,34 @@ js_string_t* js_string_concat(js_string_t* a, js_string_t* b)
     return str;
 }
 
+#ifndef JSOS
+    static char* itoa(int value, char* buff, int base)
+    {
+        char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
+        char* ret = buff;
+        char scratch[64];
+        int idx = 0;
+        if(value < 0) {
+            *buff++ = '-';
+            value = -value;
+        }
+        if(value == 0) {
+            *buff++ = '0';
+            *buff = 0;
+            return ret;
+        }
+        while(value > 0) {
+            scratch[idx++] = charset[value % base];
+            value /= base;
+        }
+        while(idx > 0) {
+            *buff++ = scratch[--idx];
+        }
+        *buff = 0;
+        return ret;
+    }
+#endif
+
 static void ftoa(float Value, char* Buffer)
  {
      union
