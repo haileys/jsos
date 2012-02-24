@@ -8,6 +8,8 @@
 #include "console.h"
 #include "panic.h"
 #include "gdt.h"
+#include "interrupt.h"
+#include "io.h"
 
 static VAL console_log(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
@@ -43,7 +45,10 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     kprintf("JSOS\n");
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length);
+    cli();
     gdt_init();
+    idt_init();
+    sti();
     
     js_gc_init(&dummy);
     js_vm_t* vm = js_vm_new();
@@ -80,6 +85,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
 void kmain(struct multiboot_info* mbd, uint32_t magic)
 {
     kmain_(mbd, magic);
-    __asm__ volatile("cli \n hlt");
+    for(;;);
+//    __asm__ volatile("cli \n hlt");
 }
 
