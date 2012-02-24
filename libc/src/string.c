@@ -42,6 +42,23 @@ void* memcpy(void* dest, const void* source, size_t bytes)
     return dest;
 }
 
+void* memmove(void* dest, const void* source, size_t bytes)
+{
+    char* d = (char*)dest;
+    const char* s = (const void*)source;
+    size_t i;
+    if(d < s) {
+        for(i = 0; i < bytes; i++) {
+            d[i] = s[i];
+        }
+    } else {
+        for(i = bytes; i > 0; i--) {
+            d[i - 1] = s[i - 1];
+        }
+    }
+    return dest;
+}
+
 int memcmp(const void* a, const void* b, size_t bytes)
 {
     const char* ca = (const char*)a;
