@@ -7,6 +7,7 @@
 #include "mm.h"
 #include "console.h"
 #include "panic.h"
+#include "gdt.h"
 
 static VAL console_log(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
@@ -42,6 +43,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     kprintf("JSOS\n");
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length);
+    gdt_init();
     
     js_gc_init(&dummy);
     js_vm_t* vm = js_vm_new();
