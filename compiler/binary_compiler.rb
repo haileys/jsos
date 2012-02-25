@@ -613,5 +613,10 @@ module JSOS
       output :pop
       output :undefined
     end
+    
+    def Not(node)
+      compile_node node.value
+      output :not
+    end
   end
 end
