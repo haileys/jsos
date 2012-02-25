@@ -25,35 +25,6 @@ bool js_string_eq(js_string_t* a, js_string_t* b)
     return memcmp(a->buff, b->buff, a->length) == 0;
 }
 
-#ifndef JSOS
-    static char* itoa(int value, char* buff, int base)
-    {
-        char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
-        char* ret = buff;
-        char scratch[64];
-        int idx = 0;
-        if(value < 0) {
-            *buff++ = '-';
-            value = -value;
-        }
-        if(value == 0) {
-            *buff++ = '0';
-            *buff = 0;
-            return ret;
-        }
-        while(value > 0) {
-            scratch[idx++] = charset[value % base];
-            value /= base;
-        }
-        while(idx > 0) {
-            *buff++ = scratch[--idx];
-        }
-        *buff = 0;
-        return ret;
-    }
-#endif
-
-    void kprintf();
 js_string_t* js_string_from_double(double number)
 {
     if(number != number) {

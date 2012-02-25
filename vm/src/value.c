@@ -248,7 +248,6 @@ VAL js_to_object(js_vm_t* vm, VAL value)
             // @TODO convert to Boolean object
         case JS_T_NUMBER:
             return js_make_number_object(vm, js_value_get_double(value));
-            // @TODO convert to Number object
         case JS_T_STRING:
             return js_make_string_object(vm, &js_value_get_pointer(value)->string);
             
@@ -381,6 +380,7 @@ bool js_seq(VAL a, VAL b)
             return js_value_get_double(a) == js_value_get_double(b);
         case JS_T_STRING:
             return js_string_eq(&js_value_get_pointer(a)->string, &js_value_get_pointer(b)->string);
+        case JS_T_OBJECT:
         case JS_T_BOOLEAN:
         case JS_T_ARRAY:
         case JS_T_STRING_OBJECT:
