@@ -2145,7 +2145,6 @@ static void malloc_extend_top(RARG nb) RDECL INTERNAL_SIZE_T nb;
   char*     brk;                  /* return value from sbrk */
   INTERNAL_SIZE_T front_misalign; /* unusable bytes at front of sbrked space */
   INTERNAL_SIZE_T correction;     /* bytes for 2nd sbrk call */
-  int correction_failed = 0;      /* whether we should relax the assertion */
   char*     new_brk;              /* return of 2nd sbrk call */
   INTERNAL_SIZE_T top_size;       /* new size of top chunk */
 
@@ -2206,7 +2205,6 @@ static void malloc_extend_top(RARG nb) RDECL INTERNAL_SIZE_T nb;
     if (new_brk == (char*)(MORECORE_FAILURE))
       {
 	correction = 0;
-	correction_failed = 1;
 	new_brk = brk;
       }
 
