@@ -76,15 +76,7 @@ void js_scope_set_global_var(js_scope_t* scope, js_string_t* name, VAL value)
 
 bool js_scope_global_var_exists(js_scope_t* scope, js_string_t* name)
 {
-    (void)scope;
-    (void)name;
-    /*
-    return js_object_get(scope->global->global_object, name);
-    js_value_t* obj = js_value_get_pointer(scope->global->global_object);
-    return obj->object.vtable->has_property(obj, name);
-    */
-    // @TODO
-    return false;
+    return js_object_has_property(scope->global->global_object, name);
 }
 
 void js_scope_delete_global_var(js_scope_t* scope, js_string_t* name)
