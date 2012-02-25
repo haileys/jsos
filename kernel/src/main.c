@@ -10,6 +10,7 @@
 #include "gdt.h"
 #include "interrupt.h"
 #include "io.h"
+#include "lib.h"
 
 static VAL console_log(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
@@ -78,6 +79,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     sti();
     
     io_init(vm);
+    lib_binary_utils_init(vm);
     
     VAL modules = js_make_object(vm);
     js_object_put(Kernel, js_cstring("modules"), modules);
