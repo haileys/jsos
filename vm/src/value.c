@@ -342,6 +342,55 @@ js_string_t* js_to_js_string_t(VAL value)
     return retn;
 }
 
+VAL js_typeof(VAL value)
+{
+    switch(js_value_get_type(value)) {
+        case JS_T_FUNCTION:
+            return js_value_make_cstring("function");
+        case JS_T_UNDEFINED:
+            return js_value_make_cstring("undefined");
+        case JS_T_BOOLEAN:
+            return js_value_make_cstring("boolean");
+        case JS_T_NUMBER:
+            return js_value_make_cstring("number");
+        case JS_T_STRING:
+            return js_value_make_cstring("string");
+        case JS_T_OBJECT:
+        case JS_T_NULL:
+        case JS_T_ARRAY:
+        case JS_T_STRING_OBJECT:
+        case JS_T_NUMBER_OBJECT:
+        case JS_T_BOOLEAN_OBJECT:
+            return js_value_make_cstring("object");
+        default:
+            js_panic("unknown type");
+    }
+}
+
+bool js_seq(VAL a, VAL b)
+{
+    if(js_value_get_type(a) != js_value_get_type(b)) {
+        return false;
+    }
+    switch(js_value_get_type(a)) {
+        case JS_T_UNDEFINED:
+        case JS_T_NULL:
+            return true;
+        case JS_T_NUMBER:
+            return js_value_get_double(a) == js_value_get_double(b);
+        case JS_T_STRING:
+            return js_string_eq(&js_value_get_pointer(a)->string, &js_value_get_pointer(b)->string);
+        case JS_T_BOOLEAN:
+        case JS_T_ARRAY:
+        case JS_T_STRING_OBJECT:
+        case JS_T_NUMBER_OBJECT:
+        case JS_T_BOOLEAN_OBJECT:
+            return js_value_get_pointer(a) == js_value_get_pointer(b);
+        default:
+            js_panic("unknown type");
+    }
+}
+
 VAL js_object_get(VAL obj, js_string_t* prop)
 {
     js_value_t* val;

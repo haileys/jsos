@@ -55,6 +55,10 @@ enum js_opcode {
     JS_OP_TLD           = 36,
     JS_OP_INDEX         = 37,
     JS_OP_SETINDEX      = 38,
+    JS_OP_OBJECT        = 39,
+    JS_OP_TYPEOF        = 40,
+    JS_OP_SEQ           = 41,
+    JS_OP_TYPEOFG       = 42,
 };
 
 typedef struct {

@@ -47,6 +47,9 @@ static js_instruction_t insns[] = {
     { "tld",        OPERAND_NONE },
     { "index",      OPERAND_NONE },
     { "setindex",   OPERAND_NONE },
+    { "object",     OPERAND_UINT32 },
+    { "typeof",     OPERAND_NONE },
+    { "typeofg",    OPERAND_STRING },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -166,6 +169,9 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                     obj = js_to_object(vm, obj);
                 }
                 fn = js_object_get(obj, &js_value_get_pointer(js_to_string(method))->string);
+                if(js_value_get_type(fn) != JS_T_FUNCTION) {
+                    js_throw_error(vm->lib.TypeError, "called non callable");
+                }
                 PUSH(js_call(fn, obj, argc, argv));
                 break;
             }
@@ -259,6 +265,9 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                     argv[argc - i - 1] = POP();
                 }
                 fn = POP();
+                if(js_value_get_type(fn) != JS_T_FUNCTION) {
+                    js_throw_error(vm->lib.TypeError, "called non callable");
+                }
                 PUSH(js_call(fn, vm->global_scope->global_object, argc, argv));
                 break;
             }
@@ -334,6 +343,9 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                     argv[argc - i - 1] = POP();
                 }
                 fn = POP();
+                if(js_value_get_type(fn) != JS_T_FUNCTION) {
+                    js_throw_error(vm->lib.TypeError, "constructed non callable");
+                }
                 PUSH(js_construct(fn, argc, argv));
                 break;
             }
@@ -404,6 +416,41 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 js_object_put(obj, &js_value_get_pointer(idx)->string, val);
                 PUSH(val);
+                break;
+            }
+            
+            case JS_OP_OBJECT: {
+                uint32_t i, items = NEXT_UINT32();
+                VAL obj = js_make_object(vm);
+                for(i = 0; i < items; i++) {
+                    VAL val = POP();
+                    js_value_t* key = js_value_get_pointer(js_to_string(POP()));
+                    js_object_put(obj, &key->string, val);
+                }
+                PUSH(obj);
+                break;
+            }
+            
+            case JS_OP_TYPEOF: {
+                VAL val = POP();
+                PUSH(js_typeof(val));
+                break;
+            };
+            
+            case JS_OP_SEQ: {
+                VAL r = POP();
+                VAL l = POP();
+                PUSH(js_value_make_boolean(js_seq(l, r)));
+                break;
+            }
+            
+            case JS_OP_TYPEOFG: {
+                js_string_t* var = NEXT_STRING();
+                if(js_scope_global_var_exists(scope, var)) {
+                    PUSH(js_typeof(js_scope_get_global_var(scope, var)));
+                } else {
+                    PUSH(js_value_undefined());
+                }
                 break;
             }
             
