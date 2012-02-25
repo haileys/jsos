@@ -40,6 +40,7 @@ root (hd0,0)
 kernel /kernel.sys
 module /kernel/init.jmg
 module /kernel/keyboard.jmg
+module /kernel/keymaps.jmg
 module /kernel/drivers.jmg
 module /kernel/drivers/ps2kb.jmg
 module /kernel/drivers/ps2mouse.jmg
