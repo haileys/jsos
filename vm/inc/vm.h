@@ -59,6 +59,13 @@ enum js_opcode {
     JS_OP_TYPEOF        = 40,
     JS_OP_SEQ           = 41,
     JS_OP_TYPEOFG       = 42,
+    JS_OP_SAL           = 43,
+    JS_OP_OR            = 44,
+    JS_OP_XOR           = 45,
+    JS_OP_AND           = 46,
+    JS_OP_SLR           = 47,
+    JS_OP_NOT           = 48,
+    JS_OP_BITNOT        = 49,
 };
 
 typedef struct {
