@@ -1,8 +1,7 @@
 Keyboard.keyMaps.US = [
     // 0x00
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    "1", "!",
+    null, null,
+    null, null,
     "1", "!",
     "2", "@",
     "3", "#",
@@ -15,7 +14,7 @@ Keyboard.keyMaps.US = [
     "0", ")",
     "-", "_",
     "=", "+",
-    0xFF, 0xFF,
+    null, null,
     " ", " ",
 
     // 0x10
@@ -32,7 +31,7 @@ Keyboard.keyMaps.US = [
     "[", "{",
     "]", "}",
     "\n", "\n",
-    0xFF, 0xFF,  
+    null, null,  
     "a", "A",
     "s", "S",
 
@@ -47,7 +46,7 @@ Keyboard.keyMaps.US = [
     ";", ":",
     "'", "\"",
     "`", "~",
-    0xFF, 0xFF,
+    null, null,
     "\\", "|",
     "z", "Z",
     "x", "X",
@@ -61,25 +60,25 @@ Keyboard.keyMaps.US = [
     ",", "<",
     ".", ">",
     "/", "?",
-    0xFF, 0xFF,
+    null, null,
     "*", "*",
-    0xFF, 0xFF,
+    null, null,
     " ", " ",
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
+    null, null,
+    null, null,
+    null, null,
+    null, null,
+    null, null,
+    null, null,
 
     // 0x40
-    0xFF,  0xFF,
-    0xFF,  0xFF,
-    0xFF,  0xFF,
-    0xFF,  0xFF,
-    0xFF,  0xFF,
-    0xFF,  0xFF,
-    0xFF,  0xFF,
+    null,  null,
+    null,  null,
+    null,  null,
+    null,  null,
+    null,  null,
+    null,  null,
+    null,  null,
     "7", "7",
     "8", "8",
     "9", "9",
@@ -95,7 +94,5 @@ Keyboard.keyMaps.US = [
     "3", "3",
     "0", "0",
     ".", ".",
-    0xFF, 0xFF
+    null, null
 ];
-
-Keyboard.setKeyMap("US");
