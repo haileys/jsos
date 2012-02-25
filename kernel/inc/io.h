@@ -16,6 +16,11 @@ static inline uint8_t inb(uint16_t port)
 	return ret;
 }
 
+static inline void insw(uint16_t port, void* buff, uint32_t size)
+{
+    __asm__ volatile("rep insw" : "+D"(buff), "+c"(size) : "d"(port) : "memory");
+}
+
 void io_init(js_vm_t* vm);
 
 #endif
