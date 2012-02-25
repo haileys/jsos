@@ -138,4 +138,6 @@ VAL js_object_default_value(VAL obj, js_type_t preferred_type);
 VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv);
 VAL js_construct(VAL fn, uint32_t argc, VAL* argv);
 
+void js_scan_args(struct js_vm* vm, uint32_t argc, VAL* argv, char* fmt, ...);
+
 #endif
