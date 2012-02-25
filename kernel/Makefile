@@ -5,14 +5,17 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
-		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o
+		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o src/lib/binary_utils.o
 
 JSIMGS=	init keyboard drivers drivers/ps2 drivers/ide
 
-.SUFFIXES: .js .o .asm .o
+.SUFFIXES: .js .o .asm .o .coffee .js
 
 .js.o:
 	ruby ../compiler/compile.rb $< > $@
+
+.coffee.o:
+	coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin > $@
 
 .asm.o:
 	nasm -f elf -o $@ $<
