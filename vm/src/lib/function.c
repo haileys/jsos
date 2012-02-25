@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "lib.h"
 #include "gc.h"
 #include "exception.h"
@@ -20,6 +21,20 @@ static VAL Function_prototype_toString(js_vm_t* vm, void* state, VAL this, uint3
     return js_value_wrap_string(js_cstring("function() { ... }"));
 }
 
+static VAL Function_prototype_call(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "object is not a function");
+    }
+    if(argc == 0) {
+        return js_call(this, vm->global_scope->global_object, 0, NULL);
+    } else {
+        VAL* new_args = js_alloc(sizeof(VAL) * (argc - 1));
+        memcpy(new_args, argv, sizeof(VAL) * (argc - 1));
+        return js_call(this, argv[0], argc - 1, new_args);
+    }
+}
+
 void js_lib_function_initialize(struct js_vm* vm)
 {
     vm->lib.Function = js_value_make_native_function(vm, NULL, js_cstring("Function"), Function_call, Function_call);
@@ -33,4 +48,5 @@ void js_lib_function_initialize(struct js_vm* vm)
     js_object_put(vm->global_scope->global_object, js_cstring("Function"), vm->lib.Function);
     
     js_object_put(vm->lib.Function_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), Function_prototype_toString, NULL));
+    js_object_put(vm->lib.Function_prototype, js_cstring("call"), js_value_make_native_function(vm, NULL, js_cstring("call"), Function_prototype_call, NULL));
 }
