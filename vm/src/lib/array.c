@@ -25,13 +25,9 @@ VAL js_make_array(struct js_vm* vm, uint32_t count, VAL* items)
     ary->base.object.properties = js_st_table_new();
     ary->length = count;
     ary->items_length = count;
-    ary->capacity = count;
-    if(count > 0) {
-        ary->items = js_alloc(sizeof(VAL) * ary->capacity);
-        memcpy(ary->items, items, sizeof(VAL) * ary->capacity);
-    } else {
-        ary->items = NULL;
-    }
+    ary->capacity = count < 4 ? 4 : count;
+    ary->items = js_alloc(sizeof(VAL) * ary->capacity);
+    memcpy(ary->items, items, sizeof(VAL) * ary->capacity);
     return js_value_make_pointer((js_value_t*)ary);
 }
 
