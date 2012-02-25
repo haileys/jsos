@@ -62,6 +62,14 @@
         return Kernel.insw(this.bus, 256);
     };
     
+    IDE.prototype.readSectorsPIO = function(lba, count) {
+        var buff = "";
+        for(var i = 0; i < lba; i++) {
+            buff += this.readSectorPIO(lba + i);
+        }
+        return buff;
+    };
+    
     IDE.prototype.writeSectorPIO = function(lba, buffer) {
         if(typeof lba !== "number") {
             throw new TypeError("expected lba to be a number");
