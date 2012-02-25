@@ -1,7 +1,11 @@
 (function() {
     Drivers = {
         loadDriver: function(driverName) {
-            Kernel.loadImage(Kernel.modules["/kernel/drivers/" + driverName + ".jmg"]);
+            var mod = Kernel.modules["/kernel/drivers/" + driverName + ".jmg"];
+            if(typeof mod !== "string") {
+                throw new Error("Could not load driver '" + driverName + "'");
+            }
+            Kernel.loadImage(mod);
         }
     };
 })();
