@@ -1,6 +1,6 @@
 CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
-		-fno-stack-protector -I../libc/inc -I../vm/inc -fno-pic
+		-fno-stack-protector -I../libc/inc -I../vm/inc -fno-pic -Werror
 
 LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
