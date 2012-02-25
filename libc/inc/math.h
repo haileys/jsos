@@ -8,8 +8,8 @@ int __inline_isfinite_double(double x);
 
 #define isfinite(x) __inline_isfinite_double(x)
 
-double floor(double d);
-double fmod(double a, double b);
-double fabs(double d);
+double floor(double x);
+double fmod(double x, double y);
+double fabs(double x);
 
 #endif
