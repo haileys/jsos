@@ -127,6 +127,8 @@ uint32_t js_to_uint32(VAL value);
 int32_t js_to_int32(VAL value);
 VAL js_to_string(VAL value);
 js_string_t* js_to_js_string_t(VAL value);
+VAL js_typeof(VAL value);
+bool js_seq(VAL a, VAL b);
 
 VAL js_object_get(VAL obj, js_string_t* prop);
 void js_object_put(VAL obj, js_string_t* prop, VAL value);

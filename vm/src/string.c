@@ -16,6 +16,14 @@ js_string_t* js_string_concat(js_string_t* a, js_string_t* b)
     return str;
 }
 
+bool js_string_eq(js_string_t* a, js_string_t* b)
+{
+    if(a->length != b->length) {
+        return false;
+    }
+    return memcmp(a->buff, b->buff, a->length) == 0;
+}
+
 #ifndef JSOS
     static char* itoa(int value, char* buff, int base)
     {
