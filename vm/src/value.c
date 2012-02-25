@@ -2,6 +2,7 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
+#include <stdarg.h>
 #include "string.h"
 #include "value.h"
 #include "object.h"
@@ -471,5 +472,59 @@ VAL js_construct(VAL fn, uint32_t argc, VAL* argv)
         return this;
     } else {
         return retn;
+    }
+}
+
+void js_scan_args(struct js_vm* vm, uint32_t argc, VAL* argv, char* fmt, ...)
+{
+    uint32_t i = 0, fmtlen = strlen(fmt);
+    va_list va;
+    va_start(va, fmt);
+    VAL* resized_argv = js_alloc(sizeof(VAL) * fmtlen);
+    memcpy(resized_argv, argv, sizeof(VAL) * (fmtlen < argc ? fmtlen : argc));
+    if(fmtlen > argc) {
+        uint32_t j;
+        for(j = argc; j < fmtlen; j++) {
+            resized_argv[j] = js_value_undefined();
+        }
+    }
+    for(i = 0; i < fmtlen; i++) {
+        VAL* v = va_arg(va, VAL*);
+        switch(fmt[i]) {
+            case 'N':
+                if(js_value_get_type(resized_argv[i]) != JS_T_NUMBER) {
+                    js_throw_error(vm->lib.TypeError, "Expected number in argument #%d", i + 1);
+                }
+                *v = resized_argv[i];
+                break;
+            case 'n':
+                *v = js_to_number(resized_argv[i]);
+                break;
+            case 'S':
+                if(js_value_get_type(resized_argv[i]) != JS_T_STRING) {
+                    js_throw_error(vm->lib.TypeError, "Expected string in argument #%d", i + 1);
+                }
+                *v = resized_argv[i];
+                break;
+            case 's':
+                *v = js_to_string(resized_argv[i]);
+                break;
+            case 'B':
+                if(js_value_get_type(resized_argv[i]) != JS_T_BOOLEAN) {
+                    js_throw_error(vm->lib.TypeError, "Expected boolean in argument #%d", i + 1);
+                }
+                *v = resized_argv[i];
+                break;
+            case 'b':
+                *v = js_to_boolean(resized_argv[i]);
+                break;
+            case 'I':
+                if(js_value_get_type(resized_argv[i]) != JS_T_NUMBER) {
+                    js_throw_error(vm->lib.TypeError, "Expected number in argument #%d", i + 1);
+                }
+                uint32_t* vi = (uint32_t*)v;
+                *vi = (uint32_t)js_value_get_double(resized_argv[i]);
+                break;
+        }
     }
 }
