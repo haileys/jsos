@@ -82,7 +82,7 @@ static void array_put(js_value_t* obj, js_string_t* prop, VAL val)
         while(index > ary->items_length) {
             ary->items[ary->items_length++] = js_value_undefined();
         }
-        ary->items[ary->items_length++] = val;
+        ary->items[index] = val;
     } else {
         js_object_base_vtable()->put(obj, prop, val);
     }
