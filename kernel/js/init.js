@@ -9,6 +9,6 @@ Drivers.loadDriver("ide");
 
 var ide = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
 console.log("before ata read");
-var data = ide.readSector(1);
+var data = ide.readSectorPIO(1);
 console.log("after ata read");
 console.log("data length: ", data);
