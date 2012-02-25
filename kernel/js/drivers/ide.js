@@ -45,7 +45,11 @@
     IDE.MASTER = 0;
     IDE.SLAVE = 1;
     
-    IDE.prototype.readSector = function(lba) {
+    IDE.prototype.readSectorPIO = function(lba) {
+        if(typeof lba !== "number") {
+            throw new TypeError("expected lba to be a number");
+        }
+        
         Kernel.outb(this.bus + ATA_REG_FEATURES, 0x00);
         Kernel.outb(this.bus + ATA_REG_SECCOUNT0, 1);
         Kernel.outb(this.bus + ATA_REG_HDDEVSEL, 0xe0 | (this.slave << 4) | ((lba & 0x0f000000) >> 24));
@@ -58,8 +62,25 @@
         return Kernel.insw(this.bus, 256);
     };
     
-    IDE.prototype.writeSector = function() {
+    IDE.prototype.writeSectorPIO = function(lba, buffer) {
+        if(typeof lba !== "number") {
+            throw new TypeError("expected lba to be a number");
+        }
+        if(typeof buffer !== "string") {
+            throw new TypeError("expected buffer to be a string");
+        }
         
+        Kernel.outb(this.bus + ATA_REG_FEATURES, 0x00);
+        Kernel.outb(this.bus + ATA_REG_SECCOUNT0, 1);
+        Kernel.outb(this.bus + ATA_REG_HDDEVSEL, 0xe0 | (this.slave << 4) | ((lba & 0x0f000000) >> 24));
+        Kernel.outb(this.bus + ATA_REG_LBA0, (lba & 0x000000ff) >> 0);
+        Kernel.outb(this.bus + ATA_REG_LBA1, (lba & 0x0000ff00) >> 1);
+        Kernel.outb(this.bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 2);
+        Kernel.outb(this.bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
+        
+        while(Kernel.inb(this.bus + ATA_REG_STATUS) & 0x80) ; // busy wait
+        Kernel.outsw(this.bus, buffer, 256);
+        Kernel.outb(this.buf + ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
     };
     
     Drivers.IDE = IDE;
