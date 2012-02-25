@@ -50,6 +50,13 @@ static js_instruction_t insns[] = {
     { "object",     OPERAND_UINT32 },
     { "typeof",     OPERAND_NONE },
     { "typeofg",    OPERAND_STRING },
+    { "sal",        OPERAND_NONE },
+    { "or",         OPERAND_NONE },
+    { "xor",        OPERAND_NONE },
+    { "and",        OPERAND_NONE },
+    { "slr",        OPERAND_NONE },
+    { "not",        OPERAND_NONE },
+    { "bitnot",     OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -435,7 +442,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL val = POP();
                 PUSH(js_typeof(val));
                 break;
-            };
+            }
             
             case JS_OP_SEQ: {
                 VAL r = POP();
@@ -451,6 +458,53 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 } else {
                     PUSH(js_value_undefined());
                 }
+                break;
+            }
+            
+            case JS_OP_SAL: {
+                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(l >> r));
+                break;
+            }
+            
+            case JS_OP_OR: {
+                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(l | r));
+                break;
+            }
+            
+            case JS_OP_XOR: {
+                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(l ^ r));
+                break;
+            }
+            
+            case JS_OP_AND: {
+                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(l & r));
+                break;
+            }
+            
+            case JS_OP_SLR: {
+                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(l << r));
+                break;
+            }
+            
+            case JS_OP_NOT: {
+                VAL v = POP();
+                PUSH(js_value_make_boolean(!js_value_is_truthy(v)));
+                break;
+            }
+            
+            case JS_OP_BITNOT: {
+                uint32_t x = (uint32_t)js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(~x));
                 break;
             }
             

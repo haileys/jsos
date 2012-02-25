@@ -65,6 +65,13 @@ module JSOS
       typeof:     40,
       seq:        41,
       typeofg:    42,
+      sal:        43,
+      or:         44,
+      xor:        45,
+      and:        46,
+      slr:        47,
+      not:        48,
+      bitnot:     49,
     }
 
   private
@@ -242,6 +249,11 @@ module JSOS
         end
       end
       private method
+    end
+    
+    def StrictInequality(node)
+      StrictEquality(node)
+      output :not
     end
   
     def post_mutate(left)
@@ -465,6 +477,34 @@ module JSOS
       else
         output [:label, else_label]
       end
+    end
+    
+    def Ternary(node)
+      compile_node node.condition
+      else_label = uniqid
+      end_label = uniqid
+      output :jif, [:ref, else_label]
+      compile_node node.if_true
+      output :jmp, [:ref, end_label]
+      output [:label, else_label]
+      compile_node node.if_false
+      output [:label, end_label]
+    end
+    
+    def While(node, continue_label = nil)
+      start_label = uniqid
+      end_label = uniqid
+      @continue_stack.push start_label
+      @break_stack.push end_label
+      output [:label, start_label]
+      output [:label, continue_label] if continue_label
+      compile_node node.condition
+      output :jif, [:ref, end_label]
+      compile_node node.body if node.body
+      output :jmp, [:ref, start_label]
+      output [:label, end_label]
+      @continue_stack.pop
+      @break_stack.pop
     end
   
     def ForLoop(node, continue_label = nil)
