@@ -1,10 +1,17 @@
 console.log("Hello world from JavaScript!");
 
 Kernel.loadImage(Kernel.modules["/kernel/keyboard.jmg"]);
+Kernel.loadImage(Kernel.modules["/kernel/keymaps.jmg"]);
+
 Kernel.loadImage(Kernel.modules["/kernel/drivers.jmg"]);
 
 Drivers.loadDriver("ps2kb");
-Keyboard.addDriver(new Drivers.PS2Keyboard());
+console.log("before create keyboard");
+var ps2kb = new Drivers.PS2Keyboard();
+var keyboard = new Keyboard(ps2kb, "US");
+keyboard.onKeyDown = function(key, scanCode) {
+    console.log(key);
+}
 
 Drivers.loadDriver("ps2mouse");
 var mouse = new Drivers.PS2Mouse();
@@ -18,6 +25,4 @@ mouse.onUpdate = function(data) {
 //    console.log("[ " + (data.leftButton ? "#" : " ") + " " + (data.middleButton ? "#" : " ") + " " + (data.rightButton ? "#" : " ") + " ]");
 }
 
-Drivers.loadDriver("ide");
-var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
-hdd.readSectorPIO(1);
+console.log("Finished initializing");
