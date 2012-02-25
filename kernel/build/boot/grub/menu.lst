@@ -42,3 +42,4 @@ module /kernel/init.jmg
 module /kernel/keyboard.jmg
 module /kernel/drivers.jmg
 module /kernel/drivers/ps2.jmg
+module /kernel/drivers/ide.jmg
