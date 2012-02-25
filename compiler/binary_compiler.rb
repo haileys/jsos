@@ -85,8 +85,9 @@ module JSOS
       end
       bytecode << [@interned_strings.count].pack("L<")
       @interned_strings.each do |str,idx|
-        bytecode << [str.bytes.count].pack("L<")
-        bytecode << str << "\0"
+        bytecode << [str.length].pack("L<")
+        # this hack here is so that UTF-8 doesn't break stuff like "\xEF\xBE\xAD\xDE":
+        bytecode << str.each_char.map(&:ord).map(&:chr).join << "\0"
       end
     end
   
@@ -556,6 +557,12 @@ module JSOS
   
     def This(node)
       output :this
+    end
+    
+    def Void(node)
+      compile_node node.value
+      output :pop
+      output :undefined
     end
   end
 end
