@@ -23,6 +23,11 @@ loader:
     mov esp, kstack+STACKSIZE           ; set up the stack
     push eax                           ; pass Multiboot magic number
     push ebx                           ; pass Multiboot info structure
+    
+    fninit
+    mov eax, cr0
+    or eax, 1 << 5  ; FPU NE bit
+    mov cr0, eax
 
     push 0
     jmp kmain                       ; call kernel proper

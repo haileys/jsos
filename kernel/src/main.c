@@ -21,6 +21,20 @@ static VAL console_log(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* a
     return js_value_undefined();
 }
 
+static VAL Kernel_load_image(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(argc == 0 || js_value_get_type(argv[0]) != JS_T_STRING) {
+        js_throw_message(vm, "Kernel.loadImage() expects string");
+    }
+    js_string_t* str = &js_value_get_pointer(argv[0])->string;
+    js_image_t* image = js_image_parse(str->buff, str->length);
+    if(!image) {
+        js_throw_message(vm, "Couldn't parse image");
+    }
+    js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
+    return js_value_true();
+}
+
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
     kprintf("Loading %d modules:\n", count);
@@ -57,10 +71,13 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     VAL Kernel = js_make_object(vm);
     js_object_put(vm->global_scope->global_object, js_cstring("Kernel"), Kernel);
+    js_object_put(Kernel, js_cstring("loadImage"), js_value_make_native_function(vm, NULL, js_cstring("loadImage"), Kernel_load_image, NULL));
     
     cli();
     idt_init(vm);
     sti();
+    
+    io_init(vm);
     
     VAL modules = js_make_object(vm);
     js_object_put(Kernel, js_cstring("modules"), modules);
@@ -86,7 +103,8 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
 void kmain(struct multiboot_info* mbd, uint32_t magic)
 {
     kmain_(mbd, magic);
-    for(;;);
-//    __asm__ volatile("cli \n hlt");
+    for(;;) {
+        __asm__ volatile("hlt");
+    }
 }
 

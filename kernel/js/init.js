@@ -1,7 +1,7 @@
 console.log("Hello world from JavaScript!");
-console.log("My bytecode is " + Kernel.modules["/kernel/init.jmg"].length + " bytes long");
 
-var tick = 0;
-Kernel.isrs[32] = function() {
-    console.log("tick " + tick++);
-};
+Kernel.loadImage(Kernel.modules["/kernel/keyboard.jmg"]);
+Kernel.loadImage(Kernel.modules["/kernel/drivers.jmg"]);
+Drivers.loadDriver("ps2");
+Keyboard.addDriver(new Drivers.PS2());
+
