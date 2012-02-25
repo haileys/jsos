@@ -30,5 +30,6 @@ void idt_init(js_vm_t* vm);
 void idt_set_gate(uint8_t gate, idt_entry_t entry);
 void idt_register_handler(uint8_t gate, uint32_t isr);
 uint32_t isr_dispatch(uint32_t interrupt, uint32_t error);
+void interrupt_dispatch_events();
 
 #endif

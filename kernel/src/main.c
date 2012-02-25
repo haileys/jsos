@@ -106,6 +106,7 @@ void kmain(struct multiboot_info* mbd, uint32_t magic)
 {
     kmain_(mbd, magic);
     for(;;) {
+        interrupt_dispatch_events();
         __asm__ volatile("hlt");
     }
 }
