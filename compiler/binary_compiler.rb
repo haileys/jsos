@@ -61,6 +61,10 @@ module JSOS
       tld:        36,
       index:      37,
       setindex:   38,
+      object:     39,
+      typeof:     40,
+      seq:        41,
+      typeofg:    42,
     }
 
   private
@@ -347,6 +351,14 @@ module JSOS
       output :pushnum, node.number.to_f
     end
   
+    def ObjectLiteral(node)
+      node.items.each do |k,v|
+        output :pushstr, k.val.to_s
+        compile_node v
+      end
+      output :object, node.items.count
+    end
+  
     def Array(node)
       node.items.each do |item|
         compile_node item
@@ -390,6 +402,15 @@ module JSOS
         compile_node node.callee
         node.arguments.each { |n| compile_node n }
         output :call, node.arguments.size
+      end
+    end
+  
+    def TypeOf(node)
+      if node.value.is_a? Twostroke::AST::Variable and not lookup_var node.value.name
+        output :typeofg, node.value.name
+      else
+        compile_node node.value
+        output :typeof
       end
     end
   
