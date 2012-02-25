@@ -300,13 +300,58 @@ module JSOS
   
     def PostIncrement(node)
       post_mutate node.value do
-        output :pushnum, 1.0
-        output :add
+        output :pushnum, -1.0
+        output :sub
       end
     end
   
     def PostDecrement(node)
       post_mutate node.value do
+        output :pushnum, 1.0
+        output :sub
+      end
+    end
+    
+    def pre_mutate(left)
+      if type(left) == :Variable || type(left) == :Declaration
+        if var = lookup_var(left.name)
+          output :pushvar, *var
+        else
+          output :pushglobal, left.name
+        end
+        yield
+        if var
+          output :setvar, *var
+        else
+          output :setglobal, left.name
+        end
+      elsif type(left) == :MemberAccess
+        compile_node left.object
+        output :dup
+        output :member, left.member
+        yield
+        output :setprop, left.member
+      elsif type(left) == :Index
+        compile_node left.object
+        compile_node left.index
+        output :dup, 2
+        output :index
+        yield
+        output :setindex
+      else
+        error! "Bad lval in post-mutation"
+      end
+    end
+
+    def PreIncrement(node)
+      pre_mutate node.value do
+        output :pushnum, -1.0
+        output :sub
+      end
+    end
+
+    def PreDecrement(node)
+      pre_mutate node.value do
         output :pushnum, 1.0
         output :sub
       end
@@ -460,7 +505,11 @@ module JSOS
     end
   
     def Return(node)
-      compile_node node.expression
+      if node.expression
+        compile_node node.expression
+      else
+        output :undefined
+      end
       output :ret
     end
   
