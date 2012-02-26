@@ -16,7 +16,7 @@ void js_set_exception_handler(js_exception_handler_t* exception_handler)
 {
     if(!initialized) {
         initialized = true;
-        js_gc_register_global((void**)&handler);
+        js_gc_register_global(&handler, sizeof(js_exception_handler_t*));
     }
     handler = exception_handler;
 }

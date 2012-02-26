@@ -23,6 +23,7 @@ typedef struct allocation {
 
 typedef struct global {
     intptr_t** ptr;
+    size_t size;
     struct global* next;
 } global_t;
 
@@ -159,10 +160,11 @@ void js_gc_init(void* stack_ptr)
     stack_top = (void*)(((intptr_t)stack_ptr + sizeof(intptr_t)) & ~(sizeof(intptr_t) - 1));
 }
 
-void js_gc_register_global(void** address)
+void js_gc_register_global(void* address, size_t length)
 {
     global_t* g = malloc(sizeof(global_t));
     g->ptr = (intptr_t**)address;
+    g->size = length / sizeof(intptr_t);
     g->next = globals;
     globals = g;
 }
@@ -203,9 +205,12 @@ static void js_gc_mark()
         ptrptr--;
     }
     for(g = globals; g; g = g->next) {
-        alloc = allocs_lookup(*g->ptr);
-        if(alloc) {
-            js_gc_mark_allocation(alloc);
+        uint32_t i;
+        for(i = 0; i < g->size; i++) {
+            alloc = allocs_lookup(g->ptr[i]);
+            if(alloc) {
+                js_gc_mark_allocation(alloc);
+            }
         }
     }
 }

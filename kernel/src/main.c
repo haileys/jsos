@@ -36,6 +36,17 @@ static VAL Kernel_load_image(js_vm_t* vm, void* state, VAL this, uint32_t argc, 
     return js_value_true();
 }
 
+static VAL Kernel_memory_usage(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    return js_value_make_double(js_gc_memory_usage());
+}
+
+static VAL Kernel_run_gc(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_gc_run();
+    return js_value_undefined();
+}
+
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
     kprintf("Loading %d modules:\n", count);
@@ -49,9 +60,10 @@ void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
     }
 }
 
+static js_vm_t* vm;
+
 void kmain_(struct multiboot_info* mbd, uint32_t magic)
 {
-    int dummy;
     console_clear();
     
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC)         panic("multiboot did not pass correct magic number");
@@ -62,8 +74,8 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length);
     gdt_init();
     
-    js_gc_init(&dummy);
-    js_vm_t* vm = js_vm_new();
+    vm = js_vm_new();
+    js_gc_register_global(&vm, sizeof(vm));
     js_set_panic_handler(js_panic_handler);
     
     VAL console = js_make_object(vm);
@@ -73,6 +85,8 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     VAL Kernel = js_make_object(vm);
     js_object_put(vm->global_scope->global_object, js_cstring("Kernel"), Kernel);
     js_object_put(Kernel, js_cstring("loadImage"), js_value_make_native_function(vm, NULL, js_cstring("loadImage"), Kernel_load_image, NULL));
+    js_object_put(Kernel, js_cstring("memoryUsage"), js_value_make_native_function(vm, NULL, js_cstring("memoryUsage"), Kernel_memory_usage, NULL));
+    js_object_put(Kernel, js_cstring("runGC"), js_value_make_native_function(vm, NULL, js_cstring("runGC"), Kernel_run_gc, NULL));
     
     cli();
     idt_init(vm);
@@ -104,6 +118,8 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
 
 void kmain(struct multiboot_info* mbd, uint32_t magic)
 {
+    int dummy;
+    js_gc_init(&dummy);
     kmain_(mbd, magic);
     for(;;) {
         interrupt_dispatch_events();
