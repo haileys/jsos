@@ -15,7 +15,7 @@
     void* js_realloc(void* ptr, size_t sz);
 #endif
 void js_gc_init(void* stack_ptr);
-void js_gc_register_global(void** address);
+void js_gc_register_global(void* address, size_t length);
 void js_gc_run();
 size_t js_gc_memory_usage();
 

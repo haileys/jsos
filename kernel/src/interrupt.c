@@ -51,7 +51,7 @@ void idt_init(js_vm_t* vm)
     __asm__ volatile("lidt (%0)" :: "m"(idtr));
     
     js_isr_table = js_make_object(vm);
-    js_gc_register_global((void**)&js_isr_table);
+    js_gc_register_global(&js_isr_table, sizeof(js_isr_table));
     js_object_put(js_object_get(vm->global_scope->global_object, js_cstring("Kernel")), js_cstring("isrs"), js_isr_table);
 }
 
