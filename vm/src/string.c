@@ -62,7 +62,7 @@ js_string_t* js_string_from_double(double number)
     if(frac > 0) {
         *ptr++ = '.';
         for(frac_i = 0; frac_i < 6; frac_i++) {
-            frac *= 10.0;
+            frac = fmod(frac * 10.0, 10.0);
             *ptr++ = '0' + (int)floor(frac);
         }
     }
