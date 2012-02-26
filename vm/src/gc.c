@@ -72,9 +72,7 @@ static void allocs_delete_alloc(alloc_t* alloc, uint16_t h)
     if(alloc->next) {
         alloc->next->prev = alloc->prev;
     }
-    #ifdef JS_GC_DEBUG
-        memset(alloc->ptr, 0, alloc->size);
-    #endif
+    memset(alloc->ptr, 0, alloc->size);
     free(alloc->ptr);
     memory_usage -= alloc->size;
     free(alloc);
