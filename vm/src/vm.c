@@ -121,7 +121,6 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     VAL temp_slot = js_value_undefined();
     
     while(1) {
-        //js_gc_run();
         opcode = NEXT_UINT32();
         switch(opcode) {
             case JS_OP_UNDEFINED:
