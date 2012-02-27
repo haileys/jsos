@@ -18,11 +18,17 @@ var mouse = new Drivers.PS2Mouse();
 mouse.enable();
 var x = 0;
 var y = 0;
+var tick = 0;
+var ABC = " ";
 mouse.onUpdate = function(data) {
     x += data.x;
     y += data.y;
-    console.log("(" + x + ", " + y + ")");
-//    console.log("[ " + (data.leftButton ? "#" : " ") + " " + (data.middleButton ? "#" : " ") + " " + (data.rightButton ? "#" : " ") + " ]");
+    console.log(Kernel.memoryUsage() / 1024, "KiB");
+    if(tick++ === 20) {
+        tick = 0;
+        console.log("--->", typeof Kernel.isrs, typeof mouse.onUpdate);
+        Kernel.runGC();
+        console.log("===>", typeof Kernel.isrs, typeof mouse.onUpdate);
+    }
 }
-
 console.log("Finished initializing");
