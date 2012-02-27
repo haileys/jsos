@@ -60,19 +60,15 @@ int main()
                     break;
                 case OPERAND_STRING:
                     op = image->sections[i].instructions[++j];
-                    printf("\"%s\" (%d)\n", image->strings[op].buff, op);
+                    printf("\"%s\" (%d)\n", image->strings[op]->buff, op);
                     break;
             }
         }
     }
     printf("\nstrings:\n");
     for(i = 0; i < image->string_count; i++) {
-        printf("    %04d  \"%s\"\n", i, image->strings[i].buff);
+        printf("    %04d  \"%s\"\n", i, image->strings[i]->buff);
     }
-    
-    printf("\n\nmemory in use before gc: %lu KiB\n", js_gc_memory_usage() / 1024);
-    js_gc_run();
-    printf("memory in use after gc: %lu KiB\n", js_gc_memory_usage() / 1024);
     
     return 0;
 }
