@@ -14,7 +14,7 @@ typedef struct js_image {
     uint32_t section_count;
     js_section_t* sections;
     uint32_t string_count;
-    js_string_t* strings;
+    js_string_t** strings;
 } js_image_t;
 
 js_image_t* js_image_parse(char* buff, uint32_t buff_size);

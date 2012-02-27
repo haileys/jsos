@@ -29,14 +29,15 @@ js_image_t* js_image_parse(char* buff, uint32_t buff_size)
         buff += sz;
     }
     image->string_count = *(uint32_t*)buff;
-    image->strings = js_alloc(sizeof(js_string_t) * image->string_count);
+    image->strings = js_alloc(sizeof(js_string_t*) * image->string_count);
     buff += 4;
     for(i = 0; i < image->string_count; i++) {
         sz = *(uint32_t*)buff;
         buff += 4;
-        image->strings[i].length = sz;
-        image->strings[i].buff = js_alloc(sz + 1);
-        memcpy(image->strings[i].buff, buff, sz + 1);
+        image->strings[i] = js_alloc(sizeof(js_string_t));
+        image->strings[i]->length = sz;
+        image->strings[i]->buff = js_alloc(sz + 1);
+        memcpy(image->strings[i]->buff, buff, sz + 1);
         buff += sz + 1;
     }
     return image;
