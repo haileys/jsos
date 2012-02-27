@@ -49,6 +49,7 @@ static js_instruction_t insns[] = {
     { "setindex",   OPERAND_NONE },
     { "object",     OPERAND_UINT32 },
     { "typeof",     OPERAND_NONE },
+    { "seq",        OPERAND_NONE },
     { "typeofg",    OPERAND_STRING },
     { "sal",        OPERAND_NONE },
     { "or",         OPERAND_NONE },
@@ -80,7 +81,7 @@ js_vm_t* js_vm_new()
 /* @TODO: bounds checking here */
 #define NEXT_UINT32() (INSNS[IP++])
 #define NEXT_DOUBLE() (IP += 2, *(double*)&INSNS[IP - 2])
-#define NEXT_STRING() (&image->strings[NEXT_UINT32()])
+#define NEXT_STRING() (image->strings[NEXT_UINT32()])
 
 #define PUSH(v) do { \
                     if(SP >= SMAX) { \
@@ -420,7 +421,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 if(js_value_is_primitive(obj)) {
                     obj = js_to_object(vm, obj);
                 }
-                js_object_put(obj, &js_value_get_pointer(idx)->string, val);
+                js_object_put(obj, js_to_js_string_t(idx), val);
                 PUSH(val);
                 break;
             }
@@ -430,8 +431,8 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL obj = js_make_object(vm);
                 for(i = 0; i < items; i++) {
                     VAL val = POP();
-                    js_value_t* key = js_value_get_pointer(js_to_string(POP()));
-                    js_object_put(obj, &key->string, val);
+                    VAL key = js_to_string(POP());
+                    js_object_put(obj, js_to_js_string_t(key), val);
                 }
                 PUSH(obj);
                 break;
