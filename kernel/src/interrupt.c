@@ -4,6 +4,7 @@
 #include "interrupt.h"
 #include "io.h"
 #include "console.h"
+#include "panic.h"
 
 static idtr_t idtr;
 static idt_entry_t idt[256];
@@ -12,13 +13,13 @@ static VAL js_isr_table;
 
 #define MAX_QUEUED_INTERRUPTS 16
 
-struct {
+static struct {
     uint32_t interrupt;
     uint32_t error;
 } queued_interrupts[MAX_QUEUED_INTERRUPTS];
 
-uint32_t queue_front;
-uint32_t queue_back;
+static uint32_t queue_front;
+static uint32_t queue_back;
 
 void idt_set_gate(uint8_t gate, idt_entry_t entry)
 {
@@ -43,7 +44,8 @@ static void remap_irqs()
 void asm_isr_init();
 
 void idt_init(js_vm_t* vm)
-{
+{    
+    cli();
     asm_isr_init();
     remap_irqs();
     idtr.size = sizeof(idt) - 1;
@@ -53,6 +55,7 @@ void idt_init(js_vm_t* vm)
     js_isr_table = js_make_object(vm);
     js_gc_register_global(&js_isr_table, sizeof(js_isr_table));
     js_object_put(js_object_get(vm->global_scope->global_object, js_cstring("Kernel")), js_cstring("isrs"), js_isr_table);
+    sti();
 }
 
 void idt_register_handler(uint8_t gate, uint32_t isr)
@@ -66,8 +69,11 @@ void idt_register_handler(uint8_t gate, uint32_t isr)
 
 uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
 {
-    if(interrupt == 39) {
+    if(interrupt == 39 /* spurious */) {
         return 0;
+    }
+    if(interrupt == 6 /* invalid opcode */) {
+        panic("Fault: Invalid Opcode");
     }
     
     // isr_dispatch is already in a cli/hlt so there's no need to do any locking
