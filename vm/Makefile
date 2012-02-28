@@ -1,4 +1,4 @@
-CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -Werror -g #-DJS_GC_DEBUG
+CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -Werror -g -DJS_GC_DEBUG -lm
 LDFLAGS=
 OBJS=	src/image.o src/scope.o src/st.o src/value.o src/vm.o src/object.o \
 		src/string.o src/gc.o src/lib.o src/lib/array.o src/lib/function.o \
@@ -20,6 +20,6 @@ clean:
 	rm -f src/*.o
 	rm -f src/*/*.o
 	rm -f runner
-	rm -f disasm
+	#rm -f disasm
 	rm -f gctest
 	rm -f *.a

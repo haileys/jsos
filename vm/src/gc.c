@@ -19,6 +19,7 @@ typedef struct allocation {
         int line;
     #endif
     bool flag;
+    bool no_pointer;
 } alloc_t;
 
 typedef struct global {
@@ -54,6 +55,7 @@ static alloc_t* allocs_insert(void* ptr, size_t size)
     alloc->flag = current_mark_flag;
     alloc->size = size;
     alloc->next = allocs[h];
+    alloc->no_pointer = false;
     if(alloc->next) {
         alloc->next->prev = alloc;
     }
@@ -103,6 +105,22 @@ void* js_alloc(size_t sz)
         (void)alloc;
     #endif
     return ptr;
+}
+
+#ifdef JS_GC_DEBUG
+void* js_alloc_no_pointer_impl(size_t sz, char* file, int line)
+#else
+void* js_alloc_no_pointer(size_t sz)
+#endif
+{
+    #ifdef JS_GC_DEBUG
+        void* ptr = js_alloc_impl(sz, file, line);
+    #else
+        void* ptr = js_alloc(sz);
+    #endif
+    alloc_t* alloc = allocs_lookup(ptr);
+    alloc->no_pointer = true;
+    return ptr;    
 }
 
 #ifdef JS_GC_DEBUG
@@ -180,6 +198,9 @@ static void js_gc_mark_allocation(alloc_t* alloc)
         return;
     }
     alloc->flag = current_mark_flag;
+    if(alloc->no_pointer) {
+        return;
+    }
     while((intptr_t)ptrptr < (intptr_t)((intptr_t)alloc->ptr + alloc->size)) {
         suballoc = allocs_lookup(*ptrptr);
         if(suballoc) {

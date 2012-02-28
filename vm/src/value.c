@@ -162,7 +162,7 @@ VAL js_value_make_string(char* buff, uint32_t len)
 {
     js_value_t* val = js_alloc(sizeof(js_value_t));
     val->type = JS_T_STRING;
-    val->string.buff = js_alloc(len + 1);
+    val->string.buff = js_alloc_no_pointer(len + 1);
     memcpy(val->string.buff, buff, len);
     val->string.buff[len] = 0; /* null terminate to ensure things don't break with old c stuff */
     val->string.length = len;
@@ -173,7 +173,7 @@ js_string_t* js_cstring(char* cstr)
 {
     js_string_t* str = js_alloc(sizeof(js_string_t));
     uint32_t len = strlen(cstr);
-    str->buff = js_alloc(len + 1);
+    str->buff = js_alloc_no_pointer(len + 1);
     memcpy(str->buff, cstr, len);
     str->buff[len] = 0;
     str->length = len;
