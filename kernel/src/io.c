@@ -32,7 +32,7 @@ static VAL js_insw(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
     }
     uint16_t port = (uint16_t)js_value_get_double(argv[0]);
     uint32_t size = (uint32_t)js_value_get_double(argv[1]);
-    char* buff = js_alloc(size * 2 + 1);
+    char* buff = js_alloc_no_pointer(size * 2 + 1);
     insw(port, buff, size);
     return js_value_make_string(buff, size * 2);
 }
