@@ -39,6 +39,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     console_init(vm);
     lib_kernel_init(vm);
     lib_binary_utils_init(vm);
+    lib_vm_init(vm);
     idt_init(vm);
     io_init(vm);
     
