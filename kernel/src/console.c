@@ -1,10 +1,47 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <value.h>
 #include "io.h"
 #include "console.h"
 
 static int row, col;
+
+static VAL Console_clear(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    console_clear();
+    return js_value_undefined();
+}
+
+static VAL Console_write(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_string_t* str = js_to_js_string_t(argc ? argv[0] : js_value_undefined());
+    console_write(str->buff, str->length);
+    return js_value_undefined();
+}
+
+static VAL Console_cursor(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t row, col;
+    js_scan_args(vm, argc, argv, "II", &row, &col);
+    if(row > 24) {
+        row = 24;
+    }
+    if(col > 79) {
+        col = 79;
+    }
+    console_cursor(row, col);
+    return js_value_undefined();
+}
+
+void console_init(js_vm_t* vm)
+{
+    VAL Console = js_make_object(vm);
+    js_object_put(vm->global_scope->global_object, js_cstring("Console"), Console);
+    js_object_put(Console, js_cstring("clear"), js_value_make_native_function(vm, NULL, js_cstring("clear"), Console_clear, NULL));
+    js_object_put(Console, js_cstring("write"), js_value_make_native_function(vm, NULL, js_cstring("write"), Console_write, NULL));
+    js_object_put(Console, js_cstring("cursor"), js_value_make_native_function(vm, NULL, js_cstring("cursor"), Console_cursor, NULL));
+}
 
 void console_clear()
 {
@@ -13,12 +50,13 @@ void console_clear()
     row = 0;
 }
 
-void console_puts(char* s)
+void console_write(char* s, size_t length)
 {
     char* vram = (char*)0xb8000;
-    for(; *s; s++) {
-        if(*s != '\n') {
-            vram[(row * 80 + col) * 2] = *s;
+    size_t i;
+    for(i = 0; i < length; i++) {
+        if(s[i] != '\n') {
+            vram[(row * 80 + col) * 2] = s[i];
             vram[(row * 80 + col) * 2 + 1] = 7;
             col++;
         } else {
@@ -36,6 +74,11 @@ void console_puts(char* s)
         }
     }
     console_cursor(row, col);
+}
+
+void console_puts(char* s)
+{
+    console_write(s, strlen(s));
 }
 
 void console_cursor(int r, int c)
