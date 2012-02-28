@@ -12,16 +12,6 @@
 #include "io.h"
 #include "lib.h"
 
-static VAL console_log(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
-{
-    uint32_t i;
-    for(i = 0; i < argc; i++) {
-       kprintf("%s%s", i ? " " : "", js_value_get_pointer(js_to_string(argv[i]))->string.buff);
-    }
-    kprintf("\n");
-    return js_value_undefined();
-}
-
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
     kprintf("Loading %d modules:\n", count);
@@ -46,10 +36,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     js_vm_t* vm = js_vm_new();
     js_set_panic_handler(js_panic_handler);
     
-    VAL console = js_make_object(vm);
-    js_object_put(console, js_cstring("log"), js_value_make_native_function(vm, NULL, js_cstring("log"), console_log, NULL));
-    js_object_put(vm->global_scope->global_object, js_cstring("console"), console);
-    
+    console_init(vm);
     lib_kernel_init(vm);
     lib_binary_utils_init(vm);
     idt_init(vm);
