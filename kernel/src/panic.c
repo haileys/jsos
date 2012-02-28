@@ -6,7 +6,7 @@
 void panic(char* message)
 {
     kprintf("\n\nKernel Panic - %s\n", message);
-    __asm__ volatile ("cli \n hlt");
+//    __asm__ volatile ("cli \n hlt");
     for(;;); // make gcc shutup
 }
 
