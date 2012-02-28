@@ -7,7 +7,7 @@ LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o \
-		src/lib/binary_utils.o src/lib/kernel.o
+		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o
 
 JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse
 
