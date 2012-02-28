@@ -119,6 +119,7 @@ VAL js_value_make_object(VAL prototype, VAL class)
 
 VAL js_value_make_native_function(js_vm_t* vm, void* state, js_string_t* name, VAL(*call)(js_vm_t*, void*, VAL, uint32_t, VAL*), VAL(*construct)(js_vm_t*, void*, VAL, uint32_t, VAL*))
 {
+    VAL retn;
     js_function_t* fn = js_alloc(sizeof(js_function_t));
     fn->base.type = JS_T_FUNCTION;
     fn->base.object.vtable = js_object_base_vtable();
@@ -131,7 +132,9 @@ VAL js_value_make_native_function(js_vm_t* vm, void* state, js_string_t* name, V
     fn->native.state = state;
     fn->native.call = call;
     fn->native.construct = construct;
-    return js_value_make_pointer((js_value_t*)fn);
+    retn = js_value_make_pointer((js_value_t*)fn);
+    js_object_put(retn, js_cstring("prototype"), js_value_make_object(vm->lib.Object_prototype, retn));
+    return retn;
 }
 
 VAL js_value_make_function(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* outer_scope)
@@ -444,7 +447,11 @@ VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv)
     }
     function = (js_function_t*)js_value_get_pointer(fn);
     if(function->is_native) {
-        return function->native.call(function->vm, function->native.state, this, argc, argv);
+        if(function->native.call) {
+            return function->native.call(function->vm, function->native.state, this, argc, argv);
+        } else {
+            js_throw_error(function->vm->lib.TypeError, "Can't call constructor in non-constructor context");
+        }
     } else {
         return js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
     }
@@ -463,7 +470,7 @@ VAL js_construct(VAL fn, uint32_t argc, VAL* argv)
         if(function->native.construct) {
             retn = function->native.construct(function->vm, function->native.state, this, argc, argv);
         } else {
-            js_throw_error(function->vm->lib.TypeError, "function is not a constructor");
+            js_throw_error(function->vm->lib.TypeError, "Can't call function in constructor context");
         }
     } else {
         retn = js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
