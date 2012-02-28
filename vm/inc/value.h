@@ -54,6 +54,7 @@ typedef struct {
     struct js_object_internal_methods* vtable;
     VAL prototype;
     VAL class;
+    void* state;
     st_table* properties;
 } js_object_t;
 

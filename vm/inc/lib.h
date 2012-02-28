@@ -51,6 +51,6 @@ VAL js_make_string_object(struct js_vm* vm, js_string_t* number);
 /* Error */
 void js_lib_error_initialize(struct js_vm* vm);
 VAL js_make_error(VAL class, js_string_t* message);
-void js_throw_error(VAL class, char* fmt, ...);
+void js_throw_error(VAL class, char* fmt, ...) __attribute__((noreturn));
 
 #endif
