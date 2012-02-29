@@ -3,7 +3,7 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 		-fno-stack-protector -I../libc/inc -I../vm/inc -fno-pic -Werror \
 		-DJS_GC_DEBUG
 
-LDFLAGS=../libc/src/*.o ../vm/src/*.o ../vm/src/*/*.o
+LDFLAGS=../libc/src/*.o ../vm/libjsvm.a
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o \
