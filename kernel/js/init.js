@@ -10,16 +10,9 @@ keyboard.onKeyDown = function(key, scanCode) {
     Console.write(key + ", " + scanCode + "\n");
 }
 
-Console.clear();
-
-Console.write("VM is a: " + typeof VM + "\n");
-Console.write("VM.self() is a: " + typeof VM.self() + "\n");
-Console.write("My VM id is: " + VM.self().id() + "\n\n");
-
-var vm = new VM(function() {
-    Console.write("Hello world from a new VM!\n");
-    Console.write("My VM id is: " + VM.self().id() + "\n\n");
-});
-
-Console.write("Back to the kernel VM, with VM id: " + VM.self().id());
-
+Drivers.loadDriver("ide");
+Drivers.loadDriver("fat16");
+var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
+var fs = new Drivers.FAT16(hdd, 1, 65519);
+fs.init();
+Console.write("Initialized FAT16 partition with OEM: " + fs.bpb.oem);
