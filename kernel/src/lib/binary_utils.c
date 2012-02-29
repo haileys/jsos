@@ -83,6 +83,33 @@ static VAL BinaryUtils_readS16(js_vm_t* vm, void* state, VAL this, uint32_t argc
     return js_value_make_double(s16);
 }
 
+
+static VAL BinaryUtils_readU8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    VAL buff;
+    uint32_t offset;
+    js_scan_args(vm, argc, argv, "SI", &buff, &offset);
+    js_string_t* str = &js_value_get_pointer(buff)->string;
+    if(offset + 1 > str->length) {
+        js_throw_error(vm->lib.RangeError, "tried to read past end of buffer of length %d (offset was %d)", str->length, offset);
+    }
+    uint8_t u8 = *(uint8_t*)&str->buff[offset];
+    return js_value_make_double(u8);
+}
+
+static VAL BinaryUtils_readS8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    VAL buff;
+    uint32_t offset;
+    js_scan_args(vm, argc, argv, "SI", &buff, &offset);
+    js_string_t* str = &js_value_get_pointer(buff)->string;
+    if(offset + 1 > str->length) {
+        js_throw_error(vm->lib.RangeError, "tried to read past end of buffer of length %d (offset was %d)", str->length, offset);
+    }
+    int8_t s8 = *(int8_t*)&str->buff[offset];
+    return js_value_make_double(s8);
+}
+
 void lib_binary_utils_init(js_vm_t* vm)
 {
     BinaryUtils = js_make_object(vm);
@@ -95,4 +122,6 @@ void lib_binary_utils_init(js_vm_t* vm)
     js_object_put(BinaryUtils, js_cstring("readS32"), js_value_make_native_function(vm, NULL, js_cstring("readS32"), BinaryUtils_readS32, NULL));
     js_object_put(BinaryUtils, js_cstring("readU16"), js_value_make_native_function(vm, NULL, js_cstring("readU16"), BinaryUtils_readU16, NULL));
     js_object_put(BinaryUtils, js_cstring("readS16"), js_value_make_native_function(vm, NULL, js_cstring("readS16"), BinaryUtils_readS16, NULL));
+    js_object_put(BinaryUtils, js_cstring("readU8"), js_value_make_native_function(vm, NULL, js_cstring("readU8"), BinaryUtils_readU8, NULL));
+    js_object_put(BinaryUtils, js_cstring("readS8"), js_value_make_native_function(vm, NULL, js_cstring("readS8"), BinaryUtils_readS8, NULL));
 }
