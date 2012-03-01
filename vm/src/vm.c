@@ -58,6 +58,8 @@ static js_instruction_t insns[] = {
     { "slr",        OPERAND_NONE },
     { "not",        OPERAND_NONE },
     { "bitnot",     OPERAND_NONE },
+    { "line",       OPERAND_UINT32 },
+    { "debugger",   OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -120,6 +122,18 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     uint32_t SMAX = 8;
     VAL* STACK = js_alloc(sizeof(VAL) * SMAX);
     VAL temp_slot = js_value_undefined();
+    uint32_t current_line = 1;
+    
+    js_exception_handler_t* handler = js_alloc(sizeof(js_exception_handler_t));
+    handler->previous = js_current_exception_handler();
+    js_set_exception_handler(handler);
+    
+    if(setjmp(handler->env)) {
+        // exception was thrown
+        (void)current_line;
+        js_set_exception_handler(handler->previous);
+        js_throw(handler->exception);
+    }
     
     while(1) {
         opcode = NEXT_UINT32();
@@ -127,17 +141,18 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_UNDEFINED:
                 PUSH(js_value_undefined());
                 break;
-            
+        
             case JS_OP_RET:
+                js_set_exception_handler(handler->previous);
                 return POP();
                 break;
-            
+        
             case JS_OP_PUSHNUM: {
                 double d = NEXT_DOUBLE();
                 PUSH(js_value_make_double(d));
                 break;
             }
-            
+        
             case JS_OP_ADD: {
                 VAL r = js_to_primitive(POP());
                 VAL l = js_to_primitive(POP());
@@ -150,19 +165,19 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_PUSHGLOBAL: {
                 js_string_t* var = NEXT_STRING();
                 PUSH(js_scope_get_global_var(scope, var));
                 break;
             }
-        
+    
             case JS_OP_PUSHSTR: {
                 js_string_t* str = NEXT_STRING();
                 PUSH(js_value_wrap_string(str));
                 break;
             }
-        
+    
             case JS_OP_METHCALL: {
                 uint32_t i, argc = NEXT_UINT32();
                 VAL* argv = js_alloc(sizeof(VAL) * argc);
@@ -182,25 +197,25 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_call(fn, obj, argc, argv));
                 break;
             }
-        
+    
             case JS_OP_SETVAR: {
                 uint32_t idx = NEXT_UINT32();
                 uint32_t sc = NEXT_UINT32();
                 js_scope_set_var(scope, idx, sc, PEEK());
                 break;
             }
-        
+    
             case JS_OP_PUSHVAR: {
                 uint32_t idx = NEXT_UINT32();
                 uint32_t sc = NEXT_UINT32();
                 PUSH(js_scope_get_var(scope, idx, sc));
                 break;
             }
-            
+        
             case JS_OP_TRUE:
                 PUSH(js_value_true());
                 break;
-                
+            
             case JS_OP_FALSE:
                 PUSH(js_value_false());
                 break;
@@ -208,13 +223,13 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_NULL:
                 PUSH(js_value_null());
                 break;
-                
+            
             case JS_OP_JMP: {
                 uint32_t next = NEXT_UINT32();
                 IP = next;
                 break;
             }
-                
+            
             case JS_OP_JIT: {
                 uint32_t next = NEXT_UINT32();
                 if(js_value_is_truthy(POP())) {
@@ -222,7 +237,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_JIF: {
                 uint32_t next = NEXT_UINT32();
                 if(!js_value_is_truthy(POP())) {
@@ -230,34 +245,34 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_SUB: {
                 VAL r = js_to_number(POP());
                 VAL l = js_to_number(POP());
                 PUSH(js_value_make_double(js_value_get_double(js_to_number(l)) - js_value_get_double(js_to_number(r))));
                 break;
             }
-            
+        
             case JS_OP_MUL: {
                 VAL r = js_to_number(POP());
                 VAL l = js_to_number(POP());
                 PUSH(js_value_make_double(js_value_get_double(js_to_number(l)) * js_value_get_double(js_to_number(r))));
                 break;
             }
-            
+        
             case JS_OP_DIV: {
                 VAL r = js_to_number(POP());
                 VAL l = js_to_number(POP());
                 PUSH(js_value_make_double(js_value_get_double(js_to_number(l)) / js_value_get_double(js_to_number(r))));
                 break;
             }
-            
+        
             case JS_OP_SETGLOBAL: {
                 js_string_t* str = NEXT_STRING();
                 js_scope_set_global_var(scope, str, PEEK());
                 break;
             }
-            
+        
             case JS_OP_CLOSE: {
                 uint32_t sect = NEXT_UINT32();
                 PUSH(js_value_make_function(vm, image, sect, scope));
@@ -278,7 +293,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_call(fn, vm->global_scope->global_object, argc, argv));
                 break;
             }
-            
+        
             case JS_OP_SETCALLEE: {
                 uint32_t idx = NEXT_UINT32();
                 if(scope->parent) { /* not global scope... */
@@ -286,7 +301,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_SETARG: {
                 uint32_t var = NEXT_UINT32();
                 uint32_t arg = NEXT_UINT32();
@@ -299,39 +314,39 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_LT: {
                 VAL right = POP();
                 VAL left = POP();
                 PUSH(js_value_make_boolean(comparison_oper(left, right) < 0));
                 break;
             }
-            
+        
             case JS_OP_LTE: {
                 VAL right = POP();
                 VAL left = POP();
                 PUSH(js_value_make_boolean(comparison_oper(left, right) <= 0));
                 break;
             }
-            
+        
             case JS_OP_GT: {
                 VAL right = POP();
                 VAL left = POP();
                 PUSH(js_value_make_boolean(comparison_oper(left, right) > 0));
                 break;
             }
-            
+        
             case JS_OP_GTE: {
                 VAL right = POP();
                 VAL left = POP();
                 PUSH(js_value_make_boolean(comparison_oper(left, right) >= 0));
                 break;
             }
-            
+        
             case JS_OP_POP:
                 (void)POP();
                 break;
-            
+        
             case JS_OP_ARRAY: {
                 uint32_t i, count = NEXT_UINT32();
                 VAL* items = js_alloc(sizeof(VAL) * count);
@@ -341,7 +356,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_make_array(vm, count, items));
                 break;
             }
-            
+        
             case JS_OP_NEWCALL: {
                 uint32_t i, argc = NEXT_UINT32();
                 VAL* argv = js_alloc(sizeof(VAL) * argc);
@@ -356,12 +371,12 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_construct(fn, argc, argv));
                 break;
             }
-            
+        
             case JS_OP_THROW: {
                 js_throw(POP());
                 break;
             };
-            
+        
             case JS_OP_MEMBER: {
                 js_string_t* member = NEXT_STRING();
                 VAL obj = POP();
@@ -371,18 +386,18 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_object_get(obj, member));
                 break;
             }
-            
+        
             case JS_OP_DUP: {
                 VAL v = PEEK();
                 PUSH(v);
                 break;
             }
-            
+        
             case JS_OP_THIS: {
                 PUSH(this);
                 break;
             }
-            
+        
             case JS_OP_SETPROP: {
                 VAL val = POP();
                 VAL obj = POP();
@@ -393,17 +408,17 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(val);
                 break;
             }
-            
+        
             case JS_OP_TST: {
                 temp_slot = POP();
                 break;
             }
-            
+        
             case JS_OP_TLD: {
                 PUSH(temp_slot);
                 break;
             }
-            
+        
             case JS_OP_INDEX: {
                 VAL index = js_to_string(POP());
                 VAL object = POP();
@@ -413,7 +428,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(js_object_get(object, &js_value_get_pointer(index)->string));
                 break;
             }
-            
+        
             case JS_OP_SETINDEX: {
                 VAL val = POP();
                 VAL idx = js_to_string(POP());
@@ -425,7 +440,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(val);
                 break;
             }
-            
+        
             case JS_OP_OBJECT: {
                 uint32_t i, items = NEXT_UINT32();
                 VAL obj = js_make_object(vm);
@@ -437,20 +452,20 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 PUSH(obj);
                 break;
             }
-            
+        
             case JS_OP_TYPEOF: {
                 VAL val = POP();
                 PUSH(js_typeof(val));
                 break;
             }
-            
+        
             case JS_OP_SEQ: {
                 VAL r = POP();
                 VAL l = POP();
                 PUSH(js_value_make_boolean(js_seq(l, r)));
                 break;
             }
-            
+        
             case JS_OP_TYPEOFG: {
                 js_string_t* var = NEXT_STRING();
                 if(js_scope_global_var_exists(scope, var)) {
@@ -460,54 +475,64 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 break;
             }
-            
+        
             case JS_OP_SAL: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(l >> r));
                 break;
             }
-            
+        
             case JS_OP_OR: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(l | r));
                 break;
             }
-            
+        
             case JS_OP_XOR: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(l ^ r));
                 break;
             }
-            
+        
             case JS_OP_AND: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(l & r));
                 break;
             }
-            
+        
             case JS_OP_SLR: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(l << r));
                 break;
             }
-            
+        
             case JS_OP_NOT: {
                 VAL v = POP();
                 PUSH(js_value_make_boolean(!js_value_is_truthy(v)));
                 break;
             }
-            
+        
             case JS_OP_BITNOT: {
                 uint32_t x = (uint32_t)js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(~x));
                 break;
             }
             
+            case JS_OP_LINE: {
+                current_line = NEXT_UINT32();
+                break;
+            }
+        
+            case JS_OP_DEBUGGER: {
+                js_panic("DEBUGGER");
+                break;
+            }
+        
             default:
                 /* @TODO proper-ify this */
                 js_panic("unknown opcode %u\n", opcode);
