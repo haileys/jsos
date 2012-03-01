@@ -148,6 +148,7 @@ VAL js_value_make_function(js_vm_t* vm, js_image_t* image, uint32_t section, js_
     fn->base.object.properties = js_st_table_new();
     fn->vm = vm;
     fn->is_native = false;
+    fn->name = NULL;
     fn->js.image = image;
     fn->js.section = section;
     fn->js.outer_scope = outer_scope;

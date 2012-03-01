@@ -52,19 +52,37 @@ static VAL js_object_base_get(js_value_t* obj, js_string_t* prop)
         }
         return js_object_get(obj->object.prototype, prop);
     }
-    // @TODO: access property descriptor properly
-    return descr->value;
+    if(!descr->is_accessor) {
+        return descr->data.value;
+    } else {
+        if(js_value_get_type(descr->accessor.get) == JS_T_FUNCTION) {
+            return js_call(descr->accessor.get, js_value_make_pointer(obj), 0, NULL);
+        }
+        return js_value_undefined();
+    }
 }
 
 static void js_object_base_put(js_value_t* obj, js_string_t* prop, VAL value)
 {
     js_property_descriptor_t* descr = NULL;
     if(st_lookup(obj->object.properties, (st_data_t)prop, (st_data_t*)&descr)) {
-        descr->value = value;
+        if(!descr->is_accessor) {
+            if(descr->data.writable) {
+                descr->data.value = value;
+            }
+        } else {
+            if(js_value_get_type(descr->accessor.set) == JS_T_FUNCTION) {
+                js_call(descr->accessor.set, js_value_make_pointer(obj), 1, &value);
+            }
+        }
         return;
     }
     descr = js_alloc(sizeof(js_property_descriptor_t));
-    descr->value = value;
+    descr->is_accessor = false;
+    descr->enumerable = true;
+    descr->configurable = true;
+    descr->data.value = value;
+    descr->data.writable = true;
     st_insert(obj->object.properties, (st_data_t)prop, (st_data_t)descr);
 }
 
