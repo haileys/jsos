@@ -2,7 +2,7 @@ module JSOS
   class BinaryCompiler
     attr_accessor :bytecode, :ast
   
-    def initialize(ast)
+    def initialize(ast, filename = "")
       @ast = ast
       @sections = [[]]
       @section_stack = [0]
@@ -11,6 +11,7 @@ module JSOS
       @continue_stack = []
       @break_stack = []
       @label_ai = 0
+      @filename = filename
     end
   
     def compile
@@ -72,12 +73,15 @@ module JSOS
       slr:        47,
       not:        48,
       bitnot:     49,
+      line:       50,
+      debugger:   51
     }
 
   private
 
     def generate_bytecode
       @bytecode = "JSX\0"
+      bytecode << [intern_string(@filename)].pack("L<")
       # how many sections exist as LE uint32_t:
       bytecode << [@sections.size].pack("L<")
       @sections.map(&method(:generate_bytecode_for_section)).each do |sect|
@@ -148,6 +152,10 @@ module JSOS
     end
 
     def compile_node(node)
+      if @current_line != node.line
+        @current_line = node.line
+        output :line, @current_line
+      end
       if respond_to? type(node), true
         send type(node), node
       else
@@ -250,6 +258,10 @@ module JSOS
         end
       end
       private method
+    end
+    
+    def Debugger(node)
+      output :debugger
     end
     
     def StrictInequality(node)
@@ -576,6 +588,26 @@ module JSOS
       output [:label, end_label]
       @continue_stack.pop
       @break_stack.pop
+    end
+    
+    def Break(node)
+      if node.label
+        error! "Undefined label '#{node.label}'" unless @labels[node.label]
+        output :jmp, [:ref, @labels[node.label][:break]]
+      else
+        error! "Break not allowed outside of loop" unless @break_stack.any?
+        output :jmp, [:ref, @break_stack.last]
+      end
+    end
+
+    def Continue(node)
+      if node.label
+        error! "Undefined label '#{node.label}'" unless @labels[node.label]
+        output :jmp, [:ref, @labels[node.label][:continue]]
+      else
+        error! "Continue not allowed outside of loop" unless @continue_stack.any?
+        output :jmp, [:ref, @continue_stack.last]
+      end
     end
   
     def Or(node)
