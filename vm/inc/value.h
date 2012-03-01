@@ -30,8 +30,6 @@ typedef struct {
 } js_string_t;
 
 typedef struct {
-    VAL value;
-    /*
     bool is_accessor;
     bool enumerable;
     bool configurable;
@@ -45,7 +43,6 @@ typedef struct {
             VAL set;
         } accessor;
     };
-    */
 } js_property_descriptor_t;
 
 struct js_object_internal_methods;
