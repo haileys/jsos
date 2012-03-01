@@ -10,15 +10,15 @@ js_image_t* js_image_parse(char* buff, uint32_t buff_size)
     uint32_t i, sz;
     /*char* buff_end = buff + buff_size;*/
     js_image_t* image;
-    if(buff_size < 12) {
+    if(buff_size < 16) {
         return NULL;
     }
     image = js_alloc(sizeof(js_image_t));
-    memcpy(image, buff, 8);
+    memcpy(image, buff, 12);
     if(image->signature != 0x0058534a /* "JSX\0" */) {
         return NULL;
     }
-    buff += 8;
+    buff += 12;
     image->sections = js_alloc(sizeof(js_section_t) * image->section_count);
     for(i = 0; i < image->section_count; i++) {
         sz = *(uint32_t*)buff;

@@ -11,6 +11,7 @@ typedef struct {
 
 typedef struct js_image {
     uint32_t signature;
+    uint32_t name;
     uint32_t section_count;
     js_section_t* sections;
     uint32_t string_count;
