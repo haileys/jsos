@@ -15,18 +15,54 @@
         device:     0x40,
     };
     
+    FAT16.prototype.readSectors = function(sector, count) {
+        if(sector + count > this.partitionLength) {
+            throw new RangeError("tried to read beyond partition. sector: " + sector + ", count: " + count);
+        }
+        return this.drive.readSectorsPIO(this.partitionOffset + sector, count);
+    }
+    
     FAT16.prototype.readCluster = function(cluster) {
         var sector = this.firstDataSector + (this.rootEntryCount / 16) + (cluster * this.sectorsPerCluster) - 2;
-        this.drive.readSectorsPIO(sector + this.partitionOffset, this.sectorsPerCluster);
+        return this.readSectors(sector, this.sectorsPerCluster);
     };
     
-    FAT16.prototype.init = function() {
-        this.bpb = new FAT16.BPB(this.drive.readSectorPIO(this.partitionOffset));
-    };
-    
-    FAT16.BPB = function(buffer) {
-        this._buffer = buffer;
+    FAT16.prototype.init = function() {        
+        this.bpb = new FAT16.BPB(this.readSectors(0, 1));
         
+        this.rootDirSectors = (this.bpb.rootEntryCount * 32 + 511) / 512;
+        this.firstDataSector = this.bpb.reservedSectors + this.bpb.fatCount * this.bpb.sectorsPerFat;
+        this.firstFatSector = this.bpb.reservedSectors;
+        this.dataSectors = this.bpb.sectorCount - (this.bpb.reservedSectors + (this.bpb.fatCount * this.bpb.sectorsPerFat) + this.rootDirSectors);
+        this.totalClusters = this.dataSectors / this.bpb.sectorsPerCluster;
+        
+        Console.write("hello!\n");
+        this.fatData = this.readSectors(this.firstFatSector, this.bpb.sectorsPerFat);
+    };
+    
+    FAT16.prototype.readRootEntries = function() {
+        this.rootEntryData = this.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
+        debugger;
+        Console.write("reading root entries from: " + this.firstDataSector + "\n");
+        this.rootEntries = [];
+        for(var i = 0; i < this.rootEntryData.length; i += 32) {
+            var firstByte = BinaryUtils.readU8(this.rootEntryData, i);
+            if(firstByte === 0) { // end of directory
+                break;
+            }
+            if(firstByte === 0xe5) { // deleted file
+                continue;
+            }
+            if(firstByte & (FAT16.attributes.device | FAT16.attributes.volumeID | FAT16.attributes.unused)) {
+                // windows 95 long file name
+                continue;
+            }
+            this.rootEntries.push(new FAT16.Entry(this.rootEntryData.substr(i, 32)));
+        }
+        return this.rootEntries;
+    };
+    
+    FAT16.BPB = function(buffer) {        
         // bpb:
         this.jmpShort           = buffer.substr(0, 3);
         this.oem                = buffer.substr(3, 8);
@@ -52,6 +88,25 @@
         this.sysIdent           = buffer.substr(54, 8);
     };
     
+    FAT16.Entry = function(buffer) {
+        // raw attributes:
+        this.fatFilename            = buffer.substr(0, 11);
+        this.attributes             = BinaryUtils.readU8(buffer, 11);
+        this.ntReserved             = BinaryUtils.readU8(buffer, 12);
+        this.creationTenthsSecond   = BinaryUtils.readU8(buffer, 13);
+        this.creationHMS            = BinaryUtils.readU16(buffer, 14);
+        this.creationYMD            = BinaryUtils.readU16(buffer, 16);
+        this.accessYMD              = BinaryUtils.readU16(buffer, 18);
+        this.firstClusterHigh       = BinaryUtils.readU16(buffer, 20);
+        this.modifiedHMS            = BinaryUtils.readU16(buffer, 22);
+        this.modifiedYMD            = BinaryUtils.readU16(buffer, 24);
+        this.firstClusterLow        = BinaryUtils.readU16(buffer, 26);
+        this.size                   = BinaryUtils.readU32(buffer, 28);
+        
+        // synthesized attributes:
+        this.filename       = this.fatFilename.substr(0, 8) + "." + this.fatFilename.substr(8, 3);
+        this.firstCluster   = (this.firstClusterHigh << 16) | this.firstClusterLow;
+    };
     
     Drivers.FAT16 = FAT16;
 })();
