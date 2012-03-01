@@ -10,16 +10,20 @@ libjsvm.a: CFLAGS += -nostdlib -nostdinc -fno-builtin -nostartfiles -nodefaultli
 all: disasm runner
 
 libjsvm.a: clean $(OBJS)
-	ar rcs libjsvm.a $(OBJS)
+	@echo "creating libjsvm.a"
+	@ar rcs libjsvm.a $(OBJS)
 
 disasm: $(OBJS)
 
 runner: $(OBJS) 
 
+%.o: %.c
+	@echo "    cc  $<"
+	@${CC} ${CFLAGS} -c -o $@ $<
+
 clean:
-	rm -f src/*.o
-	rm -f src/*/*.o
-	rm -f runner
-	#rm -f disasm
-	rm -f gctest
-	rm -f *.a
+	@rm -f src/*.o
+	@rm -f src/*/*.o
+	@rm -f runner
+	@rm -f gctest
+	@rm -f *.a
