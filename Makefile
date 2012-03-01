@@ -10,13 +10,13 @@ userland: libc/libc.a vm/libjsvm.a userland.o
 	ld -o userland $(LDFLAGS) libc/src/*.o vm/src/*.o vm/src/*/*.o userland.o
 
 libc/libc.a:
-	make -C libc libc.a
+	@make -C libc libc.a
 
 vm/libjsvm.a:
-	make -C vm libjsvm.a
+	@make -C vm libjsvm.a
 
 kernel/hdd.img:
-	make -C kernel hdd.img
+	@make -C kernel hdd.img
 
 clean:
 	rm -f userland

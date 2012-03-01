@@ -15,24 +15,32 @@ JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse
 .SUFFIXES: .js .o .asm .o .coffee .js
 
 .js.o:
-	ruby ../compiler/compile.rb $< > $@
+	@echo "    js  $<"
+	@ruby ../compiler/compile.rb $< > $@
 
 .coffee.o:
-	coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin > $@
+	@echo "coffee  $<"
+	@coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin > $@
 
 .asm.o:
-	nasm -f elf -o $@ $<
+	@echo "  nasm  $<"
+	@nasm -f elf -o $@ $<
+
+%.o: %.c
+	@echo "    cc  $<"
+	@${CC} ${CFLAGS} -c -o $@ $<
 
 hdd.img: build/kernel.sys
-	cp hdd.base.img hdd.img
-	sudo rm -rf mnt
-	sudo mkdir mnt
-	sudo mount -o loop,offset=512 hdd.img mnt
-	sudo rm -f mnt/kernel/*.jmg
-	sudo rm -f mnt/kernel/*/*.jmg
-	sudo cp -R build/* mnt/
-	sudo umount mnt
-	sudo rm -rf mnt
+	@echo "creating image"
+	@cp hdd.base.img hdd.img
+	@sudo rm -rf mnt
+	@sudo mkdir mnt
+	@sudo mount -o loop,offset=512 hdd.img mnt
+	@sudo rm -f mnt/kernel/*.jmg
+	@sudo rm -f mnt/kernel/*/*.jmg
+	@sudo cp -R build/* mnt/
+	@sudo umount mnt
+	@sudo rm -rf mnt
 
 clean:
 	rm -f hdd.img
@@ -43,8 +51,9 @@ clean:
 	rm -f src/*.o
 	rm -f js/*.o
 
-build/kernel.sys: $(OBJS) build/boot/grub/menu.lst $(patsubst %, build/kernel/%.jmg, $(JSIMGS))
-	$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
+build/kernel.sys: $(OBJS) build/boot/grub/menu.lst $(patsubst %, build/kernel/%.jmg, $(JSIMGS))	
+	@echo "    ld"
+	@$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
 build/kernel/%.jmg: js/%.o
-	cp $< $@
+	@cp $< $@
