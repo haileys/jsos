@@ -82,8 +82,8 @@
         Kernel.outb(this.bus + ATA_REG_SECCOUNT0, 1);
         Kernel.outb(this.bus + ATA_REG_HDDEVSEL, 0xe0 | (this.slave << 4) | ((lba & 0x0f000000) >> 24));
         Kernel.outb(this.bus + ATA_REG_LBA0, (lba & 0x000000ff) >> 0);
-        Kernel.outb(this.bus + ATA_REG_LBA1, (lba & 0x0000ff00) >> 1);
-        Kernel.outb(this.bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 2);
+        Kernel.outb(this.bus + ATA_REG_LBA1, (lba & 0x0000ff00) >> 8);
+        Kernel.outb(this.bus + ATA_REG_LBA2, (lba & 0x00ff0000) >> 16);
         Kernel.outb(this.bus + ATA_REG_COMMAND, ATA_CMD_WRITE_PIO);
         
         while(Kernel.inb(this.bus + ATA_REG_STATUS) & 0x80) ; // busy wait
