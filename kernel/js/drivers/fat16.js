@@ -1,8 +1,6 @@
 (function() {
-    function FAT16(drive, partitionOffset, partitionLength) {
-        this.drive = drive;
-        this.partitionOffset = Number(partitionOffset);
-        this.partitionLength = Number(partitionLength);
+    function FAT16(partition) {
+        this.partition = partition;
     }
     
     FAT16.attributes = {
@@ -15,20 +13,13 @@
         device:     0x40,
     };
     
-    FAT16.prototype.readSectors = function(sector, count) {
-        if(sector + count > this.partitionLength) {
-            throw new RangeError("tried to read beyond partition. sector: " + sector + ", count: " + count);
-        }
-        return this.drive.readSectorsPIO(this.partitionOffset + sector, count);
-    }
-    
     FAT16.prototype.readCluster = function(cluster) {
         var sector = this.firstDataSector + (this.rootEntryCount / 16) + (cluster * this.sectorsPerCluster) - 2;
-        return this.readSectors(sector, this.sectorsPerCluster);
+        return this.partition.readSectors(sector, this.sectorsPerCluster);
     };
     
     FAT16.prototype.init = function() {        
-        this.bpb = new FAT16.BPB(this.readSectors(0, 1));
+        this.bpb = new FAT16.BPB(this.partition.readSector(0));
         
         this.rootDirSectors = (this.bpb.rootEntryCount * 32 + 511) / 512;
         this.firstDataSector = this.bpb.reservedSectors + this.bpb.fatCount * this.bpb.sectorsPerFat;
@@ -36,15 +27,18 @@
         this.dataSectors = this.bpb.sectorCount - (this.bpb.reservedSectors + (this.bpb.fatCount * this.bpb.sectorsPerFat) + this.rootDirSectors);
         this.totalClusters = this.dataSectors / this.bpb.sectorsPerCluster;
         
-        Console.write("hello!\n");
-        this.fatData = this.readSectors(this.firstFatSector, this.bpb.sectorsPerFat);
+        this.fatData = this.partition.readSectors(this.firstFatSector, this.bpb.sectorsPerFat);
     };
     
     FAT16.prototype.readRootEntries = function() {
-        this.rootEntryData = this.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
-        this.rootEntries = [];
-        for(var i = 0; i < this.rootEntryData.length; i += 32) {
-            var firstByte = BinaryUtils.readU8(this.rootEntryData, i);
+        var data = this.partition.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
+        return this.readDirectoryEntries(data);
+    };
+    
+    FAT16.prototype.readDirectoryEntries = function(buff) {
+        var entries = [];
+        for(var i = 0; i < buff.length; i += 32) {
+            var firstByte = BinaryUtils.readU8(buff, i);
             if(firstByte === 0) {
                 // end of directory
                 break;
@@ -53,15 +47,15 @@
                 // deleted file
                 continue;
             }
-            var entry = new FAT16.Entry(this.rootEntryData.substr(i, 32));
+            var entry = new FAT16.Entry(buff.substr(i, 32));
             if(entry.attributes & (FAT16.attributes.device | FAT16.attributes.volumeID | FAT16.attributes.unused)) {
                 // windows 95 long file name
                 continue;
             }
-            this.rootEntries.push(entry);
+            entries.push(entry);
         }
-        return this.rootEntries;
-    };
+        return entries;
+    }
     
     FAT16.BPB = function(buffer) {        
         // bpb:
@@ -105,8 +99,20 @@
         this.size                   = BinaryUtils.readU32(buffer, 28);
         
         // synthesized attributes:
-        this.filename       = this.fatFilename.substr(0, 8) + "." + this.fatFilename.substr(8, 3);
         this.firstCluster   = (this.firstClusterHigh << 16) | this.firstClusterLow;
+        
+        var filename = this.fatFilename.substr(0, 8).trimRight();
+        var ext = this.fatFilename.substr(8, 3).trimRight();
+        if(ext.length > 0) {
+            this.filename = filename + "." + ext;
+        } else {
+            this.filename = filename;
+        }
+    };
+    
+    FAT16.Directory = function(drive, entry) {
+        this.drive = drive;
+        this.entry = entry;
     };
     
     Drivers.FAT16 = FAT16;
