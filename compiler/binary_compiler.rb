@@ -159,7 +159,7 @@ module JSOS
       if respond_to? type(node), true
         send type(node), node
       else
-        raise "unimplemented node type #{type(node)}"
+        raise "unimplemented node type #{type(node)} - line #{node.line}"
       end
     end
   
@@ -615,6 +615,16 @@ module JSOS
       output :dup
       end_label = uniqid
       output :jit, [:ref, end_label]
+      output :pop
+      compile_node node.right
+      output [:label, end_label]
+    end
+  
+    def And(node)
+      compile_node node.left
+      output :dup
+      end_label = uniqid
+      output :jif, [:ref, end_label]
       output :pop
       compile_node node.right
       output [:label, end_label]
