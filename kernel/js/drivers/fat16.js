@@ -14,8 +14,9 @@
     };
     
     FAT16.prototype.readCluster = function(cluster) {
-        var sector = this.firstDataSector + (this.rootEntryCount / 16) + (cluster * this.sectorsPerCluster) - 2;
-        return this.partition.readSectors(sector, this.sectorsPerCluster);
+        var sector = this.firstDataSector + (this.bpb.rootEntryCount / 16) + (cluster * this.bpb.sectorsPerCluster) - 2;
+        log("readCluster(" + cluster + ") ; sector => " + sector);
+        return this.partition.readSectors(sector, this.bpb.sectorsPerCluster);
     };
     
     FAT16.prototype.init = function() {        
@@ -32,7 +33,15 @@
     
     FAT16.prototype.readRootEntries = function() {
         var data = this.partition.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
-        return this.readDirectoryEntries(data);
+        var entries = this.readDirectoryEntries(data);
+        for(var i = 0; i < entries.length; i++) {
+            if(entries[i].attributes & FAT16.attributes.directory) {
+                entries[i] = new FAT16.Directory(this, entries[i]);
+            } else {
+                entries[i] = new FAT16.File(this, entries[i]);
+            }
+        }
+        return entries;
     };
     
     FAT16.prototype.readDirectoryEntries = function(buff) {
@@ -84,6 +93,10 @@
     };
     
     FAT16.Entry = function(buffer) {
+        if(buffer === undefined) {
+            return;
+        }
+        
         // raw attributes:
         this.fatFilename            = buffer.substr(0, 11);
         this.attributes             = BinaryUtils.readU8(buffer, 11);
@@ -99,7 +112,7 @@
         this.size                   = BinaryUtils.readU32(buffer, 28);
         
         // synthesized attributes:
-        this.firstCluster   = (this.firstClusterHigh << 16) | this.firstClusterLow;
+        this.firstCluster           = (this.firstClusterHigh << 16) | this.firstClusterLow;
         
         var filename = this.fatFilename.substr(0, 8).trimRight();
         var ext = this.fatFilename.substr(8, 3).trimRight();
@@ -110,9 +123,23 @@
         }
     };
     
-    FAT16.Directory = function(drive, entry) {
-        this.drive = drive;
+    FAT16.Directory = function(fs, entry) {
+        this.fs = fs;
         this.entry = entry;
+        this.name = entry.filename;
+    };
+    
+    FAT16.Directory.prototype.readEntries = function() {
+        var cluster = this.fs.readCluster(this.entry.firstCluster);
+        for(;;);
+        return this.fs.readDirectoryEntries(cluster);
+    };
+    
+    FAT16.File = function(fs, entry) {
+        this.fs = fs;
+        this.entry = entry;
+        this.name = entry.filename;
+        this.size = entry.size;
     };
     
     Drivers.FAT16 = FAT16;
