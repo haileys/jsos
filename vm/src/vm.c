@@ -532,6 +532,20 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 js_panic("DEBUGGER");
                 break;
             }
+            
+            case JS_OP_INSTANCEOF: {
+                VAL class = POP();
+                VAL obj = POP();
+                if(js_value_get_type(class) != JS_T_FUNCTION) {
+                    js_throw_error(vm->lib.TypeError, "expected a function in instanceof check");
+                }
+                if(js_value_is_primitive(obj)) {
+                    PUSH(js_value_false());
+                } else {
+                    PUSH(js_value_make_boolean(js_value_get_pointer(js_value_get_pointer(obj)->object.class) == js_value_get_pointer(class)));
+                }
+                break;
+            }
         
             default:
                 /* @TODO proper-ify this */
