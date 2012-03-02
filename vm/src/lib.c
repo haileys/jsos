@@ -2,6 +2,8 @@
 
 void js_lib_initialize(js_vm_t* vm)
 {
+    js_object_put(vm->global_scope->global_object, js_cstring("undefined"), js_value_undefined());
+    
     js_lib_function_initialize(vm);
     js_lib_object_initialize(vm);
     
