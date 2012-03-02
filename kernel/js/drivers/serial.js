@@ -10,14 +10,18 @@
     var REG_MODEM_STAT  = 6;
     var REG_SCRATCH     = 7;
     
-    function Serial(port) {
-        this.port = port;
+    function Serial(args) {
+        this.port = args.port;
+        this.irq = args.irq;
     }
     
-    Serial.COM1 = 0x3f8;
-    Serial.COM2 = 0x2f8;
-    Serial.COM3 = 0x3e8;
-    Serial.COM4 = 0x2e8;
+    Serial.COM1 = { port: 0x3f8, irq: 4 };
+    Serial.COM2 = { port: 0x2f8, irq: 3 };
+    /*
+    Serial.COM3 = { port: 0x3e8, irq: 4 };
+    Serial.COM4 = { port: 0x2e8, irq: 3 };
+    @TODO - differentiate between COM1/COM3, COM2/COM4
+    */
     
     Serial.prototype.init = function() {
         // disable interrupts
@@ -33,6 +37,18 @@
         
         // enable interrupts
         Kernel.outb(this.port + REG_MODEM_CTRL, 0x0b);
+        
+        var self = this;
+        Kernel.isrs[32 + this.irq] = function() {
+            var byte = Kernel.inb(self.port);
+            if(typeof self.onData === "function") {
+                self.onData(byte);
+            }
+        };
+    };
+    
+    Serial.prototype.dataReady = function() {
+        return (Kernel.inb(this.port + REG_LINE_STAT) & 1) > 0;
     };
     
     Serial.prototype.setBaudRate = function(baudRate) {
