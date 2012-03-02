@@ -74,7 +74,8 @@ module JSOS
       not:        48,
       bitnot:     49,
       line:       50,
-      debugger:   51
+      debugger:   51,
+      instanceof: 52,
     }
 
   private
