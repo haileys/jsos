@@ -45,3 +45,4 @@ module /kernel/drivers.jmg
 module /kernel/drivers/ps2kb.jmg
 module /kernel/drivers/ide.jmg
 module /kernel/drivers/fat16.jmg
+module /kernel/drivers/serial.jmg
