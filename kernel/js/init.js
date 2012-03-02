@@ -5,9 +5,12 @@ Kernel.loadImage(Kernel.modules["/kernel/drivers.jmg"]);
 Drivers.loadDriver("ps2kb");
 var ps2kb = new Drivers.PS2Keyboard();
 var keyboard = new Keyboard(ps2kb, "US");
-keyboard.onKeyDown = function(key, scanCode) {
-    Kernel.runGC();
-    Console.write(key + ", " + scanCode + "\n");
+
+Drivers.loadDriver("serial");
+var serial = new Drivers.Serial(Drivers.Serial.COM1);
+serial.init();
+function log(str) {
+    serial.writeString(str + "\n");
 }
 
 Drivers.loadDriver("ide");
