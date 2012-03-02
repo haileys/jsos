@@ -95,6 +95,22 @@ static VAL String_prototype_substr(js_vm_t* vm, void* state, VAL this, uint32_t 
     return js_value_make_string(str->string.buff + index, length);
 }
 
+static VAL String_prototype_trimRight(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
+        // @TODO throw exception
+        js_panic("String.prototype.substr() is not generic");
+    }
+    js_string_object_t* str = (js_string_object_t*)js_value_get_pointer(this);
+    uint32_t new_len = str->string.length;
+    while(str->string.buff[new_len - 1] == ' ') {
+        if(--new_len == 0) {
+            return js_value_make_cstring("");
+        }
+    }
+    return js_value_make_string(str->string.buff, new_len);
+}
+
 void js_lib_string_initialize(js_vm_t* vm)
 {
     vm->lib.String = js_value_make_native_function(vm, NULL, js_cstring("String"), String_call, String_construct);
@@ -106,4 +122,5 @@ void js_lib_string_initialize(js_vm_t* vm)
     js_object_put(vm->lib.String_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), String_prototype_toString, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("valueOf"), js_value_make_native_function(vm, NULL, js_cstring("valueOf"), String_prototype_valueOf, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("substr"), js_value_make_native_function(vm, NULL, js_cstring("substr"), String_prototype_substr, NULL));
+    js_object_put(vm->lib.String_prototype, js_cstring("trimRight"), js_value_make_native_function(vm, NULL, js_cstring("trimRight"), String_prototype_trimRight, NULL));
 }
