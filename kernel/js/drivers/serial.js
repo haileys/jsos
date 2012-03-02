@@ -42,7 +42,7 @@
         lineCtrl |= 128;
         Kernel.outb(this.port + REG_LINE_CTRL, lineCtrl);
         // send lsb of divisor
-        Kernel.outb(this.port + REG_BAUD_LSD, divisor & 0xff);
+        Kernel.outb(this.port + REG_BAUD_LSB, divisor & 0xff);
         // send msb of divisor
         Kernel.outb(this.port + REG_BAUD_MSB, (divisor >> 8) & 0xff);
         // clear DLAB
