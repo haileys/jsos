@@ -42,22 +42,23 @@
     
     FAT16.prototype.readRootEntries = function() {
         this.rootEntryData = this.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
-        debugger;
-        Console.write("reading root entries from: " + this.firstDataSector + "\n");
         this.rootEntries = [];
         for(var i = 0; i < this.rootEntryData.length; i += 32) {
             var firstByte = BinaryUtils.readU8(this.rootEntryData, i);
-            if(firstByte === 0) { // end of directory
+            if(firstByte === 0) {
+                // end of directory
                 break;
             }
-            if(firstByte === 0xe5) { // deleted file
+            if(firstByte === 0xe5) {
+                // deleted file
                 continue;
             }
-            if(firstByte & (FAT16.attributes.device | FAT16.attributes.volumeID | FAT16.attributes.unused)) {
+            var entry = new FAT16.Entry(this.rootEntryData.substr(i, 32));
+            if(entry.attributes & (FAT16.attributes.device | FAT16.attributes.volumeID | FAT16.attributes.unused)) {
                 // windows 95 long file name
                 continue;
             }
-            this.rootEntries.push(new FAT16.Entry(this.rootEntryData.substr(i, 32)));
+            this.rootEntries.push(entry);
         }
         return this.rootEntries;
     };
