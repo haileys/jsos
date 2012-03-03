@@ -45,7 +45,7 @@ in_real:
 	xor esi, esi
 	xor edi, edi
 
-	;call 0x9000
+	call 0x9000
 
 	cli
 	mov eax, [saved_cr0]
