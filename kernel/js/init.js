@@ -21,7 +21,9 @@ function log(str) {
 
 // vga
 Drivers.loadDriver("vga");
-Drivers.VGA.mode13h();
+var ctx = new Drivers.VGA.Mode13h();
+ctx.init();
+ctx.drawRgb(0, 0, 320, 200, Kernel.modules["/jsos.rgb"]);
 
 // hard drive
 Drivers.loadDriver("ide");
