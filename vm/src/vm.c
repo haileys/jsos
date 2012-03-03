@@ -483,7 +483,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_SAL: {
                 uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
                 uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
-                PUSH(js_value_make_double(l >> r));
+                PUSH(js_value_make_double(l << r));
                 break;
             }
         
