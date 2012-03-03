@@ -130,7 +130,11 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     
     if(setjmp(handler->env)) {
         // exception was thrown
-        (void)current_line;
+        if(js_value_is_object(handler->exception)) {
+            js_string_t* trace = js_value_get_pointer(handler->exception)->object.stack_trace;
+            trace = js_string_concat(trace, js_string_format("\n    at %s:%d", image->strings[image->name]->buff, current_line));
+            js_value_get_pointer(handler->exception)->object.stack_trace = trace;
+        }
         js_set_exception_handler(handler->previous);
         js_throw(handler->exception);
     }

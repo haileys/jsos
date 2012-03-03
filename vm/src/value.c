@@ -242,6 +242,9 @@ VAL js_to_boolean(VAL value)
 
 VAL js_to_object(js_vm_t* vm, VAL value)
 {
+    if(js_value_is_object(value)) {
+        return value;
+    }
     switch(js_value_get_type(value)) {
         case JS_T_NULL:
         case JS_T_UNDEFINED:
@@ -254,17 +257,9 @@ VAL js_to_object(js_vm_t* vm, VAL value)
             return js_make_number_object(vm, js_value_get_double(value));
         case JS_T_STRING:
             return js_make_string_object(vm, &js_value_get_pointer(value)->string);
-            
-        case JS_T_OBJECT:
-        case JS_T_FUNCTION:
-        case JS_T_ARRAY:
-        case JS_T_STRING_OBJECT:
-        case JS_T_NUMBER_OBJECT:
-        case JS_T_BOOLEAN_OBJECT:
-            return value;
+        default:
+            js_panic("unknown type");
     }
-    // @TODO throw?
-    return js_value_null();
 }
 
 VAL js_to_primitive(VAL value)
