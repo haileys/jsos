@@ -30,7 +30,15 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     console_clear();
     
     kprintf("JSOS\n");
-    mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length);
+    uint32_t highest_module = 0;
+    multiboot_module_t* mods = (multiboot_module_t*)mbd->mods_addr;
+    uint32_t i;
+    for(i = 0; i < mbd->mods_count; i++) {
+        if(mods[i].mod_end > highest_module) {
+            highest_module = mods[i].mod_end;
+        }
+    }
+    mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length, highest_module);
     gdt_init();
     
     js_vm_t* vm = js_vm_new();
