@@ -60,7 +60,13 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     JS_TRY({
         js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
     }, exception, {
-        panicf("Unhandled exception: %s", js_value_get_pointer(js_to_string(exception))->string.buff);
+        if(js_value_is_object(exception) && js_value_get_pointer(exception)->object.stack_trace) {
+            panicf("Unhandled exception: %s\n%s",
+                js_value_get_pointer(js_to_string(exception))->string.buff,
+                js_value_get_pointer(exception)->object.stack_trace->buff);
+        } else {
+            panicf("Unhandled exception: %s\n%s", js_value_get_pointer(js_to_string(exception))->string.buff);
+        }
     });
 }
 
