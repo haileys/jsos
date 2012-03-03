@@ -10,3 +10,4 @@ userland
 ._*
 .gdbinit
 *.sys
+kernel/build/jsos.rgb
