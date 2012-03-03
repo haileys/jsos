@@ -7,7 +7,7 @@
 #include "panic.h"
 
 static idtr_t idtr;
-static idt_entry_t idt[256];
+static idt_entry_t* idt = (idt_entry_t*)0x1600;
 
 static VAL js_isr_table;
 
@@ -48,8 +48,8 @@ void idt_init(js_vm_t* vm)
     cli();
     asm_isr_init();
     remap_irqs();
-    idtr.size = sizeof(idt) - 1;
-    idtr.offset = (uint32_t)&idt;
+    idtr.size = (256*8) - 1;
+    idtr.offset = (uint32_t)idt;
     __asm__ volatile("lidt (%0)" :: "m"(idtr));
     
     js_isr_table = js_make_object(vm);
