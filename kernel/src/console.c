@@ -5,7 +5,7 @@
 #include "io.h"
 #include "console.h"
 
-static int row, col;
+static uint32_t row, col, width = 80, height = 25;
 
 static VAL Console_clear(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
@@ -24,13 +24,22 @@ static VAL Console_cursor(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL
 {
     uint32_t row, col;
     js_scan_args(vm, argc, argv, "II", &row, &col);
-    if(row > 24) {
-        row = 24;
+    if(row >= height) {
+        row = height - 1;
     }
-    if(col > 79) {
-        col = 79;
+    if(col >= width) {
+        col = width - 1;
     }
     console_cursor(row, col);
+    return js_value_undefined();
+}
+
+static VAL Console_set_size(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t w, h;
+    js_scan_args(vm, argc, argv, "II", &w, &h);
+    width = w;
+    height = h;
     return js_value_undefined();
 }
 
@@ -41,11 +50,12 @@ void console_init(js_vm_t* vm)
     js_object_put(Console, js_cstring("clear"), js_value_make_native_function(vm, NULL, js_cstring("clear"), Console_clear, NULL));
     js_object_put(Console, js_cstring("write"), js_value_make_native_function(vm, NULL, js_cstring("write"), Console_write, NULL));
     js_object_put(Console, js_cstring("cursor"), js_value_make_native_function(vm, NULL, js_cstring("cursor"), Console_cursor, NULL));
+    js_object_put(Console, js_cstring("setSize"), js_value_make_native_function(vm, NULL, js_cstring("setSize"), Console_set_size, NULL));
 }
 
 void console_clear()
 {
-    memset((void*)0xb8000, 0, 80*25*2);
+    memset((void*)0xb8000, 0, width*height*2);
     col = 0;
     row = 0;
 }
@@ -56,21 +66,21 @@ void console_write(char* s, size_t length)
     size_t i;
     for(i = 0; i < length; i++) {
         if(s[i] != '\n') {
-            vram[(row * 80 + col) * 2] = s[i];
-            vram[(row * 80 + col) * 2 + 1] = 7;
+            vram[(row * width + col) * 2] = s[i];
+            vram[(row * width + col) * 2 + 1] = 7;
             col++;
         } else {
             col = 0;
             row++;
         }
-        if(col == 80) {
+        if(col == width) {
             col = 0;
             row++;
         }
-        if(row == 25) {
-            memmove(vram, vram + 80 * 2, 24 * 80 * 2);
-            memset(vram + 24 * 80 * 2, 0, 80 * 2);
-            row = 24;
+        if(row == height) {
+            memmove(vram, vram + width * 2, (height - 1) * width * 2);
+            memset(vram + (height - 1) * width * 2, 0, width * 2);
+            row = height - 1;
         }
     }
     console_cursor(row, col);
@@ -86,7 +96,7 @@ void console_cursor(int r, int c)
     uint16_t pos, base_vga_port;
     row = r;
     col = c;
-    pos = row * 80 + col;
+    pos = row * width + col;
     base_vga_port = *(uint16_t*)0x463; // read base vga port from bios data area
     
     outb(base_vga_port, 0x0e);
