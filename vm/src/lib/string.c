@@ -47,6 +47,18 @@ VAL js_make_string_object(js_vm_t* vm, js_string_t* string)
     return v;
 }
 
+static VAL String_fromCharCode(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_value_t* val = js_alloc(sizeof(js_value_t));
+    val->type = JS_T_STRING;
+    val->string.length = argc;
+    uint32_t i;
+    for(i = 0; i < argc; i++) {
+        val->string.buff[i] = (uint8_t)js_value_get_double(js_to_number(argv[i]));
+    }
+    return js_value_make_pointer(val);
+}
+
 static VAL String_prototype_toString(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
@@ -118,6 +130,7 @@ void js_lib_string_initialize(js_vm_t* vm)
     
     vm->lib.String_prototype = js_value_make_object(vm->lib.Object_prototype, vm->lib.String);
     js_object_put(vm->lib.String, js_cstring("prototype"), vm->lib.String_prototype);
+    js_object_put(vm->lib.String, js_cstring("fromCharCode"), js_value_make_native_function(vm, NULL, js_cstring("fromCharCode"), String_fromCharCode, NULL));
     
     js_object_put(vm->lib.String_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), String_prototype_toString, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("valueOf"), js_value_make_native_function(vm, NULL, js_cstring("valueOf"), String_prototype_valueOf, NULL));
