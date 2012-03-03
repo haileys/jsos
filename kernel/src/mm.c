@@ -9,10 +9,13 @@ static uint32_t current_increment;
 
 extern int end_of_image;
 
-void mm_init(multiboot_memory_map_t* mmap, uint32_t length)
+void mm_init(multiboot_memory_map_t* mmap, uint32_t length, uint32_t highest_module)
 {
     uint32_t i, len;
-    uint32_t start_addr = (((uint32_t)&end_of_image + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+    if((uint32_t)&end_of_image > highest_module) {
+        highest_module = (uint32_t)&end_of_image;
+    }
+    uint32_t start_addr = ((highest_module + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
     uint64_t end;
     for(i = 0; i < length / sizeof(multiboot_memory_map_t); i++) {
         if(mmap[i].type == MULTIBOOT_MEMORY_AVAILABLE) {
