@@ -10,7 +10,7 @@ OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o src/realmode.o
 
 JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse \
-		drivers/fat16 drivers/serial drivers/mbr
+		drivers/fat16 drivers/serial drivers/mbr drivers/vga
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 

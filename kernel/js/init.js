@@ -19,12 +19,11 @@ function log(str) {
     serial.writeString(str + "\n");
 }
 
-Console.write("before realmode...\n");
-Kernel.realExec();
-Console.write("after realmode!\n");
+// vga
+Drivers.loadDriver("vga");
+Drivers.VGA.mode13h();
 
 // hard drive
-/*
 Drivers.loadDriver("ide");
 Drivers.loadDriver("mbr");
 Drivers.loadDriver("fat16");
@@ -57,4 +56,3 @@ function outputEnt(ent, level) {
 for(var i = 0; i < entries.length; i++) {
     outputEnt(entries[i], "");
 }
-*/
