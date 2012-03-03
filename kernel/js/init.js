@@ -2,6 +2,10 @@ Kernel.loadImage(Kernel.modules["/kernel/keyboard.jmg"]);
 Kernel.loadImage(Kernel.modules["/kernel/keymaps.jmg"]);
 Kernel.loadImage(Kernel.modules["/kernel/drivers.jmg"]);
 
+Kernel.isrs[32] = function() {
+    Console.write(".");
+};
+
 // keyboard
 Drivers.loadDriver("ps2kb");
 var ps2kb = new Drivers.PS2Keyboard();
@@ -15,7 +19,12 @@ function log(str) {
     serial.writeString(str + "\n");
 }
 
+Console.write("before realmode...\n");
+Kernel.realExec();
+Console.write("after realmode!\n");
+
 // hard drive
+/*
 Drivers.loadDriver("ide");
 Drivers.loadDriver("mbr");
 Drivers.loadDriver("fat16");
@@ -30,9 +39,22 @@ Console.write("\n");
 
 var fs = new Drivers.FAT16(hdd.partitions[0]);
 fs.init();
-Console.write("Initialized FAT16 partition with label '" + fs.bpb.label + "'\n");
+Console.write("Initialized FAT16 partition with label '" + fs.bpb.label + "'\n\n");
 var entries = fs.readRootEntries();
-Console.write("Directory listing of '/' (" + entries.length + " items):\n");
-for(var i = 0; i < entries.length; i++) {
-    Console.write("  " + entries[i].filename + "\n");
+
+function outputEnt(ent, level) {
+    if(ent.name !== "." && ent.name !== "..") {
+        Console.write(level + ent.name + "\n");
+        if(ent instanceof Drivers.FAT16.Directory) {
+            var children = ent.readEntries();
+            for(var i = 0; i < children.length; i++) {
+                outputEnt(children[i], level + "  ");
+            }
+        }
+    }
 }
+
+for(var i = 0; i < entries.length; i++) {
+    outputEnt(entries[i], "");
+}
+*/

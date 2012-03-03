@@ -2,6 +2,8 @@
 #include <vm.h>
 #include <gc.h>
 #include <exception.h>
+#include <string.h>
+#include "console.h"
 #include "lib.h"
 
 static VAL Kernel;
@@ -31,6 +33,21 @@ static VAL Kernel_run_gc(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_undefined();
 }
 
+extern int _binary_src_realmode_bin_start;
+
+static VAL Kernel_real_exec(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    /*
+    if(argc == 0 || js_value_get_type(argv[0]) != JS_T_STRING) {
+        js_throw_message(vm, "Kernel.realExec() expects string");
+    }
+    js_string_t* str = js_to_js_string_t(argv[0]);
+    */
+    memcpy((void*)0x8000, &_binary_src_realmode_bin_start, 0x1000);
+    ((void(*)())0x8000)();
+    return js_value_undefined();
+}
+
 void lib_kernel_init(js_vm_t* vm)
 {
     Kernel = js_make_object(vm);
@@ -40,4 +57,5 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("loadImage"), js_value_make_native_function(vm, NULL, js_cstring("loadImage"), Kernel_load_image, NULL));
     js_object_put(Kernel, js_cstring("memoryUsage"), js_value_make_native_function(vm, NULL, js_cstring("memoryUsage"), Kernel_memory_usage, NULL));
     js_object_put(Kernel, js_cstring("runGC"), js_value_make_native_function(vm, NULL, js_cstring("runGC"), Kernel_run_gc, NULL));
+    js_object_put(Kernel, js_cstring("realExec"), js_value_make_native_function(vm, NULL, js_cstring("realExec"), Kernel_real_exec, NULL));
 }
