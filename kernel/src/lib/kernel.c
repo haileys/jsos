@@ -37,14 +37,25 @@ extern int _binary_src_realmode_bin_start;
 
 static VAL Kernel_real_exec(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
-    /*
     if(argc == 0 || js_value_get_type(argv[0]) != JS_T_STRING) {
         js_throw_message(vm, "Kernel.realExec() expects string");
     }
     js_string_t* str = js_to_js_string_t(argv[0]);
-    */
+    // copy 16 bit code to 0x9000
+    memcpy((void*)0x9000, str->buff, str->length);
+    
+    // call 32<->16 bit handler which in turn calls into 0x9000
     memcpy((void*)0x8000, &_binary_src_realmode_bin_start, 0x1000);
     ((void(*)())0x8000)();
+    
+    return js_value_undefined();
+}
+
+static VAL Kernel_memcpy(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t dest, src, len;
+    js_scan_args(vm, argc, argv, "III", &dest, &src, &len);
+    memcpy((void*)dest, (void*)src, len);
     return js_value_undefined();
 }
 
@@ -58,4 +69,5 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("memoryUsage"), js_value_make_native_function(vm, NULL, js_cstring("memoryUsage"), Kernel_memory_usage, NULL));
     js_object_put(Kernel, js_cstring("runGC"), js_value_make_native_function(vm, NULL, js_cstring("runGC"), Kernel_run_gc, NULL));
     js_object_put(Kernel, js_cstring("realExec"), js_value_make_native_function(vm, NULL, js_cstring("realExec"), Kernel_real_exec, NULL));
+    js_object_put(Kernel, js_cstring("memcpy"), js_value_make_native_function(vm, NULL, js_cstring("memcpy"), Kernel_memcpy, NULL));
 }
