@@ -15,23 +15,23 @@ JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse
 .SUFFIXES: .js .o .asm .o .coffee .js
 
 .js.o:
-	@echo "    js  $<"
+	@echo "      js  $<"
 	@ruby ../compiler/compile.rb $< > $@
 
 .coffee.o:
-	@echo "coffee  $<"
+	@echo "  coffee  $<"
 	@coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin > $@
 
 .asm.o:
-	@echo "  nasm  $<"
+	@echo "    nasm  $<"
 	@nasm -f elf -o $@ $<
 
 %.o: %.c
-	@echo "    cc  $<"
+	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 hdd.img: $(patsubst %, build/kernel/%.jmg, $(JSIMGS)) build/kernel.sys \
-	 	build/boot/grub/menu.lst
+	 	build/boot/grub/menu.lst build/jsos.rgb
 	@echo "creating image"
 	@cp hdd.base.img hdd.img
 	@sudo rm -rf mnt
@@ -48,19 +48,24 @@ clean:
 	rm -f build/kernel.sys
 	rm -f build/kernel/*.jmg
 	rm -f build/kernel/*/*.jmg
+	rm -f build/jsos.rgb
 	rm -f src/*/*.o
 	rm -f src/*.o
 	rm -f js/*.o
 
 src/realmode.o: src/realmode.asm
-	@echo "  nasm src/realmode.asm"
+	@echo "    nasm src/realmode.asm"
 	@nasm -f bin -o src/realmode.bin $<
 	@objcopy --input binary --output elf32-i386 --binary-architecture i386 src/realmode.bin $@
 	@rm src/realmode.bin
 
 build/kernel.sys: $(OBJS)
-	@echo "    ld"
+	@echo "      ld"
 	@$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
 build/kernel/%.jmg: js/%.o
 	@cp $< $@
+
+build/jsos.rgb: jsos.png
+	@echo " convert $<"
+	@convert $< -depth 8 $@

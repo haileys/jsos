@@ -18,7 +18,7 @@ disasm: $(OBJS)
 runner: $(OBJS) 
 
 %.o: %.c
-	@echo "    cc  $<"
+	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 clean:

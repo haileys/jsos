@@ -8,7 +8,7 @@ libc.a: $(OBJS)
 	@ar rcs libc.a $(OBJS)
 
 src/setjmp.o: src/setjmp.asm
-	@echo "  nasm  $<"
+	@echo "    nasm  $<"
 	@nasm -f elf32 -o src/setjmp.o src/setjmp.asm
 
 # these CFLAGS are the same as the CFLAGS up the top except -fno-builtin is removed
@@ -18,7 +18,7 @@ src/math.o: CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g \
 
 
 %.o: %.c
-	@echo "    cc  $<"
+	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
