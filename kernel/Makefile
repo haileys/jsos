@@ -7,7 +7,7 @@ LDFLAGS=../libc/src/*.o ../vm/libjsvm.a
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o \
-		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o
+		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o src/realmode.o
 
 JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse \
 		drivers/fat16 drivers/serial drivers/mbr
@@ -30,7 +30,8 @@ JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse
 	@echo "    cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
-hdd.img: build/kernel.sys
+hdd.img: $(patsubst %, build/kernel/%.jmg, $(JSIMGS)) build/kernel.sys \
+	 	build/boot/grub/menu.lst
 	@echo "creating image"
 	@cp hdd.base.img hdd.img
 	@sudo rm -rf mnt
@@ -51,7 +52,13 @@ clean:
 	rm -f src/*.o
 	rm -f js/*.o
 
-build/kernel.sys: $(OBJS) build/boot/grub/menu.lst $(patsubst %, build/kernel/%.jmg, $(JSIMGS))	
+src/realmode.o: src/realmode.asm
+	@echo "  nasm src/realmode.asm"
+	@nasm -f bin -o src/realmode.bin $<
+	@objcopy --input binary --output elf32-i386 --binary-architecture i386 src/realmode.bin $@
+	@rm src/realmode.bin
+
+build/kernel.sys: $(OBJS)
 	@echo "    ld"
 	@$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
