@@ -33,15 +33,7 @@
     
     FAT16.prototype.readRootEntries = function() {
         var data = this.partition.readSectors(this.firstDataSector, this.bpb.rootEntryCount / (512/32));
-        var entries = this.readDirectoryEntries(data);
-        for(var i = 0; i < entries.length; i++) {
-            if(entries[i].attributes & FAT16.attributes.directory) {
-                entries[i] = new FAT16.Directory(this, entries[i]);
-            } else {
-                entries[i] = new FAT16.File(this, entries[i]);
-            }
-        }
-        return entries;
+        return this.readDirectoryEntries(data);
     };
     
     FAT16.prototype.readDirectoryEntries = function(buff) {
@@ -61,7 +53,11 @@
                 // windows 95 long file name
                 continue;
             }
-            entries.push(entry);
+            if(entry.attributes & FAT16.attributes.directory) {
+                entries.push(new FAT16.Directory(this, entry));
+            } else {
+                entries.push(new FAT16.File(this, entry));
+            }
         }
         return entries;
     }
@@ -97,6 +93,8 @@
             return;
         }
         
+        this.buffer = buffer;
+        
         // raw attributes:
         this.fatFilename            = buffer.substr(0, 11);
         this.attributes             = BinaryUtils.readU8(buffer, 11);
@@ -131,7 +129,6 @@
     
     FAT16.Directory.prototype.readEntries = function() {
         var cluster = this.fs.readCluster(this.entry.firstCluster);
-        for(;;);
         return this.fs.readDirectoryEntries(cluster);
     };
     
