@@ -59,6 +59,14 @@ static VAL Kernel_memcpy(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_undefined();
 }
 
+static VAL Kernel_memset(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t ptr, val, count;
+    js_scan_args(vm, argc, argv, "III", &ptr, &val, &count);
+    memset((void*)ptr, (uint8_t)val, count);
+    return js_value_undefined();
+}
+
 static VAL Kernel_peek8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     uint32_t addr;
@@ -80,6 +88,30 @@ static VAL Kernel_peek32(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_make_double(*(uint32_t*)addr);
 }
 
+static VAL Kernel_poke8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr, val;
+    js_scan_args(vm, argc, argv, "II", &addr, &val);
+    *(uint8_t*)addr = (uint8_t)val;
+    return js_value_undefined();
+}
+
+static VAL Kernel_poke16(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr, val;
+    js_scan_args(vm, argc, argv, "II", &addr, &val);
+    *(uint16_t*)addr = (uint16_t)val;
+    return js_value_undefined();
+}
+
+static VAL Kernel_poke32(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr, val;
+    js_scan_args(vm, argc, argv, "II", &addr, &val);
+    *(uint32_t*)addr = (uint32_t)val;
+    return js_value_undefined();
+}
+
 void lib_kernel_init(js_vm_t* vm)
 {
     Kernel = js_make_object(vm);
@@ -91,7 +123,11 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("runGC"), js_value_make_native_function(vm, NULL, js_cstring("runGC"), Kernel_run_gc, NULL));
     js_object_put(Kernel, js_cstring("realExec"), js_value_make_native_function(vm, NULL, js_cstring("realExec"), Kernel_real_exec, NULL));
     js_object_put(Kernel, js_cstring("memcpy"), js_value_make_native_function(vm, NULL, js_cstring("memcpy"), Kernel_memcpy, NULL));
+    js_object_put(Kernel, js_cstring("memset"), js_value_make_native_function(vm, NULL, js_cstring("memset"), Kernel_memset, NULL));
     js_object_put(Kernel, js_cstring("peek8"), js_value_make_native_function(vm, NULL, js_cstring("peek8"), Kernel_peek8, NULL));
     js_object_put(Kernel, js_cstring("peek16"), js_value_make_native_function(vm, NULL, js_cstring("peek16"), Kernel_peek16, NULL));
     js_object_put(Kernel, js_cstring("peek32"), js_value_make_native_function(vm, NULL, js_cstring("peek32"), Kernel_peek32, NULL));
+    js_object_put(Kernel, js_cstring("poke8"), js_value_make_native_function(vm, NULL, js_cstring("poke8"), Kernel_poke8, NULL));
+    js_object_put(Kernel, js_cstring("poke16"), js_value_make_native_function(vm, NULL, js_cstring("poke16"), Kernel_poke16, NULL));
+    js_object_put(Kernel, js_cstring("poke32"), js_value_make_native_function(vm, NULL, js_cstring("poke32"), Kernel_poke32, NULL));
 }
