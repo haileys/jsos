@@ -25,6 +25,23 @@ bool js_string_eq(js_string_t* a, js_string_t* b)
     return memcmp(a->buff, b->buff, a->length) == 0;
 }
 
+bool js_string_index_of(js_string_t* haystack, js_string_t* needle, uint32_t* index)
+{
+    uint32_t a, i;
+    for(a = 0; a < haystack->length; a++) {
+        for(i = 0; i < needle->length; i++) {
+            if(haystack->buff[a + i] != needle->buff[i]) {
+                goto next;
+            }
+        }
+        // found the substring
+        *index = a;
+        return true;
+    next: continue;
+    }
+    return false;
+}
+
 js_string_t* js_string_from_double(double number)
 {
     if(number != number) {
