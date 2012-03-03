@@ -47,3 +47,4 @@ module /kernel/drivers/ide.jmg
 module /kernel/drivers/mbr.jmg
 module /kernel/drivers/fat16.jmg
 module /kernel/drivers/serial.jmg
+module /kernel/drivers/vga.jmg
