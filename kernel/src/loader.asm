@@ -2,27 +2,23 @@ global loader
 global end_of_image
 extern kmain
 
-; setting up the Multiboot header - see GRUB docs for details
-MODULEALIGN equ	1<<0                   ; align loaded modules on page boundaries
-MEMINFO     equ	1<<1                   ; provide memory map
-FLAGS       equ	MODULEALIGN | MEMINFO  ; this is the Multiboot 'flag' field
-MAGIC       equ	0x1BADB002           ; 'magic number' lets bootloader find the header
-CHECKSUM    equ	-(MAGIC + FLAGS)        ; checksum required
-
 section .text
 align 4
 MultiBootHeader:
+    FLAGS       equ	3
+    MAGIC       equ	0x1BADB002
+    CHECKSUM    equ	-(MAGIC + FLAGS)
+    
     dd MAGIC
     dd FLAGS
     dd CHECKSUM
- 
-; reserve initial kernel stack space
-STACKSIZE equ 0x10000                  ; that's 64k.
- 
+
+STACKSIZE equ 0x10000 ; 64KiB
+
 loader:
-    mov esp, kstack+STACKSIZE           ; set up the stack
-    push eax                           ; pass Multiboot magic number
-    push ebx                           ; pass Multiboot info structure
+    mov esp, kstack+STACKSIZE
+    push eax ; multiboot magic number
+    push ebx ; pointer to multiboot struct
     
     fninit
     mov eax, cr0
@@ -30,12 +26,12 @@ loader:
     mov cr0, eax
 
     push 0
-    jmp kmain                       ; call kernel proper
+    jmp kmain
  
 section .bss
 align 4
 kstack:
-    resb STACKSIZE                     ; reserve 16k stack on a doubleword boundary
+    resb STACKSIZE
 
 section .end_of_image
 end_of_image:
