@@ -194,7 +194,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 if(js_value_is_primitive(obj)) {
                     obj = js_to_object(vm, obj);
                 }
-                fn = js_object_get(obj, &js_value_get_pointer(js_to_string(method))->string);
+                fn = js_object_get(obj, js_to_js_string_t(method));
                 if(js_value_get_type(fn) != JS_T_FUNCTION) {
                     js_throw_error(vm->lib.TypeError, "called non callable");
                 }
