@@ -6,5 +6,6 @@
 void lib_vm_init(js_vm_t* vm);
 void lib_kernel_init(js_vm_t* vm);
 void lib_binary_utils_init(js_vm_t* vm);
+void lib_buffer_init(js_vm_t* vm);
 
 #endif
