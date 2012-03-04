@@ -55,7 +55,6 @@
             if(entry.attributes & FAT16.attributes.directory) {
                 entries.push(new FAT16.Directory(this, entry));
             } else {
-                log(typeof FAT16.File);
                 entries.push(new FAT16.File(this, entry));
             }
         }
