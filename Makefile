@@ -6,9 +6,6 @@ LDFLAGS=-nostdlib -static
 
 kernel: libc/libc.a vm/libjsvm.a kernel/hdd.img
 
-userland: libc/libc.a vm/libjsvm.a userland.o
-	ld -o userland $(LDFLAGS) libc/src/*.o vm/src/*.o vm/src/*/*.o userland.o
-
 libc/libc.a:
 	@make -C libc libc.a
 
