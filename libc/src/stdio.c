@@ -105,7 +105,7 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             case 'x': {
                 char buff[64];
                 int len;
-                itoa(va_arg(ap, int), buff, 16);
+                utoa(va_arg(ap, int), buff, 16);
                 len = strlen(buff);
                 if(i + len < size - 1) {
                     memcpy(str + i, buff, len);
