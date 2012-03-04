@@ -67,7 +67,7 @@ static alloc_t* allocs_insert(void* ptr, size_t size)
 static void allocs_delete_alloc(alloc_t* alloc, uint16_t h)
 {    
     if(alloc->prev == NULL) {
-        allocs[h] = NULL;
+        allocs[h] = alloc->next;
     } else {
         alloc->prev->next = alloc->next;
     }
