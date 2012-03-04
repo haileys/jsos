@@ -569,6 +569,22 @@ module JSOS
       @continue_stack.pop
       @break_stack.pop
     end
+    
+    def DoWhile(node, continue_label = nil)
+      start_label = uniqid
+      end_label = uniqid
+      @continue_stack.push start_label
+      @break_stack.push end_label
+      output [:label, start_label]
+      output [:label, continue_label] if continue_label
+      compile_node node.condition
+      output :jif, [:ref, end_label]
+      compile_node node.body if node.body
+      output :jmp, [:ref, start_label]
+      output [:label, end_label]
+      @continue_stack.pop
+      @break_stack.pop
+    end
   
     def ForLoop(node, continue_label = nil)
       compile_node node.initializer if node.initializer
@@ -632,7 +648,10 @@ module JSOS
     end
   
     def Body(node)
-      node.statements.each &method(:compile_node)
+      node.statements.each do |n|
+        compile_node n
+        output :pop
+      end
     end
   
     def True(node)
