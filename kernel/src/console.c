@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <value.h>
+#include <lib.h>
+#include <gc.h>
 #include "io.h"
 #include "console.h"
 
@@ -22,15 +24,21 @@ static VAL Console_write(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
 
 static VAL Console_cursor(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
-    uint32_t row, col;
-    js_scan_args(vm, argc, argv, "II", &row, &col);
-    if(row >= height) {
+    uint32_t r, c;
+    if(argc == 0) {
+        VAL* yx = js_alloc(sizeof(VAL) * 2);
+        yx[0] = js_value_make_double(row);
+        yx[1] = js_value_make_double(col);
+        return js_make_array(vm, 2, yx);
+    }
+    js_scan_args(vm, argc, argv, "II", &r, &c);
+    if(r >= height) {
         row = height - 1;
     }
-    if(col >= width) {
+    if(c >= width) {
         col = width - 1;
     }
-    console_cursor(row, col);
+    console_cursor(r, c);
     return js_value_undefined();
 }
 
