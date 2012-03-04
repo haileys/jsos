@@ -7,6 +7,8 @@
 #include "value.h"
 #include "lib.h"
 
+#define VM_CYCLES_PER_COLLECTION 2000
+
 typedef struct js_vm {
     js_scope_t* global_scope;
     js_lib_t lib;

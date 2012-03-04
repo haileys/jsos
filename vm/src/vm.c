@@ -143,9 +143,9 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     }
     
     while(1) {
-        if(++global_instruction_counter == 2000) {
+        if(++global_instruction_counter >= VM_CYCLES_PER_COLLECTION) {
             global_instruction_counter = 0;
-            //js_gc_run();
+            js_gc_run();
         }
         opcode = NEXT_UINT32();
         switch(opcode) {
