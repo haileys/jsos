@@ -650,7 +650,6 @@ module JSOS
     def Body(node)
       node.statements.each do |n|
         compile_node n
-        output :pop
       end
     end
   
