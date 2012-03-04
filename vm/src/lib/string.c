@@ -40,7 +40,7 @@ VAL js_make_string_object(js_vm_t* vm, js_string_t* string)
 {
     js_string_object_t* str = js_alloc(sizeof(js_string_object_t));
     str->base.type = JS_T_STRING_OBJECT;
-    str->base.object.vtable = js_object_base_vtable();
+    str->base.object.vtable = &string_vtable;
     str->base.object.prototype = vm->lib.String_prototype;
     str->base.object.class = vm->lib.String;
     str->base.object.properties = js_st_table_new();
@@ -68,8 +68,10 @@ static VAL string_vtable_get(js_value_t* obj, js_string_t* prop)
     js_string_object_t* str = (js_string_object_t*)obj;
     if(is_string_integer(prop)) {
         uint32_t idx = atoi(prop->buff);
-        char x = str->string.buff[idx];
-        return js_value_make_string(&x, 1);
+        if(idx < str->string.length) {
+            char x = str->string.buff[idx];
+            return js_value_make_string(&x, 1);
+        }
     }
     return js_object_base_vtable()->get(obj, prop);
 }
@@ -192,6 +194,27 @@ static VAL String_prototype_split(js_vm_t* vm, void* state, VAL this, uint32_t a
     return js_make_array(vm, count, items);
 }
 
+static VAL String_prototype_toLowerCase(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
+        // @TODO throw exception
+        js_panic("String.prototype.substr() is not generic");
+    }
+    js_string_object_t* str = (js_string_object_t*)js_value_get_pointer(this);
+    js_value_t* new_str = (js_value_t*)js_alloc(sizeof(js_value_t));
+    new_str->type = JS_T_STRING;
+    new_str->string.buff = js_alloc_no_pointer(str->string.length + 1);
+    new_str->string.length = str->string.length;
+    memcpy(new_str->string.buff, str->string.buff, str->string.length);
+    uint32_t i;
+    for(i = 0; i < str->string.length; i++) {
+        if(new_str->string.buff[i] >= 'A' && new_str->string.buff[i] <= 'Z') {
+            new_str->string.buff[i] += 'a' - 'A';
+        }
+    }
+    return js_value_make_pointer(new_str);
+}
+
 void js_lib_string_initialize(js_vm_t* vm)
 {
     if(!statically_initialized) {
@@ -213,4 +236,5 @@ void js_lib_string_initialize(js_vm_t* vm)
     js_object_put(vm->lib.String_prototype, js_cstring("trimRight"), js_value_make_native_function(vm, NULL, js_cstring("trimRight"), String_prototype_trimRight, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("indexOf"), js_value_make_native_function(vm, NULL, js_cstring("indexOf"), String_prototype_indexOf, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("split"), js_value_make_native_function(vm, NULL, js_cstring("split"), String_prototype_split, NULL));
+    js_object_put(vm->lib.String_prototype, js_cstring("toLowerCase"), js_value_make_native_function(vm, NULL, js_cstring("toLowerCase"), String_prototype_toLowerCase, NULL));
 }
