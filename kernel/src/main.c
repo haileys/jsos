@@ -25,6 +25,90 @@ void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
     }
 }
 
+static void check_struct_align()
+{
+    #define check(expr) \
+        if((uint32_t)&(expr) & 3) { \
+            panicf("alignment check failed: %s", #expr); \
+        } \
+        if(sizeof(expr) & 3) { \
+            panicf("size check failed: %s", #expr); \
+        }
+    
+    js_string_t string;
+    check(string);
+    check(string.buff);
+    
+    js_object_t object;
+    check(object);
+    check(object.vtable);
+    check(object.prototype);
+    check(object.class);
+    check(object.stack_trace);
+    check(object.state);
+    check(object.properties);
+    
+    js_value_t value;
+    check(value);
+    check(value.string);
+    check(value.object);
+    
+    js_function_t function;
+    check(function);
+    check(function.base);
+    check(function.vm);
+    check(function.name);
+    check(function.native.state);
+    check(function.native.call);
+    check(function.native.construct);
+    check(function.js.image);
+    check(function.js.outer_scope);
+    
+    js_property_descriptor_t property_descriptor;
+    check(property_descriptor);
+    check(property_descriptor.data.value);
+    check(property_descriptor.accessor.get);
+    check(property_descriptor.accessor.set);
+    
+    js_vm_t vm;
+    check(vm);
+    check(vm.global_scope);
+    check(vm.lib);
+    
+    js_lib_t lib;
+    check(lib.Function);
+    check(lib.Function_prototype);
+    check(lib.Object);
+    check(lib.Object_prototype);
+    check(lib.Array);
+    check(lib.Array_prototype);
+    check(lib.Number);
+    check(lib.Number_prototype);
+    check(lib.String);
+    check(lib.String_prototype);
+    check(lib.Error);
+    check(lib.Error_prototype);
+    check(lib.RangeError);
+    check(lib.RangeError_prototype);
+    check(lib.ReferenceError);
+    check(lib.ReferenceError_prototype);
+    check(lib.TypeError);
+    check(lib.TypeError_prototype);
+    
+    #undef check
+}
+
+static void unhandled_exception(VAL exception)
+{
+    if(js_value_is_object(exception) && js_value_get_pointer(exception)->object.stack_trace) {
+        panicf("Unhandled exception: %s\n%s",
+            js_value_get_pointer(js_to_string(exception))->string.buff,
+            js_value_get_pointer(exception)->object.stack_trace->buff);
+    } else {
+        panicf("Unhandled exception: %s\n%s", js_value_get_pointer(js_to_string(exception))->string.buff);
+    }
+}
+
 void kmain_(struct multiboot_info* mbd, uint32_t magic)
 {
     console_clear();
@@ -38,6 +122,10 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
             highest_module = mods[i].mod_end;
         }
     }
+    
+    // run alignment checks before using the gc
+    check_struct_align();
+    
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length, highest_module);
     gdt_init();
     
@@ -69,13 +157,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     JS_TRY({
         js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
     }, exception, {
-        if(js_value_is_object(exception) && js_value_get_pointer(exception)->object.stack_trace) {
-            panicf("Unhandled exception: %s\n%s",
-                js_value_get_pointer(js_to_string(exception))->string.buff,
-                js_value_get_pointer(exception)->object.stack_trace->buff);
-        } else {
-            panicf("Unhandled exception: %s\n%s", js_value_get_pointer(js_to_string(exception))->string.buff);
-        }
+        unhandled_exception(exception);
     });
 }
 
@@ -86,11 +168,16 @@ void kmain(struct multiboot_info* mbd, uint32_t magic)
     if(!(mbd->flags & MULTIBOOT_INFO_MEM_MAP))      panic("multiboot did not pass memory map");
     
     int dummy;
+    VAL exception;
     js_gc_init(&dummy);
     
     kmain_(mbd, magic);
     for(;;) {
-        interrupt_dispatch_events();
+        JS_TRY({
+            interrupt_dispatch_events();
+        }, exception, {
+            unhandled_exception(exception);
+        });
         __asm__ volatile("hlt");
     }
 }
