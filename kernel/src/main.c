@@ -156,6 +156,10 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     VAL exception;
     JS_TRY({
         js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
+        for(;;) {
+            interrupt_dispatch_events();
+            __asm__ volatile("hlt");
+        }
     }, exception, {
         unhandled_exception(exception);
     });
@@ -168,17 +172,8 @@ void kmain(struct multiboot_info* mbd, uint32_t magic)
     if(!(mbd->flags & MULTIBOOT_INFO_MEM_MAP))      panic("multiboot did not pass memory map");
     
     int dummy;
-    VAL exception;
     js_gc_init(&dummy);
     
     kmain_(mbd, magic);
-    for(;;) {
-        JS_TRY({
-            interrupt_dispatch_events();
-        }, exception, {
-            unhandled_exception(exception);
-        });
-        __asm__ volatile("hlt");
-    }
 }
 
