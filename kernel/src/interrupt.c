@@ -67,13 +67,23 @@ void idt_register_handler(uint8_t gate, uint32_t isr)
     idt[gate].type = 0x80 /* present */ | 0xf /* 32 bit trap gate */;
 }
 
+static char* exceptions[] = {
+    [6]     = "Invalid Opcode",
+    [8]     = "Double Fault",
+    [10]    = "Invalid TSS",
+    [11]    = "Segment Not Present",
+    [13]    = "General Protection Fault",
+    [14]    = "Page Fault"
+};
+
 uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
 {
     if(interrupt == 39 /* spurious */) {
         return 0;
     }
-    if(interrupt == 6 /* invalid opcode */) {
-        panic("Fault: Invalid Opcode");
+    
+    if(interrupt < sizeof(exceptions) / sizeof(char*) && exceptions[interrupt]) {
+        panicf("%s", exceptions[interrupt]);
     }
     
     // isr_dispatch is already in a cli/hlt so there's no need to do any locking
