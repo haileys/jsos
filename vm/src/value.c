@@ -247,9 +247,9 @@ VAL js_to_object(js_vm_t* vm, VAL value)
     }
     switch(js_value_get_type(value)) {
         case JS_T_NULL:
+            js_throw_error(vm->lib.TypeError, "cannot convert null to object");
         case JS_T_UNDEFINED:
-            js_panic("tried to convert undefined to object!");
-            // @TODO throw exception
+            js_throw_error(vm->lib.TypeError, "cannot convert undefined to object");
         case JS_T_BOOLEAN:
             js_panic("converting boolean to object not yet supported");
             // @TODO convert to Boolean object
@@ -288,8 +288,6 @@ VAL js_to_number(VAL value)
             return js_to_number(js_to_primitive(value));
             break;
     }
-    // @TODO throw
-    return js_value_null();
 }
 
 uint32_t js_to_uint32(VAL value)
@@ -328,8 +326,6 @@ VAL js_to_string(VAL value)
         default:
             return js_to_string(js_object_default_value(value, JS_T_STRING));
     }
-    // @TODO throw?
-    return js_value_null();
 }
 
 js_string_t* js_to_js_string_t(VAL value)
