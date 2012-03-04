@@ -65,5 +65,7 @@ Drivers.loadDriver("serial");
 var serial = new Drivers.Serial(Drivers.Serial.COM1);
 serial.init();
 function log(str) {
-    serial.writeString(str + "\n");
-}
+    if(Drivers.Serial) {
+        serial.writeString(str + "\n");
+    }
+};
