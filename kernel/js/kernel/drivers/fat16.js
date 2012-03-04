@@ -15,7 +15,6 @@
     
     FAT16.prototype.readCluster = function(cluster) {
         var sector = this.firstDataSector + (this.bpb.rootEntryCount / 16) + (cluster * this.bpb.sectorsPerCluster) - 2;
-        log("readCluster(" + cluster + ") ; sector => " + sector);
         return this.partition.readSectors(sector, this.bpb.sectorsPerCluster);
     };
     
@@ -56,11 +55,54 @@
             if(entry.attributes & FAT16.attributes.directory) {
                 entries.push(new FAT16.Directory(this, entry));
             } else {
+                log(typeof FAT16.File);
                 entries.push(new FAT16.File(this, entry));
             }
         }
         return entries;
     }
+    
+    FAT16.prototype.find = function(path) {
+        if(path[0] !== "/") return null;
+        var parts = path.toLowerCase().split("/");
+        var entries = this.readRootEntries();
+        for(var i = 1; i < parts.length; i++) {
+            for(var j = 0; j < entries.length; j++) {
+                if(entries[j].name.toLowerCase() === parts[i]) {
+                    if(i + 1 === parts.length) {
+                        return entries[j];
+                    } else if(entries[j] instanceof FAT16.Directory) {
+                        entries = entries[j].readEntries();
+                    } else {
+                        return null;
+                    }
+                    break;
+                }
+            }
+            if(j === entries.length) {
+                return null;
+            }
+        }
+        return null;
+    };
+    
+    FAT16.prototype.readClusterChain = function(firstCluster) {
+        var clusters = 0;
+        var cluster = firstCluster;
+        do {
+            clusters++;
+            cluster = BinaryUtils.readU16(this.fatData, cluster * 2);
+        } while(cluster < 0xFFF7);
+        
+        var buff = new Buffer(clusters * this.bpb.sectorsPerCluster * 512);
+        var cluster = firstCluster;
+        do {
+            buff.append(this.readCluster(cluster));
+            cluster = BinaryUtils.readU16(this.fatData, cluster * 2);
+        } while(cluster < 0xFFF7);
+        
+        return buff.getContents();
+    };
     
     FAT16.BPB = function(buffer) {        
         // bpb:
@@ -128,7 +170,7 @@
     };
     
     FAT16.Directory.prototype.readEntries = function() {
-        var cluster = this.fs.readCluster(this.entry.firstCluster);
+        var cluster = this.fs.readClusterChain(this.entry.firstCluster);
         return this.fs.readDirectoryEntries(cluster);
     };
     
@@ -137,6 +179,10 @@
         this.entry = entry;
         this.name = entry.filename;
         this.size = entry.size;
+    };
+    
+    FAT16.File.prototype.readAllBytes = function() {
+        return this.fs.readClusterChain(this.entry.firstCluster).substr(0, this.size);
     };
     
     Drivers.FAT16 = FAT16;
