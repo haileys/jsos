@@ -7,10 +7,12 @@ LDFLAGS=../libc/src/*.o ../vm/libjsvm.a
 
 OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 		src/helpers.o src/gdt.o src/interrupt.o src/isrs.o src/io.o \
-		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o src/realmode.o
+		src/lib/binary_utils.o src/lib/kernel.o src/lib/vm.o src/realmode.o \
+		src/lib/buffer.o
 
-JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse \
-		drivers/fat16 drivers/serial drivers/mbr drivers/vga
+JSIMGS=	kernel/init kernel/keyboard kernel/keymaps kernel/drivers kernel/drivers/ps2kb \
+		kernel/drivers/ide kernel/drivers/ps2mouse kernel/drivers/fat16 kernel/drivers/serial \
+		kernel/drivers/mbr kernel/drivers/vga
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
@@ -30,7 +32,7 @@ JSIMGS=	init keyboard keymaps drivers drivers/ps2kb drivers/ide drivers/ps2mouse
 	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
-hdd.img: $(patsubst %, build/kernel/%.jmg, $(JSIMGS)) build/kernel.sys \
+hdd.img: $(patsubst %, build/%.jmg, $(JSIMGS)) build/kernel.sys \
 	 	build/boot/grub/menu.lst build/jsos.rgb
 	@echo "creating image"
 	@cp hdd.base.img hdd.img
@@ -63,7 +65,7 @@ build/kernel.sys: $(OBJS)
 	@echo "      ld"
 	@$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
-build/kernel/%.jmg: js/%.o
+build/%.jmg: js/%.o
 	@cp $< $@
 
 build/jsos.rgb: jsos.png
