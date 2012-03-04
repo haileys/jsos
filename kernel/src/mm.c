@@ -71,7 +71,7 @@ void mm_init(multiboot_memory_map_t* mmap, uint32_t length, uint32_t highest_mod
             base = ((start_addr + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
             max_size = len;
             kprintf("%d MiB available memory (0x%x - 0x%x)\n", len / (1024 * 1024), start_addr, start_addr + len);
-            paging_init(0x7fffffff/*start_addr + len*/);
+            paging_init(start_addr + len);
             return;
         }
     }
@@ -85,6 +85,7 @@ void* sbrk(int32_t increment)
         panic("trying to sbrk to negative current_increment");
     }
     if(current_increment + increment >= max_size) {
+        return NULL;
         panic("out of memory");
     }
     void* ptr = (void*)(base + current_increment);

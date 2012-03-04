@@ -92,11 +92,16 @@ void* js_alloc(size_t sz)
         js_panic("js_alloc() called before js_gc_init()");
     }
     ptr = malloc(sz);
-    memset(ptr, 0, sz);
-    memory_usage += sz;
     if(ptr == NULL) {
-        js_panic("malloc(%lu) failed!", sz);
+        // allocation failed, so run a gc and attempt to free up some space
+        js_gc_run();
+        ptr = malloc(sz);
+        if(ptr == NULL) {
+            js_panic("malloc(%lu) failed - out of memory!", sz);
+        }
     }
+    memory_usage += sz;
+    memset(ptr, 0, sz);
     alloc = allocs_insert(ptr, sz);
     #ifdef JS_GC_DEBUG
         alloc->file = file;
