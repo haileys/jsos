@@ -82,6 +82,12 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
         return 0;
     }
     
+    if(interrupt == 14 /* page fault */) {
+        uint32_t fault_address;
+        __asm__ volatile ("movl %%cr2, %0" : "=r"(fault_address));
+        panicf("Page Fault at 0x%x - failed on %s\n", fault_address, (error & 2) ? "write" : "read");
+    }
+    
     if(interrupt < sizeof(exceptions) / sizeof(char*) && exceptions[interrupt]) {
         panicf("%s", exceptions[interrupt]);
     }
