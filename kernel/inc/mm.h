@@ -12,4 +12,6 @@
 void mm_init(multiboot_memory_map_t* mmap, uint32_t length, uint32_t highest_module);
 void* sbrk(int32_t increment);
 
+void paging_set_directory(void* page_directory);
+
 #endif
