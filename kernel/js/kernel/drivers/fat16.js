@@ -66,21 +66,23 @@
         var parts = path.toLowerCase().split("/");
         var entries = this.readRootEntries();
         for(var i = 1; i < parts.length; i++) {
+            var found = null;
             for(var j = 0; j < entries.length; j++) {
                 if(entries[j].name.toLowerCase() === parts[i]) {
                     if(i + 1 === parts.length) {
                         return entries[j];
                     } else if(entries[j] instanceof FAT16.Directory) {
-                        entries = entries[j].readEntries();
+                        found = entries[j];
                     } else {
                         return null;
                     }
                     break;
                 }
             }
-            if(j === entries.length) {
+            if(!found) {
                 return null;
             }
+            entries = found.readEntries();
         }
         return null;
     };
