@@ -67,6 +67,24 @@ static VAL Kernel_memset(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_undefined();
 }
 
+static VAL Kernel_read_memory(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr, size;
+    js_scan_args(vm, argc, argv, "II", &addr, &size);
+    return js_value_make_string((void*)addr, size);
+}
+
+static VAL Kernel_write_memory(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr;
+    VAL buff;
+    js_string_t* str;
+    js_scan_args(vm, argc, argv, "IS", &addr, &buff);
+    str = &js_value_get_pointer(buff)->string;
+    memcpy((void*)addr, str->buff, str->length);
+    return js_value_undefined();
+}
+
 static VAL Kernel_peek8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     uint32_t addr;
@@ -124,6 +142,8 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("realExec"), js_value_make_native_function(vm, NULL, js_cstring("realExec"), Kernel_real_exec, NULL));
     js_object_put(Kernel, js_cstring("memcpy"), js_value_make_native_function(vm, NULL, js_cstring("memcpy"), Kernel_memcpy, NULL));
     js_object_put(Kernel, js_cstring("memset"), js_value_make_native_function(vm, NULL, js_cstring("memset"), Kernel_memset, NULL));
+    js_object_put(Kernel, js_cstring("readMemory"), js_value_make_native_function(vm, NULL, js_cstring("readMemory"), Kernel_read_memory, NULL));
+    js_object_put(Kernel, js_cstring("writeMemory"), js_value_make_native_function(vm, NULL, js_cstring("writeMemory"), Kernel_write_memory, NULL));
     js_object_put(Kernel, js_cstring("peek8"), js_value_make_native_function(vm, NULL, js_cstring("peek8"), Kernel_peek8, NULL));
     js_object_put(Kernel, js_cstring("peek16"), js_value_make_native_function(vm, NULL, js_cstring("peek16"), Kernel_peek16, NULL));
     js_object_put(Kernel, js_cstring("peek32"), js_value_make_native_function(vm, NULL, js_cstring("peek32"), Kernel_peek32, NULL));
