@@ -80,20 +80,6 @@ js_vm_t* js_vm_new()
     return vm;
 }
 
-/* @TODO: bounds checking here */
-#define NEXT_UINT32() (INSNS[IP++])
-#define NEXT_DOUBLE() (IP += 2, *(double*)&INSNS[IP - 2])
-#define NEXT_STRING() (image->strings[NEXT_UINT32()])
-
-#define PUSH(v) do { \
-                    if(SP >= SMAX) { \
-                        STACK = js_realloc(STACK, sizeof(VAL) * (SMAX *= 2)); \
-                    } \
-                    STACK[SP++] = (v); \
-                } while(false)
-#define POP()   (STACK[--SP])
-#define PEEK()  (STACK[SP - 1])
-
 static int comparison_oper(VAL left, VAL right)
 {
     double l, r;
@@ -111,6 +97,23 @@ static int comparison_oper(VAL left, VAL right)
         }
     }
 }
+
+/* @TODO: bounds checking here */
+#define NEXT_UINT32() (INSNS[IP++])
+#define NEXT_DOUBLE() (IP += 2, *(double*)&INSNS[IP - 2])
+#define NEXT_STRING() (image->strings[NEXT_UINT32()])
+
+#define PUSH(v) do { \
+                    if(SP >= SMAX) { \
+                        SMAX *= 2; \
+                        STACK = js_realloc(STACK, sizeof(VAL) * SMAX); \
+                    } \
+                    STACK[SP++] = (v); \
+                } while(false)
+#define POP()   (STACK[--SP])
+#define PEEK()  (STACK[SP - 1])
+
+static uint32_t global_instruction_counter = 0;
 
 VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
 {
@@ -140,6 +143,10 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     }
     
     while(1) {
+        if(++global_instruction_counter == 2000) {
+            global_instruction_counter = 0;
+            //js_gc_run();
+        }
         opcode = NEXT_UINT32();
         switch(opcode) {
             case JS_OP_UNDEFINED:
