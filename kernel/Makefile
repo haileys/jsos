@@ -1,7 +1,7 @@
 CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
 		-fno-stack-protector -I../libc/inc -I../vm/inc -fno-pic -Werror \
-		-DJS_GC_DEBUG
+		-DJS_GC_DEBUG -std=c99
 
 LDFLAGS=../libc/src/*.o ../vm/libjsvm.a
 
