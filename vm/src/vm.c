@@ -60,6 +60,7 @@ static js_instruction_t insns[] = {
     { "bitnot",     OPERAND_NONE },
     { "line",       OPERAND_UINT32 },
     { "debugger",   OPERAND_NONE },
+    { "negate",     OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -567,6 +568,12 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 } else {
                     PUSH(js_value_make_boolean(js_value_get_pointer(js_value_get_pointer(obj)->object.class) == js_value_get_pointer(class)));
                 }
+                break;
+            }
+            
+            case JS_OP_NEGATE: {
+                double d = js_value_get_double(js_to_number(POP()));
+                PUSH(js_value_make_double(-d));
                 break;
             }
         

@@ -72,6 +72,7 @@ enum js_opcode {
     JS_OP_LINE          = 50,
     JS_OP_DEBUGGER      = 51,
     JS_OP_INSTANCEOF    = 52,
+    JS_OP_NEGATE        = 53,
 };
 
 typedef struct {
