@@ -35,7 +35,7 @@ var userland = new VM();
 Console.write(userland + "\n");
 Console.write(userland.id + "\n");
 userland.globals.log = function(str) {
-    Console.write("[user process]  " + git guistr + "\n");
+    Console.write("[user process]  " + str + "\n");
 };
 Console.write("Jumping into userland...\n");
 userland.execute(fs.find("/userland.jmg").readAllBytes());
