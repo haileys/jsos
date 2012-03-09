@@ -39,7 +39,6 @@ title  JSOS
 root (hd0,0)
 kernel /kernel.sys
 module /kernel/init.jmg
-module /kernel/drivers.jmg
 module /kernel/drivers/ide.jmg
 module /kernel/drivers/mbr.jmg
 module /kernel/drivers/fat16.jmg
