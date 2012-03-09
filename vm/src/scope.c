@@ -1,13 +1,15 @@
 #include <stdlib.h>
 #include "scope.h"
+#include "vm.h"
 #include "gc.h"
 #include "exception.h"
 
-js_scope_t* js_scope_make_global(VAL object)
+js_scope_t* js_scope_make_global(js_vm_t* vm, VAL object)
 {
     js_scope_t* scope = js_alloc(sizeof(js_scope_t));
     scope->parent = NULL;
     scope->global = scope;
+    scope->vm = vm;
     if(js_value_is_primitive(object)) {
         js_panic("primitive passed as global object");
     }
@@ -52,6 +54,7 @@ js_scope_t* js_scope_close(js_scope_t* scope, VAL callee)
 {    
     uint32_t i;
     js_scope_t* new_scope = js_alloc(sizeof(js_scope_t));
+    new_scope->vm = scope->vm;
     new_scope->parent = scope;
     new_scope->global = scope->global;
     new_scope->locals.callee = callee;
@@ -68,8 +71,7 @@ VAL js_scope_get_global_var(js_scope_t* scope, js_string_t* name)
     if(js_object_has_property(scope->global->global_object, name)) {
         return js_object_get(scope->global->global_object, name);
     } else {
-        // @TODO throw
-        js_panic("undefined variable %s", name->buff);
+        js_throw_error(scope->vm->lib.ReferenceError, "undefined variable %s", name->buff);
     }
 }
 

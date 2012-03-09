@@ -9,6 +9,7 @@ typedef struct js_scope {
     /* if parent is NULL, this is a global scope. otherwise this is a local scope */
     struct js_scope* parent;
     struct js_scope* global;
+    struct js_vm* vm;
     union {
         VAL global_object;
         struct {
@@ -19,7 +20,7 @@ typedef struct js_scope {
     };
 } js_scope_t;
 
-js_scope_t* js_scope_make_global(VAL object);
+js_scope_t* js_scope_make_global(struct js_vm* vm, VAL object);
 VAL js_scope_get_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes);
 void js_scope_set_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes, VAL value);
 bool js_scope_has_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes);

@@ -70,11 +70,18 @@ js_instruction_t* js_instruction(uint32_t opcode)
     return &insns[opcode];
 }
 
+static void* stack_limit;
+
+void js_vm_set_stack_limit(void* stack_limit_)
+{
+    stack_limit = stack_limit_;
+}
+
 js_vm_t* js_vm_new()
 {
     js_vm_t* vm = js_alloc(sizeof(js_vm_t));
     // this proto/constructor is fixed up later by js_lib_initialize
-    vm->global_scope = js_scope_make_global(js_value_make_object(js_value_undefined(), js_value_undefined()));
+    vm->global_scope = js_scope_make_global(vm, js_value_make_object(js_value_undefined(), js_value_undefined()));
     js_object_put(vm->global_scope->global_object, js_cstring("global"), vm->global_scope->global_object);
     js_lib_initialize(vm);
     return vm;
@@ -116,8 +123,13 @@ static int comparison_oper(VAL left, VAL right)
 static uint32_t global_instruction_counter = 0;
 
 VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
-{
+{    
     uint32_t IP = 0;
+    
+    if((uint32_t)&IP < (uint32_t)stack_limit) {
+        js_throw_error(vm->lib.RangeError, "Stack overflow");
+    }
+    
     uint32_t* INSNS = image->sections[section].instructions;
     uint32_t opcode;
     

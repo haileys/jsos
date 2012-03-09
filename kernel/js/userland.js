@@ -1,1 +1,5 @@
-log("hello from userland");
+var counter = 0;
+(function foo() {
+    log(counter++);
+    foo();
+})();

@@ -1,5 +1,6 @@
 global loader
 global end_of_image
+global kstack_max
 extern kmain
 
 section .text
@@ -13,10 +14,10 @@ MultiBootHeader:
     dd FLAGS
     dd CHECKSUM
 
-STACKSIZE equ 0x10000 ; 64KiB
+STACKSIZE equ 1024*1024 ; 1 MiB
 
 loader:
-    mov esp, kstack+STACKSIZE
+    mov esp, kstack_max+STACKSIZE
     push eax ; multiboot magic number
     push ebx ; pointer to multiboot struct
     
@@ -30,7 +31,11 @@ loader:
  
 section .bss
 align 4
-kstack:
+
+    resb 64*1024
+    ; 64 KiB slack space. we can detect a looming stack overflow by comparing
+    ; the address of a local variable against the address of kstack_max
+kstack_max:
     resb STACKSIZE
 
 section .end_of_image
