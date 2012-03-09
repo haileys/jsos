@@ -53,4 +53,7 @@ void js_lib_error_initialize(struct js_vm* vm);
 VAL js_make_error(VAL class, js_string_t* message);
 void js_throw_error(VAL class, char* fmt, ...) __attribute__((noreturn));
 
+/* Math */
+void js_lib_math_initialize(struct js_vm* vm);
+
 #endif
