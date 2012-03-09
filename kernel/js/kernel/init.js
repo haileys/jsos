@@ -1,42 +1,39 @@
-Kernel.loadImage(Kernel.modules["/kernel/drivers.jmg"]);
+(function() {    
+    Drivers = {};
 
-// hard drive
-Drivers.loadDriver("ide");
-Drivers.loadDriver("mbr");
-Drivers.loadDriver("fat16");
-
-var hdd = new Drivers.MBR(new Drivers.IDE(0x1f0, Drivers.IDE.MASTER));
-var fs = new Drivers.FAT16(hdd.partitions[0]);
-fs.init();
-
-Drivers.setLoader(function(name) {
-    return fs.find(name).readAllBytes();
-});
-
-Kernel.loadImage(fs.find("/kernel/keyboard.jmg").readAllBytes());
-Kernel.loadImage(fs.find("/kernel/keymaps.jmg").readAllBytes());
-
-// keyboard
-Drivers.loadDriver("ps2kb");
-var ps2kb = new Drivers.PS2Keyboard();
-var keyboard = new Keyboard(ps2kb, "US");
-
-// serial port
-Drivers.loadDriver("serial");
-var serial = new Drivers.Serial(Drivers.Serial.COM1);
-serial.init();
-function log(str) {
-    if(Drivers.Serial) {
-        serial.writeString(str + "\n");
+    Kernel.loadImage(Kernel.modules["/kernel/drivers/ide.jmg"]);
+    Kernel.loadImage(Kernel.modules["/kernel/drivers/mbr.jmg"]);
+    Kernel.loadImage(Kernel.modules["/kernel/drivers/fat16.jmg"]);
+    
+    var hdd = new Drivers.MBR(new Drivers.IDE(0x1f0, Drivers.IDE.MASTER));
+    var fs = new Drivers.FAT16(hdd.partitions[0]);
+    fs.init();
+    Kernel.filesystem = fs;
+    
+    var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
+                    "drivers/serial", "process" ];
+    for(var i = 0; i < images.length; i++) {
+        var path = "/kernel/" + images[i] + ".jmg";
+        Console.write("Loading " + path + "... ");
+        var file = fs.find(path);
+        if(!(file instanceof Drivers.FAT16.File)) {
+            throw new Error("could not load " + path);
+        }
+        Kernel.loadImage(file.readAllBytes());
+        Console.write("ok.\n");
     }
-}
-
-var userland = new VM();
-Console.write(userland + "\n");
-Console.write(userland.id + "\n");
-userland.globals.log = userland.exposeFunction(function(str) {
-    Console.write("[user process]  " + str + "\n");
-});
-Console.write("Jumping into userland...\n");
-userland.execute(fs.find("/userland.jmg").readAllBytes());
-Console.write("back from userland!\n");
+    
+    Kernel.keyboard = new Keyboard(new Drivers.PS2Keyboard(), "US");
+    
+    Kernel.serial = new Drivers.Serial(Drivers.Serial.COM1);
+    Kernel.serial.init();
+    
+    Kernel.log = function(str) {
+        Kernel.serial.writeString(str + "\n");
+    }
+    
+    Console.write("HELLO!\n");
+    
+    var init = new Process();
+    init.load("/userland.jmg");
+})();
