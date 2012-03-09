@@ -11,7 +11,7 @@
     Kernel.filesystem = fs;
     
     var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
-                    "drivers/serial", "process" ];
+                    "drivers/serial", "drivers/pit", "process" ];
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
         Console.write("Loading " + path + "... ");
@@ -32,8 +32,21 @@
         Kernel.serial.writeString(str + "\n");
     }
     
-    Console.write("HELLO!\n");
+    Drivers.PIT.init(50);
+    Drivers.PIT.subscribe(function() {
+        Process.tick();
+    });
     
-    var init = new Process();
-    init.load("/userland.jmg");
+    var a = new Process();
+    a._vm.globals.log = a._vm.exposeFunction(Console.write);
+    a._vm.globals.yield = a._vm.exposeFunction(Process.yield);
+    a._vm.globals.processName = "A";
+    
+    var b = new Process();
+    b._vm.globals.log = b._vm.exposeFunction(Console.write);
+    b._vm.globals.yield = b._vm.exposeFunction(Process.yield);
+    b._vm.globals.processName = "B";
+    
+    Process.yield(function() { a.load("/userland.jmg"); });
+    Process.yield(function() { b.load("/userland.jmg"); });
 })();

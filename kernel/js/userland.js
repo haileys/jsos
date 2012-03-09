@@ -1,1 +1,4 @@
-log("hi!");
+(function cb() {
+    log("--> " + processName + "\n");
+    yield(cb);
+})();

@@ -29,7 +29,14 @@ Process.LoadError.prototype = new Error();
 
 Process.yieldQueue = new Queue();
 
-Process.taskSwitch = function() {
+Process.yield = function(callback) {
+    Process.yieldQueue.push(callback);
+};
+
+Process.tick = function() {
+    if(Process.yieldQueue.isEmpty()) {
+        return;
+    }
     var callback = Process.yieldQueue.pop();
     callback();
 };
