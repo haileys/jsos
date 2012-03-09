@@ -2,6 +2,7 @@
 #include <vm.h>
 #include <gc.h>
 #include <exception.h>
+#include <string.h>
 #include "lib.h"
 #include "console.h"
 
@@ -85,6 +86,24 @@ static VAL VM_prototype_execute(js_vm_t* vm, void* state, VAL this, uint32_t arg
     return js_vm_exec(target_vm, image, section, target_vm->global_scope, js_value_null(), 0, NULL);
 }
 
+static VAL VM_prototype_expose_function(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    // this is necessary to prevent user processes from gaining access to the Kernel Function.prototype
+    
+    js_vm_t* target_vm = get_vm(vm, this);
+    
+    if(argc == 0 || js_value_get_type(argv[0]) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "expected function as first parameter");
+    }
+    
+    js_function_t* kernel_fn = (js_function_t*)js_value_get_pointer(argv[0]);
+    js_function_t* user_fn = js_alloc(sizeof(js_function_t));
+    memcpy(user_fn, kernel_fn, sizeof(js_function_t));
+    user_fn->base.object.class = target_vm->lib.Function;
+    user_fn->base.object.prototype = target_vm->lib.Function_prototype;
+    return js_value_make_pointer((js_value_t*)user_fn);
+}
+
 void lib_vm_init(js_vm_t* vm)
 {
     VM = js_value_make_native_function(vm, NULL, js_cstring("VM"), NULL, VM_construct);
@@ -100,4 +119,5 @@ void lib_vm_init(js_vm_t* vm)
     
     // instance methods:
     js_object_put(VM_prototype, js_cstring("execute"), js_value_make_native_function(vm, NULL, js_cstring("execute"), VM_prototype_execute, NULL));
+    js_object_put(VM_prototype, js_cstring("exposeFunction"), js_value_make_native_function(vm, NULL, js_cstring("exposeFunction"), VM_prototype_expose_function, NULL));
 }
