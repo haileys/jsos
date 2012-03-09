@@ -104,6 +104,16 @@ static VAL VM_prototype_expose_function(js_vm_t* vm, void* state, VAL this, uint
     return js_value_make_pointer((js_value_t*)user_fn);
 }
 
+static VAL VM_prototype_create_object(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    return js_make_object(get_vm(vm, this));
+}
+
+static VAL VM_prototype_create_array(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    return js_make_array(get_vm(vm, this), 0, NULL);
+}
+
 void lib_vm_init(js_vm_t* vm)
 {
     VM = js_value_make_native_function(vm, NULL, js_cstring("VM"), NULL, VM_construct);
@@ -120,4 +130,6 @@ void lib_vm_init(js_vm_t* vm)
     // instance methods:
     js_object_put(VM_prototype, js_cstring("execute"), js_value_make_native_function(vm, NULL, js_cstring("execute"), VM_prototype_execute, NULL));
     js_object_put(VM_prototype, js_cstring("exposeFunction"), js_value_make_native_function(vm, NULL, js_cstring("exposeFunction"), VM_prototype_expose_function, NULL));
+    js_object_put(VM_prototype, js_cstring("createObject"), js_value_make_native_function(vm, NULL, js_cstring("createObject"), VM_prototype_create_object, NULL));
+    js_object_put(VM_prototype, js_cstring("createArray"), js_value_make_native_function(vm, NULL, js_cstring("createArray"), VM_prototype_create_array, NULL));
 }
