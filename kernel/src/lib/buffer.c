@@ -55,8 +55,8 @@ static VAL Buffer_prototype_append(js_vm_t* vm, void* state, VAL this, uint32_t 
     }
     buffer->buffer = js_realloc(buffer->buffer, buffer->capacity);
     for(i = 0; i < argc; i++) {
-        void* ptr;
-        uint32_t sz;
+        void* ptr = NULL;
+        uint32_t sz = 0;
         if(js_value_get_type(argv[i]) == JS_T_STRING) {
             ptr = js_value_get_pointer(argv[i])->string.buff;
             sz = js_value_get_pointer(argv[i])->string.length;
