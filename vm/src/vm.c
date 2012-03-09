@@ -138,7 +138,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     uint32_t SMAX = 8;
     VAL* STACK = js_alloc(sizeof(VAL) * SMAX);
     VAL temp_slot = js_value_undefined();
-    uint32_t current_line = 1;
+    volatile uint32_t current_line = 1;
     
     js_exception_handler_t* handler = js_alloc(sizeof(js_exception_handler_t));
     handler->previous = js_current_exception_handler();
