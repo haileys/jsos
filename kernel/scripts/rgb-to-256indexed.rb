@@ -1,0 +1,1 @@
+print ARGF.read.bytes.each_slice(3).map { |r,g,b| (r & 0xc0) | ((g & 0xe0) >> 2) | ((b & 0xe0) >> 5) }.map(&:chr).join
