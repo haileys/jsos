@@ -165,6 +165,8 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     });
 }
 
+extern int kstack_max;
+
 void kmain(struct multiboot_info* mbd, uint32_t magic)
 {    
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC)         panic("multiboot did not pass correct magic number");
@@ -173,6 +175,7 @@ void kmain(struct multiboot_info* mbd, uint32_t magic)
     
     int dummy;
     js_gc_init(&dummy);
+    js_vm_set_stack_limit(&kstack_max);
     
     kmain_(mbd, magic);
 }

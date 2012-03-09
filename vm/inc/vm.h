@@ -15,6 +15,7 @@ typedef struct js_vm {
 } js_vm_t;
 
 js_vm_t* js_vm_new();
+void js_vm_set_stack_limit(void* stack_limit);
 VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv);
 
 enum js_opcode {
