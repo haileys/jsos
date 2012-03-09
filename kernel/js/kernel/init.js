@@ -21,45 +21,6 @@ Drivers.loadDriver("ps2kb");
 var ps2kb = new Drivers.PS2Keyboard();
 var keyboard = new Keyboard(ps2kb, "US");
 
-var inputBuffer = "";
-
-keyboard.onKeyDown = function(char, scanCode) {
-    var rc = Console.cursor();
-    log(rc[0] + ", " + rc[1]);
-    var row = rc[0];
-    if(scanCode === 14) {
-        // backspace
-        if(inputBuffer.length) {
-            inputBuffer = inputBuffer.substr(0, inputBuffer.length - 1);
-            Console.cursor(row, 2 + inputBuffer.length);
-            Console.write(" ");
-            Console.cursor(row, 2 + inputBuffer.length);
-        }
-    } else if(char) {
-        if(char === "\n") {
-            Console.write("\n");
-            var ent = fs.find(inputBuffer);
-            if(ent === null) {
-                Console.write("File not found\n");
-            } else if(ent instanceof Drivers.FAT16.Directory) {
-                Console.write("Directory\n");
-            } else if(ent instanceof Drivers.FAT16.File) {
-                Console.write("File of size " + ent.size + "\n");
-            }
-            Console.write("> ");
-            inputBuffer = "";
-        } else {
-            inputBuffer += char;
-            Console.write(char);
-        }
-    } else {
-        log(scanCode);
-    }
-};
-
-Console.write("Interactive FAT shell.\n");
-Console.write("> ");
-
 // serial port
 Drivers.loadDriver("serial");
 var serial = new Drivers.Serial(Drivers.Serial.COM1);
@@ -68,4 +29,10 @@ function log(str) {
     if(Drivers.Serial) {
         serial.writeString(str + "\n");
     }
-};
+}
+
+var userland = new VM();
+Console.write(userland + "\n");
+Console.write(new VM().id + "\n");
+//userland.globals.log = log;
+//userland.execute(fs.find("/userland.jmg").readAllBytes());
