@@ -34,5 +34,9 @@ function log(str) {
 var userland = new VM();
 Console.write(userland + "\n");
 Console.write(new VM().id + "\n");
-//userland.globals.log = log;
-//userland.execute(fs.find("/userland.jmg").readAllBytes());
+userland.globals.log = function(str) {
+    Console.write("[user process]  " + str + "\n");
+};
+Console.write("Jumping into userland...\n");
+userland.execute(fs.find("/userland.jmg").readAllBytes());
+Console.write("back from userland!\n");
