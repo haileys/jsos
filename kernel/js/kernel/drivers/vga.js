@@ -68,6 +68,42 @@
         }
     };
     
+    Mode13h.prototype.drawCircle = function(cx, cy, radius, r, g, b) {
+        var base = this.baseAddr;
+        var poke8 = Kernel.poke8;
+        var color = this.rgbTo256(r, g, b);
+        var cos = Math.cos;
+        var sin = Math.sin;
+        var floor = Math.floor;
+        var pi = Math.PI;
+        var pi2 = pi * 2;
+        var circumference = pi2 * radius;
+        var inc = pi2 / circumference;
+        for(var theta = 0; theta < pi2; theta += inc) {
+            poke8(base + floor(cy + sin(theta) * radius) * 320 + floor(cx + cos(theta) * radius), color);
+        }
+    };
+    
+    Mode13h.prototype.fillCircle = function(cx, cy, radius, r, g, b) {
+        var base = this.baseAddr;
+        var poke8 = Kernel.poke8;
+        var color = this.rgbTo256(r, g, b);
+        var sqrt = Math.sqrt;
+        var memset = Kernel.memset;
+        for(var y = -radius; y <= radius; y++) {
+            var ycy = y + cy;
+            if(ycy < 0) {
+                continue;
+            }
+            if(ycy >= 320) {
+                break;
+            }
+            var lineMiddle = base + 320 * (ycy) + cx;
+            var lineWidth = sqrt(radius * radius - y * y);
+            memset(lineMiddle - lineWidth, color, lineWidth * 2);
+        }
+    };
+    
     Mode13h.prototype.fillRect = function(x1, y1, x2, y2, r, g, b) {
         var base = this.baseAddr;
         var poke8 = Kernel.poke8;
