@@ -261,6 +261,11 @@ module JSOS
       private method
     end
     
+    def BinaryNot(node)
+      compile_node node.value
+      output :bitnot
+    end
+    
     def Debugger(node)
       output :debugger
     end
