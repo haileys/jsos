@@ -1,4 +1,4 @@
-CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -Werror -DJS_GC_DEBUG -lm -g \
+CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -Werror -DJS_GC_DEBUG -lm -O3 \
 		-Wno-clobbered
 LDFLAGS=
 OBJS=	src/image.o src/scope.o src/st.o src/value.o src/vm.o src/object.o \

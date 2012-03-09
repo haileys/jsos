@@ -12,7 +12,7 @@
     
     var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
                     "drivers/serial", "drivers/pit", "process",
-                    "drivers/rtc" ];
+                    "drivers/rtc", "drivers/vga" ];
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
         Console.write("Loading " + path + "... ");
@@ -41,7 +41,13 @@
     Console.write("Reading time...\n");
     var time = Drivers.RTC.readTime();
     Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n");
+  
+    var vga = new Drivers.VGA.Mode13h();
+    vga.init();
+//    vga.draw256(0, 0, 320, 200, fs.find("/jsos.256").readAllBytes());
+    vga.drawLine(0, 0, 320, 200, 255, 0, 0);
     
+    /*
     var a = new Process();
     a._vm.globals.log = a._vm.exposeFunction(Console.write);
     a._vm.globals.yield = a._vm.exposeFunction(Process.yield);
@@ -51,6 +57,7 @@
     b._vm.globals.log = b._vm.exposeFunction(Console.write);
     b._vm.globals.yield = b._vm.exposeFunction(Process.yield);
     b._vm.globals.processName = "B";
+    */
     
     //Process.yield(function() { a.load("/userland.jmg"); });
     //Process.yield(function() { b.load("/userland.jmg"); });

@@ -49,6 +49,14 @@
         }
     };
     
+    Mode13h.prototype.draw256 = function(x, y, width, height, data) {
+        var base = this.baseAddr;
+        var writeMemory = Kernel.writeMemory;
+        for(var iy = 0; iy < height; iy++) {
+            writeMemory(base + (320 * (iy + y)) + x, data.substr(width * iy, width));
+        }
+    };
+    
     Mode13h.prototype.drawPixel = function(x, y, color) {
         var addr = y * 320 + x;
         Kernel.poke8(this.baseAddr + addr, color);
@@ -83,6 +91,37 @@
             poke8(base + floor(cy + sin(theta) * radius) * 320 + floor(cx + cos(theta) * radius), color);
         }
     };
+    
+    Mode13h.prototype.drawLine = function(x1, x2, y1, y2, r, g, b) {
+        var base = this.baseAddr;
+        var color = this.rgbTo256(r, g, b);
+        var dx = Math.abs(x2 - x1);
+        var dy = Math.abs(y2 - y1);
+        var sx = 1;
+        var sy = 1;
+        if(x1 > x2) {
+            sx = -1;
+        }
+        if(y1 > y2) {
+            sy = -1;
+        }
+        var err = dx - dy;
+        while(true) {
+            this.drawPixel(x1, y1, color);
+            if(x1 === x2 && y1 === y2) {
+                break;
+            }
+            var e2 = 2 * err;
+            if(e2 > -dy) {
+                err -= dy;
+                x1 += sx;
+            }
+            if(e2 < dx) {
+                err += dx;
+                y1 += sy;
+            }
+        }
+    }
     
     Mode13h.prototype.fillCircle = function(cx, cy, radius, r, g, b) {
         var base = this.baseAddr;

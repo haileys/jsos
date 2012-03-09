@@ -35,7 +35,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/keymaps kernel/drivers/ps2kb \
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 hdd.img: $(patsubst %, build/%.jmg, $(JSIMGS)) build/kernel.sys \
-	 	build/boot/grub/menu.lst build/jsos.rgb
+	 	build/boot/grub/menu.lst build/jsos.256
 	@echo "creating image"
 	@cp hdd.base.img hdd.img
 	@sudo rm -rf mnt
@@ -52,7 +52,7 @@ clean:
 	rm -f build/kernel.sys
 	rm -f build/kernel/*.jmg
 	rm -f build/kernel/*/*.jmg
-	rm -f build/jsos.rgb
+	rm -f build/*.256
 	rm -f src/*/*.o
 	rm -f src/*.o
 	rm -f js/*.o
@@ -70,6 +70,8 @@ build/kernel.sys: $(OBJS)
 build/%.jmg: js/%.o
 	@cp $< $@
 
-build/jsos.rgb: jsos.png
+build/%.256: %.png
 	@echo " convert $<"
-	@convert $< -depth 8 $@
+	@convert $< -depth 8 tmp.rgb
+	@ruby scripts/rgb-to-256indexed.rb tmp.rgb > $@
+	@rm -f tmp.rgb
