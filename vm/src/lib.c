@@ -18,4 +18,5 @@ void js_lib_initialize(js_vm_t* vm)
     js_lib_array_initialize(vm);
     js_lib_number_initialize(vm);
     js_lib_string_initialize(vm);
+    js_lib_math_initialize(vm);
 }
