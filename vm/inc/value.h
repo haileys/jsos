@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "string.h"
 #include "st.h"
 
 typedef enum {
@@ -23,11 +24,6 @@ typedef union {
     double d;
     uint64_t i;
 } VAL;
-
-typedef struct {
-    uint32_t length;
-    char* buff;
-} js_string_t;
 
 struct js_vm;
 
