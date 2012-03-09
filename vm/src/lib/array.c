@@ -37,16 +37,12 @@ VAL js_make_array(struct js_vm* vm, uint32_t count, VAL* items)
     ary->items = js_alloc(sizeof(VAL) * ary->capacity);
     memcpy(ary->items, items, sizeof(VAL) * ary->capacity);
     
-    // length property
-    js_property_descriptor_t* length = js_alloc(sizeof(js_property_descriptor_t));
-    length->is_accessor = true;
-    length->enumerable = false;
-    length->configurable = false;
-    length->accessor.get = js_value_make_native_function(vm, NULL, NULL, array_length_get, NULL);
-    length->accessor.set = js_value_undefined();
-    st_insert(ary->base.object.properties, (st_data_t)js_cstring("length"), (st_data_t)length);
+    VAL obj = js_value_make_pointer((js_value_t*)ary);
     
-    return js_value_make_pointer((js_value_t*)ary);
+    // length property
+    js_object_put_accessor(vm, obj, "length", array_length_get, NULL);
+    
+    return obj;
 }
 
 static void array_put(js_array_t* ary, uint32_t index, VAL val)
