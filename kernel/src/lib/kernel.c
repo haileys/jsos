@@ -3,6 +3,7 @@
 #include <gc.h>
 #include <exception.h>
 #include <string.h>
+#include "panic.h"
 #include "console.h"
 #include "lib.h"
 
@@ -49,6 +50,15 @@ static VAL Kernel_real_exec(js_vm_t* vm, void* state, VAL this, uint32_t argc, V
     ((void(*)())0x8000)();
     
     return js_value_undefined();
+}
+
+static VAL Kernel_panic(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_string_t* str = js_cstring("");
+    for(uint32_t i = 0; i < argc; i++) {
+        str = js_string_concat(str, js_to_js_string_t(argv[i]));
+    }
+    panic(str->buff);
 }
 
 static VAL Kernel_memcpy(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
@@ -140,6 +150,7 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("memoryUsage"), js_value_make_native_function(vm, NULL, js_cstring("memoryUsage"), Kernel_memory_usage, NULL));
     js_object_put(Kernel, js_cstring("runGC"), js_value_make_native_function(vm, NULL, js_cstring("runGC"), Kernel_run_gc, NULL));
     js_object_put(Kernel, js_cstring("realExec"), js_value_make_native_function(vm, NULL, js_cstring("realExec"), Kernel_real_exec, NULL));
+    js_object_put(Kernel, js_cstring("panic"), js_value_make_native_function(vm, NULL, js_cstring("panic"), Kernel_panic, NULL));
     js_object_put(Kernel, js_cstring("memcpy"), js_value_make_native_function(vm, NULL, js_cstring("memcpy"), Kernel_memcpy, NULL));
     js_object_put(Kernel, js_cstring("memset"), js_value_make_native_function(vm, NULL, js_cstring("memset"), Kernel_memset, NULL));
     js_object_put(Kernel, js_cstring("readMemory"), js_value_make_native_function(vm, NULL, js_cstring("readMemory"), Kernel_read_memory, NULL));
