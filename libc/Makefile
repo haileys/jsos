@@ -1,15 +1,15 @@
 CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
 		-fno-stack-protector -static -fno-pic -Werror -g
-OBJS=	src/string.o src/setjmp.o src/stdio.o src/stdlib.o src/math.o
+OBJS=	src/string.o src/setjmp.o src/stdio.o src/stdlib.o src/math.o src/x87math.o
 
 libc.a: $(OBJS)
 	@echo "creating libc.a"
 	@ar rcs libc.a $(OBJS)
 
-src/setjmp.o: src/setjmp.asm
+src/%.o: src/%.asm
 	@echo "    nasm  $<"
-	@nasm -f elf32 -o src/setjmp.o src/setjmp.asm
+	@nasm -f elf32 -o $@ $<
 
 # these CFLAGS are the same as the CFLAGS up the top except -fno-builtin is removed
 src/math.o: CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -g \
