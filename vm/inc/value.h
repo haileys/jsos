@@ -29,6 +29,10 @@ typedef struct {
     char* buff;
 } js_string_t;
 
+struct js_vm;
+
+typedef VAL(*js_native_callback_t)(struct js_vm*, void*, VAL, uint32_t, VAL*);
+
 typedef struct {
     bool is_accessor;
     bool enumerable;
@@ -72,8 +76,8 @@ typedef struct {
     union {
         struct {
             void* state;
-            VAL(*call)(struct js_vm*, void*, VAL, uint32_t, VAL*);
-            VAL(*construct)(struct js_vm*, void*, VAL, uint32_t, VAL*);
+            js_native_callback_t call;
+            js_native_callback_t construct;
         } native;
         struct {
             struct js_image* image;
@@ -93,7 +97,7 @@ typedef struct js_object_internal_methods {
     bool                        (*has_property)         (js_value_t*, js_string_t*);
     bool                        (*delete)               (js_value_t*, js_string_t*);
     VAL                         (*default_value)        (js_value_t*, js_type_t);
-    bool                        (*define_own_property)  (js_value_t*, js_property_descriptor_t*);
+    bool                        (*define_own_property)  (js_value_t*, js_string_t*, js_property_descriptor_t*);
 } js_object_internal_methods_t;
 
 VAL js_value_make_pointer(js_value_t* ptr);
@@ -108,7 +112,7 @@ VAL js_value_false();
 VAL js_value_true();
 VAL js_value_make_boolean(bool boolean);
 VAL js_value_make_object(VAL prototype, VAL class);
-VAL js_value_make_native_function(struct js_vm*, void* state, js_string_t* name, VAL(*call)(struct js_vm*, void*, VAL, uint32_t, VAL*), VAL(*construct)(struct js_vm*, void*, VAL, uint32_t, VAL*));
+VAL js_value_make_native_function(struct js_vm*, void* state, js_string_t* name, js_native_callback_t call, js_native_callback_t construct);
 VAL js_value_make_function(struct js_vm* vm, struct js_image* image, uint32_t section, struct js_scope* outer_scope);
 
 js_value_t* js_value_get_pointer(VAL val);
@@ -131,8 +135,11 @@ bool js_seq(VAL a, VAL b);
 
 VAL js_object_get(VAL obj, js_string_t* prop);
 void js_object_put(VAL obj, js_string_t* prop, VAL value);
+bool js_object_define_own_property(VAL obj, js_string_t* prop, js_property_descriptor_t* descr);
 bool js_object_has_property(VAL obj, js_string_t* prop);
 VAL js_object_default_value(VAL obj, js_type_t preferred_type);
+
+void js_object_put_accessor(struct js_vm* vm, VAL obj, char* prop, js_native_callback_t get, js_native_callback_t set);
 
 VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv);
 VAL js_construct(VAL fn, uint32_t argc, VAL* argv);
