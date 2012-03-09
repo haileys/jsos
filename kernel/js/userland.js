@@ -1,1 +1,1 @@
-Console.write("hello from userland");
+log("hello from userland");
