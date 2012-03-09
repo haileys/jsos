@@ -76,6 +76,7 @@ module JSOS
       line:       50,
       debugger:   51,
       instanceof: 52,
+      negate:     53,
     }
 
   private
@@ -264,6 +265,11 @@ module JSOS
     def BinaryNot(node)
       compile_node node.value
       output :bitnot
+    end
+    
+    def Negation(node)
+      compile_node node.value
+      output :negate
     end
     
     def Debugger(node)
