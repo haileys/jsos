@@ -117,7 +117,7 @@ VAL js_value_make_object(VAL prototype, VAL class)
     return js_value_make_pointer(obj);
 }
 
-VAL js_value_make_native_function(js_vm_t* vm, void* state, js_string_t* name, VAL(*call)(js_vm_t*, void*, VAL, uint32_t, VAL*), VAL(*construct)(js_vm_t*, void*, VAL, uint32_t, VAL*))
+VAL js_value_make_native_function(js_vm_t* vm, void* state, js_string_t* name, js_native_callback_t call, js_native_callback_t construct)
 {
     VAL retn;
     js_function_t* fn = js_alloc(sizeof(js_function_t));
@@ -392,7 +392,7 @@ VAL js_object_get(VAL obj, js_string_t* prop)
     js_value_t* val;
     if(js_value_is_primitive(obj)) {
         // @TODO throw
-        js_panic("precondition failed, expected object but received number");
+        js_panic("precondition failed, expected object but received primitive");
     }
     val = js_value_get_pointer(obj);
     return val->object.vtable->get(val, prop);
@@ -403,7 +403,7 @@ void js_object_put(VAL obj, js_string_t* prop, VAL value)
     js_value_t* val;
     if(js_value_is_primitive(obj)) {
         // @TODO throw
-        js_panic("precondition failed, expected object but received number");
+        js_panic("precondition failed, expected object but received primitive");
     }
     val = js_value_get_pointer(obj);
     val->object.vtable->put(val, prop, value);
@@ -414,10 +414,20 @@ bool js_object_has_property(VAL obj, js_string_t* prop)
     js_value_t* val;
     if(js_value_is_primitive(obj)) {
         // @TODO throw
-        js_panic("precondition failed, expected object but received number");
+        js_panic("precondition failed, expected object but received primitive");
     }
     val = js_value_get_pointer(obj);
     return val->object.vtable->has_property(val, prop);
+}
+
+bool js_object_define_own_property(VAL obj, js_string_t* prop, js_property_descriptor_t* descr)
+{
+    js_value_t* val;
+    if(js_value_is_primitive(obj)) {
+        js_panic("precondition failed, expected object but received primitive");
+    }
+    val = js_value_get_pointer(obj);
+    return val->object.vtable->define_own_property(val, prop, descr);
 }
 
 VAL js_object_default_value(VAL obj, js_type_t preferred_type)
@@ -425,10 +435,21 @@ VAL js_object_default_value(VAL obj, js_type_t preferred_type)
     js_value_t* val;
     if(js_value_is_primitive(obj)) {
         // @TODO throw
-        js_panic("precondition failed, expected object but received number");
+        js_panic("precondition failed, expected object but received primitive");
     }
     val = js_value_get_pointer(obj);
     return val->object.vtable->default_value(val, preferred_type);
+}
+
+void js_object_put_accessor(js_vm_t* vm, VAL obj, char* prop, js_native_callback_t get, js_native_callback_t set)
+{
+    js_property_descriptor_t* accessor = js_alloc(sizeof(js_property_descriptor_t));
+    accessor->is_accessor = true;
+    accessor->enumerable = false;
+    accessor->configurable = false;
+    accessor->accessor.get = get ? js_value_make_native_function(vm, NULL, NULL, get, NULL) : js_value_undefined();
+    accessor->accessor.set = set ? js_value_make_native_function(vm, NULL, NULL, set, NULL) : js_value_undefined();
+    js_object_define_own_property(obj, js_cstring(prop), accessor);
 }
 
 VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv)
