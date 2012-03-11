@@ -1,4 +1,5 @@
 (function cb() {
-    log("--> " + processName + "\n");
+    log(processName);
     yield(cb);
 })();
+
