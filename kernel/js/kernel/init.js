@@ -38,16 +38,22 @@
         Process.tick();
     });
     
-    Console.write("Reading time...\n");
-    var time = Drivers.RTC.readTime();
-    Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n");
-  
-    var vga = new Drivers.VGA.Mode13h();
-    vga.init();
-//    vga.draw256(0, 0, 320, 200, fs.find("/jsos.256").readAllBytes());
-    vga.drawLine(0, 0, 320, 200, 255, 0, 0);
+    Kernel.reboot = function() {
+        
+        while(Kernel.inb(0x64) & 0x02);
+        Kernel.outb(0x64, 0xFE);
+        while(true) { }
+    };
     
-    /*
+    Console.write("\nReading time...\n");
+    var time = Drivers.RTC.readTime();
+    Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n\n");
+    
+    Console.write("jit compiling a function... ");
+    var fn = Kernel.jit(function() { });
+    Console.write("it returns: ");
+    Console.write(fn() + "\n");
+    
     var a = new Process();
     a._vm.globals.log = a._vm.exposeFunction(Console.write);
     a._vm.globals.yield = a._vm.exposeFunction(Process.yield);
@@ -57,8 +63,7 @@
     b._vm.globals.log = b._vm.exposeFunction(Console.write);
     b._vm.globals.yield = b._vm.exposeFunction(Process.yield);
     b._vm.globals.processName = "B";
-    */
     
-    //Process.yield(function() { a.load("/userland.jmg"); });
-    //Process.yield(function() { b.load("/userland.jmg"); });
+    Process.yield(function() { a.load("/userland.jmg"); });
+    Process.yield(function() { b.load("/userland.jmg"); });
 })();
