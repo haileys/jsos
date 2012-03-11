@@ -15,6 +15,8 @@ vm/libjsvm.a:
 kernel/hdd.img:
 	@make -C kernel hdd.img
 
+.PHONY: libc/libc.a vm/libjsvm.a kernel/hdd.img
+
 clean:
 	rm -f userland
 	rm -f *.o
