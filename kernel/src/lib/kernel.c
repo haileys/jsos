@@ -3,6 +3,7 @@
 #include <gc.h>
 #include <exception.h>
 #include <string.h>
+#include <jit.h>
 #include "panic.h"
 #include "console.h"
 #include "lib.h"
@@ -140,6 +141,23 @@ static VAL Kernel_poke32(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_undefined();
 }
 
+static VAL Kernel_jit(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(argc == 0 || js_value_get_type(argv[0]) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "expected function as first parameter");
+    }
+    js_function_t* fn = (js_function_t*)js_value_get_pointer(argv[0]);
+    if(fn->is_native) {
+        js_throw_error(vm->lib.TypeError, "can only JIT js functions");
+    }
+    js_native_callback_t jit = js_jit_section(&fn->js.image->sections[fn->js.section], NULL);
+    if(jit) {
+        return js_value_make_native_function(vm, NULL, NULL, jit, NULL);
+    } else {
+        js_throw_error(vm->lib.Error, "failed to JIT");
+    }
+}
+
 void lib_kernel_init(js_vm_t* vm)
 {
     Kernel = js_make_object(vm);
@@ -161,4 +179,5 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("poke8"), js_value_make_native_function(vm, NULL, js_cstring("poke8"), Kernel_poke8, NULL));
     js_object_put(Kernel, js_cstring("poke16"), js_value_make_native_function(vm, NULL, js_cstring("poke16"), Kernel_poke16, NULL));
     js_object_put(Kernel, js_cstring("poke32"), js_value_make_native_function(vm, NULL, js_cstring("poke32"), Kernel_poke32, NULL));
+    js_object_put(Kernel, js_cstring("jit"), js_value_make_native_function(vm, NULL, js_cstring("jit"), Kernel_jit, NULL));
 }
