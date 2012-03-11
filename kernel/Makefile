@@ -63,7 +63,7 @@ src/realmode.o: src/realmode.asm
 	@objcopy --input binary --output elf32-i386 --binary-architecture i386 src/realmode.bin $@
 	@rm src/realmode.bin
 
-build/kernel.sys: $(OBJS)
+build/kernel.sys: $(OBJS) ../vm/libjsvm.a
 	@echo "      ld"
 	@$(LD) -T linker.ld -o build/kernel.sys $(OBJS) $(LDFLAGS)
 
