@@ -5,6 +5,7 @@
 *.dSYM
 vm/disasm
 vm/runner
+vm/compile
 userland
 *crap*
 ._*
