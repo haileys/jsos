@@ -12,6 +12,8 @@
 #include "io.h"
 #include "lib.h"
 
+bool x86_64_support();
+
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
     kprintf("Loading %d modules:\n", count);
