@@ -1,5 +1,6 @@
 global gdt_reload_segment_registers
 global paging_set_directory
+global x86_64_support
 
 gdt_reload_segment_registers:
     jmp 0x08:.flush_cs
@@ -21,4 +22,23 @@ paging_set_directory:
     or eax, 0x80000000
     mov cr0, eax
     
+    ret
+
+x86_64_support:
+    push ebx
+    mov eax, 0x80000000
+    cpuid
+    cmp eax, 0x80000001
+    jb .no_long_mode
+    ; ok so extended mode is available, let's see if long mode is available:
+    mov eax, 0x80000001
+    cpuid
+    test edx, 1 << 9
+    jz .no_long_mode
+    mov eax, 1
+    jmp .endif
+    .no_long_mode:
+    mov eax, 0
+    .endif:
+    pop ebx
     ret
