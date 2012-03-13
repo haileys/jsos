@@ -26,8 +26,16 @@
         this.firstFatSector = this.bpb.reservedSectors;
         this.dataSectors = this.bpb.sectorCount - (this.bpb.reservedSectors + (this.bpb.fatCount * this.bpb.sectorsPerFat) + this.rootDirSectors);
         this.totalClusters = this.dataSectors / this.bpb.sectorsPerCluster;
-        
-        this.fatData = this.partition.readSectors(this.firstFatSector, this.bpb.sectorsPerFat);
+        this.fatSectors = {};
+    };
+    
+    FAT16.prototype.findNextCluster = function(cluster) {
+        var offset = cluster * 2;
+        var sec = offset >> 9;
+        if(typeof this.fatSectors[sec] !== 'string') {
+            this.fatSectors[sec] = this.partition.readSector(this.firstFatSector + sec);
+        }    
+        return BinaryUtils.readU16(this.fatSectors[sec], offset & 511);
     };
     
     FAT16.prototype.readRootEntries = function() {
@@ -92,14 +100,14 @@
         var cluster = firstCluster;
         do {
             clusters++;
-            cluster = BinaryUtils.readU16(this.fatData, cluster * 2);
+            cluster = this.findNextCluster(cluster);
         } while(cluster < 0xFFF7);
         
         var buff = new Buffer(clusters * this.bpb.sectorsPerCluster * 512);
         var cluster = firstCluster;
         do {
             buff.append(this.readCluster(cluster));
-            cluster = BinaryUtils.readU16(this.fatData, cluster * 2);
+            cluster = this.findNextCluster(cluster);
         } while(cluster < 0xFFF7);
         
         return buff.getContents();
