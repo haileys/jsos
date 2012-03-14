@@ -2,7 +2,7 @@
     function MBR(drive) {
         this.drive = drive;
         this.partitions = [];
-        var mbr = drive.readSectorPIO(0);
+        var mbr = drive.readSector(0);
         for(var i = 0; i < 4; i++) {
             this.partitions.push(new MBR.Partition(drive, mbr.substr(0x1be + i * 16, 16)));
         }
@@ -34,13 +34,13 @@
         this.totalSectors   = BinaryUtils.readU32(buffer, 12);
     };
     MBR.Partition.prototype.readSector = function(sector) {
-        return this.drive.readSectorPIO(sector + this.relativeSector);
+        return this.drive.readSector(sector + this.relativeSector);
     };
     MBR.Partition.prototype.readSectors = function(sector, count) {
-        return this.drive.readSectorsPIO(sector + this.relativeSector, count);
+        return this.drive.readSectors(sector + this.relativeSector, count);
     };
     MBR.Partition.prototype.writeSector = function(sector, buff) {
-        return this.drive.writeSectorPIO(sector + this.relativeSector, buff);
+        return this.drive.writeSector(sector + this.relativeSector, buff);
     };
     
     Drivers.MBR = MBR;
