@@ -98,5 +98,9 @@
         Kernel.outb(this.buf + ATA_REG_COMMAND, ATA_CMD_CACHE_FLUSH);
     };
     
+    IDE.prototype.readSector = IDE.prototype.readSectorPIO;
+    IDE.prototype.readSectors = IDE.prototype.readSectorsPIO;
+    IDE.prototype.writeSector = IDE.prototype.writeSectorPIO;
+    
     Drivers.IDE = IDE;
 })();

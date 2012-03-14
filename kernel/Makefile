@@ -14,7 +14,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/keymaps kernel/drivers/ps2kb \
 		kernel/drivers/ide kernel/drivers/ps2mouse kernel/drivers/fat16 \
 		kernel/drivers/serial kernel/drivers/mbr kernel/drivers/vga \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils kernel/userlib \
-		kernel/process userland
+		kernel/process userland kernel/drivers/bios_hdd
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
