@@ -28,7 +28,7 @@ static VAL js_outb(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 static VAL js_insw(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     if(argc < 2 || js_value_get_type(argv[0]) != JS_T_NUMBER || js_value_get_type(argv[1]) != JS_T_NUMBER) {
-        js_throw_message(vm, "Kernel.outb() expects port number and buffer size parameters");
+        js_throw_message(vm, "Kernel.insw() expects port number and buffer size parameters");
     }
     uint16_t port = (uint16_t)js_value_get_double(argv[0]);
     uint32_t size = (uint32_t)js_value_get_double(argv[1]);
@@ -40,7 +40,7 @@ static VAL js_insw(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 static VAL js_outsw(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     if(argc < 3 || js_value_get_type(argv[0]) != JS_T_NUMBER || js_value_get_type(argv[1]) != JS_T_STRING || js_value_get_type(argv[2]) != JS_T_NUMBER) {
-        js_throw_message(vm, "Kernel.outb() expects port number, buffer and buffer size parameters");
+        js_throw_message(vm, "Kernel.outsw() expects port number, buffer and buffer size parameters");
     }
     uint16_t port = (uint16_t)js_value_get_double(argv[0]);
     uint32_t size = (uint32_t)js_value_get_double(argv[2]);
