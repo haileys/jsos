@@ -1,12 +1,21 @@
 (function() {    
     Drivers = {};
-
+    
+    Kernel.loadImage(Kernel.modules["/kernel/drivers/bios_hdd.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/ide.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/mbr.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/fat16.jmg"]);
     
-    var hdd = new Drivers.MBR(new Drivers.IDE(0x1f0, Drivers.IDE.MASTER));
-    var fs = new Drivers.FAT16(hdd.partitions[0]);
+    Console.write("Booting from drive number " + Kernel.bootDevice + "\n");
+    
+    var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
+    if(!hdd.detect()) {
+        Kernel.panic("did not detect IDE drive on 0x1f0:MASTER")
+    } else {
+        Console.write("Detected IDE drive of size " + Math.round(hdd.getDriveSize() / 1024 / 1024) + " MiB\n");
+    }
+    var mbr = new Drivers.MBR(hdd);
+    var fs = new Drivers.FAT16(mbr.partitions[0]);
     fs.init();
     Kernel.filesystem = fs;
     
@@ -50,9 +59,10 @@
     Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n\n");
     
     Console.write("jit compiling a function... ");
-    var fn = Kernel.jit(function() { });
+    var fn = Kernel.jit(function() { return 123; });
     Console.write("it returns: ");
     Console.write(fn() + "\n");
+    while(true) { }
     
     var a = new Process();
     a._vm.globals.log = a._vm.exposeFunction(Console.write);
