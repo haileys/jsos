@@ -4,7 +4,10 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -g -Wno-unused-parameter -nostdlib \
 
 LDFLAGS=-nostdlib -static
 
-kernel: libc/libc.a vm/libjsvm.a kernel/hdd.img
+kernel: twostroke/LICENSE libc/libc.a vm/libjsvm.a kernel/hdd.img
+
+twostroke/LICENSE:
+	git submodule update --init
 
 libc/libc.a:
 	@make -C libc libc.a
