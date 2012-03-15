@@ -4,9 +4,11 @@
 #include "gc.h"
 #include "exception.h"
 
+#define ALLOC_MAX_BUCKETS (65536 + 45)
+
 static uint16_t pointer_hash(void* ptr)
 {
-    return (2654435761ul * (intptr_t)ptr) >> 16;
+    return (2654435761ul * (intptr_t)ptr) % ALLOC_MAX_BUCKETS;
 }
 
 typedef struct allocation {
@@ -29,7 +31,7 @@ typedef struct global {
 } global_t;
 
 static bool current_mark_flag;
-static alloc_t* allocs[65536];
+static alloc_t* allocs[ALLOC_MAX_BUCKETS];
 static global_t* globals;
 static intptr_t* stack_top;
 static size_t memory_usage;
@@ -222,9 +224,11 @@ static void js_gc_mark()
     alloc_t* alloc;
     global_t* g;
     while((intptr_t)ptrptr > (intptr_t)&stack_dummy) {
-        alloc = allocs_lookup(*ptrptr);
-        if(alloc) {
-            js_gc_mark_allocation(alloc);
+        if(((intptr_t)*ptrptr & 3) == 0) {
+            alloc = allocs_lookup(*ptrptr);
+            if(alloc) {
+                js_gc_mark_allocation(alloc);
+            }
         }
         ptrptr--;
     }
@@ -244,7 +248,7 @@ static void js_gc_sweep()
     uint32_t i;
     alloc_t* alloc;
     alloc_t* next;
-    for(i = 0; i < 65536; i++) {
+    for(i = 0; i < ALLOC_MAX_BUCKETS; i++) {
         alloc = allocs[i];
         while(alloc) {
             next = alloc->next;
