@@ -45,6 +45,47 @@
     IDE.MASTER = 0;
     IDE.SLAVE = 1;
     
+    IDE.prototype.detect = function() {
+        // drive select
+        Kernel.outb(this.bus + ATA_REG_HDDEVSEL, this.slave === IDE.MASTER ? 0xa0 : 0xb0);
+        // set sector count, lba lo/mid/hi to 0
+        Kernel.outb(this.bus + ATA_REG_SECCOUNT0, 0);
+        Kernel.outb(this.bus + ATA_REG_LBA0, 0);
+        Kernel.outb(this.bus + ATA_REG_LBA1, 0);
+        Kernel.outb(this.bus + ATA_REG_LBA2, 0);
+        // IDENTIFY
+        Kernel.outb(this.bus + ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+        if(Kernel.inb(this.bus + ATA_REG_STATUS) === 0) {
+            // drive does not exist
+            return null;
+        }
+        while(Kernel.inb(this.bus + ATA_REG_STATUS) & 0x80) ;
+        if(Kernel.inb(this.bus + ATA_REG_LBA1) !== 0 || Kernel.inb(this.bus + ATA_REG_LBA2) !== 0) {
+            // drive is not ATA
+            return null;
+        }
+        while(true) {
+            var b = Kernel.inb(this.bus + ATA_REG_STATUS);
+            if(b & 8) {
+                break;
+            }
+            if(b & 1) {
+                // error
+                return null;
+            }
+        }
+        return Kernel.insw(this.bus + ATA_REG_DATA, 256);
+    };
+    
+    IDE.prototype.getDriveSize = function() {
+        var detect = this.detect();
+        if(detect === null) {
+            return null;
+        }
+        var lba28 = BinaryUtils.readU32(detect, 120);
+        return lba28 * 512;
+    };
+    
     IDE.prototype.readSectorPIO = function(lba) {
         return this.readSectorsPIO(lba, 1);
     };
