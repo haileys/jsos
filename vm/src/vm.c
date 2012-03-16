@@ -61,6 +61,13 @@ static js_instruction_t insns[] = {
     { "line",       OPERAND_UINT32 },
     { "debugger",   OPERAND_NONE },
     { "negate",     OPERAND_NONE },
+    { "try",        OPERAND_UINT32_UINT32 },
+    { "poptry",     OPERAND_NONE },
+    { "catch",      OPERAND_UINT32 },
+    { "catchg",     OPERAND_STRING },
+    { "popcatch",   OPERAND_NONE },
+    { "finally",    OPERAND_NONE },
+    { "popfinally", OPERAND_NONE }
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -123,42 +130,91 @@ static int comparison_oper(VAL left, VAL right)
 
 static uint32_t global_instruction_counter = 0;
 
+struct exception_frame {
+    uint32_t catch;
+    uint32_t finally;
+    struct exception_frame* prev;
+};
+
+//void kprintf(char* fmt, ...);
+#define kprintf(...) 
+
+/*static int setjmp_helper(jmp_buf buffer)
+{
+    // setjmp is not guaranteed to preserve the stack frame it was called from
+    // we're using this little dummy function to wrap it
+    return setjmp(buffer);
+}*/
+
 VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
 {    
     uint32_t IP = 0;
-    
-    if((uint32_t)&IP < (uint32_t)stack_limit) {
-        js_throw_error(vm->lib.RangeError, "Stack overflow");
-    }
     
     uint32_t* INSNS = image->sections[section].instructions;
     uint32_t opcode;
     
     uint32_t SP = 0;
     uint32_t SMAX = 8;
-    VAL* STACK = js_alloc(sizeof(VAL) * SMAX);
-    VAL temp_slot = js_value_undefined();
-    volatile uint32_t current_line = 1;
+    VAL* STACK;
+    VAL temp_slot;
+    uint32_t current_line = 1;
     
-    js_exception_handler_t* handler = js_alloc(sizeof(js_exception_handler_t));
-    handler->previous = js_current_exception_handler();
-    js_set_exception_handler(handler);
+    js_exception_handler_t handler;
+    struct exception_frame* exception_stack = NULL;
+    bool exception_thrown = false;
+    bool return_after_finally = false;
+    bool will_return = false;
+    VAL return_val;
+    VAL return_after_finally_val;
+    VAL exception;
     
-    if(setjmp(handler->env)) {
+    STACK = js_alloc(sizeof(VAL) * SMAX);
+    temp_slot = js_value_undefined();
+    return_val = js_value_undefined();
+    return_after_finally_val = js_value_undefined();
+    exception = js_value_undefined();
+    
+    if((uint32_t)&IP < (uint32_t)stack_limit) {
+        js_throw_error(vm->lib.RangeError, "Stack overflow");
+    }
+    
+    handler.previous = js_current_exception_handler();
+    js_set_exception_handler(&handler);
+    
+    if(setjmp(handler.env)) {
         // exception was thrown
-        if(js_value_is_object(handler->exception)) {
-            js_string_t* trace = js_value_get_pointer(handler->exception)->object.stack_trace;
+        kprintf("## thrown, exception_stack is 0x%x\n", exception_stack);
+        exception_thrown = true;
+        exception = handler.exception;
+        if(js_value_is_object(handler.exception)) {
+            js_string_t* trace = js_value_get_pointer(handler.exception)->object.stack_trace;
             trace = js_string_concat(trace, js_string_format("\n    at %s:%d", image->strings[image->name]->buff, current_line));
-            js_value_get_pointer(handler->exception)->object.stack_trace = trace;
+            js_value_get_pointer(handler.exception)->object.stack_trace = trace;
         }
-        js_set_exception_handler(handler->previous);
-        js_throw(handler->exception);
+        if(exception_stack) {
+            if(exception_stack->catch) {
+                kprintf("## catch handler in stack\n");
+                IP = exception_stack->catch;
+            } else {
+                kprintf("## finally handler in stack\n");
+                IP = exception_stack->finally;
+            }
+        } else {
+            kprintf("## no catch handler, rethrowing...\n");
+            js_set_exception_handler(handler.previous);
+            js_throw(handler.exception);
+        }
     }
     
     while(1) {
+        kprintf("## exception_stack is 0x%x\n", exception_stack);
         if(++global_instruction_counter >= VM_CYCLES_PER_COLLECTION) {
             global_instruction_counter = 0;
             js_gc_run();
+        }
+        if(will_return) {
+            js_set_exception_handler(handler.previous);
+            return return_val;
         }
         opcode = NEXT_UINT32();
         switch(opcode) {
@@ -167,8 +223,14 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 break;
         
             case JS_OP_RET:
-                js_set_exception_handler(handler->previous);
-                return POP();
+                if(exception_stack) {
+                    return_after_finally_val = POP();
+                    return_after_finally = true;
+                    IP = exception_stack->finally;
+                } else {
+                    js_set_exception_handler(handler.previous);
+                    return POP();
+                }
                 break;
         
             case JS_OP_PUSHNUM: {
@@ -397,6 +459,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             }
         
             case JS_OP_THROW: {
+                kprintf("## JS_OP_THROW\n");
                 js_throw(POP());
                 break;
             };
@@ -574,6 +637,64 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_NEGATE: {
                 double d = js_value_get_double(js_to_number(POP()));
                 PUSH(js_value_make_double(-d));
+                break;
+            }
+            
+            case JS_OP_TRY: {
+                uint32_t catch = NEXT_UINT32();
+                uint32_t finally = NEXT_UINT32();
+                struct exception_frame* frame = js_alloc(sizeof(struct exception_frame));
+                frame->catch = catch;
+                frame->finally = finally;
+                frame->prev = exception_stack;
+                kprintf("## pushing exception handler\n");
+                exception_stack = frame;
+                break;
+            }
+            
+            case JS_OP_POPTRY: {
+                struct exception_frame* frame = exception_stack;
+                exception_stack = frame->prev;
+                kprintf("## popping exception handler (in JS_OP_POPTRY)\n");
+                IP = frame->finally;
+                break;
+            }
+            
+            case JS_OP_CATCH: {
+                exception_stack->catch = 0;
+                js_scope_set_var(scope, NEXT_UINT32(), 0, exception);
+                exception = js_value_undefined();
+                exception_thrown = false;
+                break;
+            }
+            
+            case JS_OP_CATCHG: {
+                exception_stack->catch = 0;
+                js_scope_set_global_var(scope, NEXT_STRING(), exception);
+                break;
+            }
+            
+            case JS_OP_POPCATCH: {
+                IP = exception_stack->finally;
+                break;
+            }
+            
+            case JS_OP_FINALLY: {
+                kprintf("## popping exception handler (in JS_OP_FINALLY)\n");
+                exception_stack = exception_stack->prev;
+                break;
+            }
+            
+            case JS_OP_POPFINALLY: {
+                if(exception_thrown) {
+                    js_throw(exception);
+                }
+                if(return_after_finally) {
+                    return_after_finally = false;
+                    will_return = true;
+                    return_val = return_after_finally_val;
+                    return_after_finally_val = js_value_undefined();
+                }
                 break;
             }
         

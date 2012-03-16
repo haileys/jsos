@@ -73,6 +73,13 @@ enum js_opcode {
     JS_OP_DEBUGGER      = 51,
     JS_OP_INSTANCEOF    = 52,
     JS_OP_NEGATE        = 53,
+    JS_OP_TRY           = 54,
+    JS_OP_POPTRY        = 55,
+    JS_OP_CATCH         = 56,
+    JS_OP_CATCHG        = 57,
+    JS_OP_POPCATCH      = 58,
+    JS_OP_FINALLY       = 59,
+    JS_OP_POPFINALLY    = 60,
 };
 
 typedef struct {
