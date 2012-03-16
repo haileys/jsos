@@ -114,19 +114,19 @@ static int comparison_oper(VAL left, VAL right)
 }
 
 /* @TODO: bounds checking here */
-#define NEXT_UINT32() (INSNS[IP++])
-#define NEXT_DOUBLE() (IP += 2, *(double*)&INSNS[IP - 2])
-#define NEXT_STRING() (image->strings[NEXT_UINT32()])
+#define NEXT_UINT32() (L->INSNS[L->IP++])
+#define NEXT_DOUBLE() (L->IP += 2, *(double*)&L->INSNS[L->IP - 2])
+#define NEXT_STRING() (L->image->strings[NEXT_UINT32()])
 
 #define PUSH(v) do { \
-                    if(SP >= SMAX) { \
-                        SMAX *= 2; \
-                        STACK = js_realloc(STACK, sizeof(VAL) * SMAX); \
+                    if(L->SP >= L->SMAX) { \
+                        L->SMAX *= 2; \
+                        L->STACK = js_realloc(L->STACK, sizeof(VAL) * L->SMAX); \
                     } \
-                    STACK[SP++] = (v); \
+                    L->STACK[L->SP++] = (v); \
                 } while(false)
-#define POP()   (STACK[--SP])
-#define PEEK()  (STACK[SP - 1])
+#define POP()   (L->STACK[--L->SP])
+#define PEEK()  (L->STACK[L->SP - 1])
 
 static uint32_t global_instruction_counter = 0;
 
@@ -136,85 +136,107 @@ struct exception_frame {
     struct exception_frame* prev;
 };
 
-//void kprintf(char* fmt, ...);
-#define kprintf(...) 
-
-/*static int setjmp_helper(jmp_buf buffer)
-{
-    // setjmp is not guaranteed to preserve the stack frame it was called from
-    // we're using this little dummy function to wrap it
-    return setjmp(buffer);
-}*/
-
-VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
-{    
-    uint32_t IP = 0;
+struct vm_locals {
+    js_vm_t* vm;
+    js_image_t* image;
+    uint32_t section;
+    js_scope_t* scope;
+    VAL this;
+    uint32_t argc;
+    VAL* argv;
     
-    uint32_t* INSNS = image->sections[section].instructions;
-    uint32_t opcode;
-    
-    uint32_t SP = 0;
-    uint32_t SMAX = 8;
+    uint32_t IP;
+    uint32_t* INSNS;
+    uint32_t SP;
+    uint32_t SMAX;
     VAL* STACK;
     VAL temp_slot;
-    uint32_t current_line = 1;
+    uint32_t current_line;
     
     js_exception_handler_t handler;
-    struct exception_frame* exception_stack = NULL;
-    bool exception_thrown = false;
-    bool return_after_finally = false;
-    bool will_return = false;
+    struct exception_frame* exception_stack;
+    bool exception_thrown;
+    bool return_after_finally;
+    bool will_return;
     VAL return_val;
     VAL return_after_finally_val;
     VAL exception;
+};
+
+static VAL vm_exec(struct vm_locals* L);
+
+VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
+{
+    struct vm_locals L;
     
-    STACK = js_alloc(sizeof(VAL) * SMAX);
-    temp_slot = js_value_undefined();
-    return_val = js_value_undefined();
-    return_after_finally_val = js_value_undefined();
-    exception = js_value_undefined();
+    L.vm = vm;
+    L.image = image;
+    L.section = section;
+    L.scope = scope;
+    L.this = this;
+    L.argc = argc;
+    L.argv = argv;
     
-    if((uint32_t)&IP < (uint32_t)stack_limit) {
+    L.IP = 0;
+    L.INSNS = image->sections[section].instructions;
+    
+    L.SP = 0;
+    L.SMAX = 8;
+    L.STACK = js_alloc(sizeof(VAL) * L.SMAX);
+    L.temp_slot = js_value_undefined();
+    L.current_line = 1;
+    
+    L.exception_stack = NULL;
+    L.exception_thrown = false;
+    L.return_after_finally = false;
+    L.will_return = false;
+    L.return_val = js_value_undefined();
+    L.return_after_finally_val = js_value_undefined();
+    L.exception = js_value_undefined();
+    
+    if((uint32_t)&L < (uint32_t)stack_limit) {
         js_throw_error(vm->lib.RangeError, "Stack overflow");
     }
     
-    handler.previous = js_current_exception_handler();
-    js_set_exception_handler(&handler);
+    L.handler.previous = js_current_exception_handler();
+    js_set_exception_handler(&L.handler);
     
-    if(setjmp(handler.env)) {
+    return vm_exec(&L);
+}
+
+static VAL vm_exec(struct vm_locals* L)
+{
+    uint32_t opcode;
+    
+    if(setjmp(L->handler.env)) {
         // exception was thrown
-        kprintf("## thrown, exception_stack is 0x%x\n", exception_stack);
-        exception_thrown = true;
-        exception = handler.exception;
-        if(js_value_is_object(handler.exception)) {
-            js_string_t* trace = js_value_get_pointer(handler.exception)->object.stack_trace;
-            trace = js_string_concat(trace, js_string_format("\n    at %s:%d", image->strings[image->name]->buff, current_line));
-            js_value_get_pointer(handler.exception)->object.stack_trace = trace;
+        L->exception_thrown = true;
+        L->exception = L->handler.exception;
+        if(js_value_is_object(L->handler.exception)) {
+            js_string_t* trace = js_value_get_pointer(L->handler.exception)->object.stack_trace;
+            trace = js_string_concat(trace, js_string_format("\n    at %s:%d", L->image->strings[L->image->name]->buff, L->current_line));
+            js_value_get_pointer(L->handler.exception)->object.stack_trace = trace;
         }
-        if(exception_stack) {
-            if(exception_stack->catch) {
-                kprintf("## catch handler in stack\n");
-                IP = exception_stack->catch;
+        if(L->exception_stack) {
+            if(L->exception_stack->catch) {
+                L->IP = L->exception_stack->catch;
             } else {
-                kprintf("## finally handler in stack\n");
-                IP = exception_stack->finally;
+                L->IP = L->exception_stack->finally;
             }
         } else {
-            kprintf("## no catch handler, rethrowing...\n");
-            js_set_exception_handler(handler.previous);
-            js_throw(handler.exception);
+            js_set_exception_handler(L->handler.previous);
+            js_throw(L->handler.exception);
         }
     }
     
     while(1) {
-        kprintf("## exception_stack is 0x%x\n", exception_stack);
         if(++global_instruction_counter >= VM_CYCLES_PER_COLLECTION) {
             global_instruction_counter = 0;
             js_gc_run();
         }
-        if(will_return) {
-            js_set_exception_handler(handler.previous);
-            return return_val;
+        if(L->will_return) {
+            js_set_exception_handler(L->handler.previous);
+            return L->return_val;
         }
         opcode = NEXT_UINT32();
         switch(opcode) {
@@ -223,12 +245,12 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 break;
         
             case JS_OP_RET:
-                if(exception_stack) {
-                    return_after_finally_val = POP();
-                    return_after_finally = true;
-                    IP = exception_stack->finally;
+                if(L->exception_stack) {
+                    L->return_after_finally_val = POP();
+                    L->return_after_finally = true;
+                    L->IP = L->exception_stack->finally;
                 } else {
-                    js_set_exception_handler(handler.previous);
+                    js_set_exception_handler(L->handler.previous);
                     return POP();
                 }
                 break;
@@ -254,7 +276,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
         
             case JS_OP_PUSHGLOBAL: {
                 js_string_t* var = NEXT_STRING();
-                PUSH(js_scope_get_global_var(scope, var));
+                PUSH(js_scope_get_global_var(L->scope, var));
                 break;
             }
     
@@ -274,11 +296,11 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 method = POP();
                 obj = POP();
                 if(js_value_is_primitive(obj)) {
-                    obj = js_to_object(vm, obj);
+                    obj = js_to_object(L->vm, obj);
                 }
                 fn = js_object_get(obj, js_to_js_string_t(method));
                 if(js_value_get_type(fn) != JS_T_FUNCTION) {
-                    js_throw_error(vm->lib.TypeError, "called non callable");
+                    js_throw_error(L->vm->lib.TypeError, "called non callable");
                 }
                 PUSH(js_call(fn, obj, argc, argv));
                 break;
@@ -287,14 +309,14 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_SETVAR: {
                 uint32_t idx = NEXT_UINT32();
                 uint32_t sc = NEXT_UINT32();
-                js_scope_set_var(scope, idx, sc, PEEK());
+                js_scope_set_var(L->scope, idx, sc, PEEK());
                 break;
             }
     
             case JS_OP_PUSHVAR: {
                 uint32_t idx = NEXT_UINT32();
                 uint32_t sc = NEXT_UINT32();
-                PUSH(js_scope_get_var(scope, idx, sc));
+                PUSH(js_scope_get_var(L->scope, idx, sc));
                 break;
             }
         
@@ -312,14 +334,14 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             
             case JS_OP_JMP: {
                 uint32_t next = NEXT_UINT32();
-                IP = next;
+                L->IP = next;
                 break;
             }
             
             case JS_OP_JIT: {
                 uint32_t next = NEXT_UINT32();
                 if(js_value_is_truthy(POP())) {
-                    IP = next;
+                    L->IP = next;
                 }
                 break;
             }
@@ -327,7 +349,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_JIF: {
                 uint32_t next = NEXT_UINT32();
                 if(!js_value_is_truthy(POP())) {
-                    IP = next;
+                    L->IP = next;
                 }
                 break;
             }
@@ -355,13 +377,13 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
         
             case JS_OP_SETGLOBAL: {
                 js_string_t* str = NEXT_STRING();
-                js_scope_set_global_var(scope, str, PEEK());
+                js_scope_set_global_var(L->scope, str, PEEK());
                 break;
             }
         
             case JS_OP_CLOSE: {
                 uint32_t sect = NEXT_UINT32();
-                PUSH(js_value_make_function(vm, image, sect, scope));
+                PUSH(js_value_make_function(L->vm, L->image, sect, L->scope));
                 break;
             }
 
@@ -374,16 +396,16 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 fn = POP();
                 if(js_value_get_type(fn) != JS_T_FUNCTION) {
-                    js_throw_error(vm->lib.TypeError, "called non callable");
+                    js_throw_error(L->vm->lib.TypeError, "called non callable");
                 }
-                PUSH(js_call(fn, vm->global_scope->global_object, argc, argv));
+                PUSH(js_call(fn, L->vm->global_scope->global_object, argc, argv));
                 break;
             }
         
             case JS_OP_SETCALLEE: {
                 uint32_t idx = NEXT_UINT32();
-                if(scope->parent) { /* not global scope... */
-                    js_scope_set_var(scope, idx, 0, scope->locals.callee);
+                if(L->scope->parent) { /* not global scope... */
+                    js_scope_set_var(L->scope, idx, 0, L->scope->locals.callee);
                 }
                 break;
             }
@@ -391,11 +413,11 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             case JS_OP_SETARG: {
                 uint32_t var = NEXT_UINT32();
                 uint32_t arg = NEXT_UINT32();
-                if(scope->parent) { /* not global scope... */
-                    if(arg >= argc) {
-                        js_scope_set_var(scope, var, 0, js_value_undefined());
+                if(L->scope->parent) { /* not global scope... */
+                    if(arg >= L->argc) {
+                        js_scope_set_var(L->scope, var, 0, js_value_undefined());
                     } else {
-                        js_scope_set_var(scope, var, 0, argv[arg]);
+                        js_scope_set_var(L->scope, var, 0, L->argv[arg]);
                     }
                 }
                 break;
@@ -439,7 +461,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 for(i = 0; i < count; i++) {
                     items[count - i - 1] = POP();
                 }
-                PUSH(js_make_array(vm, count, items));
+                PUSH(js_make_array(L->vm, count, items));
                 break;
             }
         
@@ -452,14 +474,13 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 }
                 fn = POP();
                 if(js_value_get_type(fn) != JS_T_FUNCTION) {
-                    js_throw_error(vm->lib.TypeError, "constructed non callable");
+                    js_throw_error(L->vm->lib.TypeError, "constructed non callable");
                 }
                 PUSH(js_construct(fn, argc, argv));
                 break;
             }
         
             case JS_OP_THROW: {
-                kprintf("## JS_OP_THROW\n");
                 js_throw(POP());
                 break;
             };
@@ -468,7 +489,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 js_string_t* member = NEXT_STRING();
                 VAL obj = POP();
                 if(js_value_is_primitive(obj)) {
-                    obj = js_to_object(vm, obj);
+                    obj = js_to_object(L->vm, obj);
                 }
                 PUSH(js_object_get(obj, member));
                 break;
@@ -481,7 +502,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             }
         
             case JS_OP_THIS: {
-                PUSH(this);
+                PUSH(L->this);
                 break;
             }
         
@@ -489,7 +510,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL val = POP();
                 VAL obj = POP();
                 if(js_value_is_primitive(obj)) {
-                    obj = js_to_object(vm, obj);
+                    obj = js_to_object(L->vm, obj);
                 }
                 js_object_put(obj, NEXT_STRING(), val);
                 PUSH(val);
@@ -497,12 +518,12 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             }
         
             case JS_OP_TST: {
-                temp_slot = POP();
+                L->temp_slot = POP();
                 break;
             }
         
             case JS_OP_TLD: {
-                PUSH(temp_slot);
+                PUSH(L->temp_slot);
                 break;
             }
         
@@ -510,7 +531,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL index = js_to_string(POP());
                 VAL object = POP();
                 if(js_value_is_primitive(object)) {
-                    object = js_to_object(vm, object);
+                    object = js_to_object(L->vm, object);
                 }
                 PUSH(js_object_get(object, &js_value_get_pointer(index)->string));
                 break;
@@ -521,7 +542,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL idx = js_to_string(POP());
                 VAL obj = POP();
                 if(js_value_is_primitive(obj)) {
-                    obj = js_to_object(vm, obj);
+                    obj = js_to_object(L->vm, obj);
                 }
                 js_object_put(obj, js_to_js_string_t(idx), val);
                 PUSH(val);
@@ -530,7 +551,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
         
             case JS_OP_OBJECT: {
                 uint32_t i, items = NEXT_UINT32();
-                VAL obj = js_make_object(vm);
+                VAL obj = js_make_object(L->vm);
                 for(i = 0; i < items; i++) {
                     VAL val = POP();
                     VAL key = js_to_string(POP());
@@ -555,8 +576,8 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
         
             case JS_OP_TYPEOFG: {
                 js_string_t* var = NEXT_STRING();
-                if(js_scope_global_var_exists(scope, var)) {
-                    PUSH(js_typeof(js_scope_get_global_var(scope, var)));
+                if(js_scope_global_var_exists(L->scope, var)) {
+                    PUSH(js_typeof(js_scope_get_global_var(L->scope, var)));
                 } else {
                     PUSH(js_value_undefined());
                 }
@@ -611,7 +632,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
             }
             
             case JS_OP_LINE: {
-                current_line = NEXT_UINT32();
+                L->current_line = NEXT_UINT32();
                 break;
             }
         
@@ -624,7 +645,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 VAL class = POP();
                 VAL obj = POP();
                 if(js_value_get_type(class) != JS_T_FUNCTION) {
-                    js_throw_error(vm->lib.TypeError, "expected a function in instanceof check");
+                    js_throw_error(L->vm->lib.TypeError, "expected a function in instanceof check");
                 }
                 if(js_value_is_primitive(obj)) {
                     PUSH(js_value_false());
@@ -646,54 +667,51 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
                 struct exception_frame* frame = js_alloc(sizeof(struct exception_frame));
                 frame->catch = catch;
                 frame->finally = finally;
-                frame->prev = exception_stack;
-                kprintf("## pushing exception handler\n");
-                exception_stack = frame;
+                frame->prev = L->exception_stack;
+                L->exception_stack = frame;
                 break;
             }
             
             case JS_OP_POPTRY: {
-                struct exception_frame* frame = exception_stack;
-                exception_stack = frame->prev;
-                kprintf("## popping exception handler (in JS_OP_POPTRY)\n");
-                IP = frame->finally;
+                struct exception_frame* frame = L->exception_stack;
+                L->exception_stack = frame->prev;
+                L->IP = frame->finally;
                 break;
             }
             
             case JS_OP_CATCH: {
-                exception_stack->catch = 0;
-                js_scope_set_var(scope, NEXT_UINT32(), 0, exception);
-                exception = js_value_undefined();
-                exception_thrown = false;
+                L->exception_stack->catch = 0;
+                js_scope_set_var(L->scope, NEXT_UINT32(), 0, L->exception);
+                L->exception = js_value_undefined();
+                L->exception_thrown = false;
                 break;
             }
             
             case JS_OP_CATCHG: {
-                exception_stack->catch = 0;
-                js_scope_set_global_var(scope, NEXT_STRING(), exception);
+                L->exception_stack->catch = 0;
+                js_scope_set_global_var(L->scope, NEXT_STRING(), L->exception);
                 break;
             }
             
             case JS_OP_POPCATCH: {
-                IP = exception_stack->finally;
+                L->IP = L->exception_stack->finally;
                 break;
             }
             
             case JS_OP_FINALLY: {
-                kprintf("## popping exception handler (in JS_OP_FINALLY)\n");
-                exception_stack = exception_stack->prev;
+                L->exception_stack = L->exception_stack->prev;
                 break;
             }
             
             case JS_OP_POPFINALLY: {
-                if(exception_thrown) {
-                    js_throw(exception);
+                if(L->exception_thrown) {
+                    js_throw(L->exception);
                 }
-                if(return_after_finally) {
-                    return_after_finally = false;
-                    will_return = true;
-                    return_val = return_after_finally_val;
-                    return_after_finally_val = js_value_undefined();
+                if(L->return_after_finally) {
+                    L->return_after_finally = false;
+                    L->will_return = true;
+                    L->return_val = L->return_after_finally_val;
+                    L->return_after_finally_val = js_value_undefined();
                 }
                 break;
             }
