@@ -14,7 +14,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/keymaps kernel/drivers/ps2kb \
 		kernel/drivers/ide kernel/drivers/ps2mouse kernel/drivers/fat16 \
 		kernel/drivers/serial kernel/drivers/mbr kernel/drivers/vga \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils kernel/userlib \
-		kernel/process userland kernel/drivers/bios_hdd
+		kernel/process userland kernel/drivers/bios_hdd kernel/vm
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
@@ -58,7 +58,7 @@ clean:
 	rm -f js/*.o
 
 src/realmode.o: src/realmode.asm
-	@echo "    nasm src/realmode.asm"
+	@echo "    nasm  src/realmode.asm"
 	@nasm -f bin -o src/realmode.bin $<
 	@objcopy --input binary --output elf32-i386 --binary-architecture i386 src/realmode.bin $@
 	@rm src/realmode.bin
