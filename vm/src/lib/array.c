@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "gc.h"
 #include "object.h"
+#include "exception.h"
 
 typedef struct {
     js_value_t base;
@@ -43,6 +44,22 @@ VAL js_make_array(struct js_vm* vm, uint32_t count, VAL* items)
     js_object_put_accessor(vm, obj, "length", array_length_get, NULL);
     
     return obj;
+}
+
+VAL* js_array_items(VAL array, uint32_t* count)
+{
+    if(js_value_get_type(array) != JS_T_ARRAY) {
+        js_panic("non array passed to js_array_items");
+    }
+    js_array_t* ary = (js_array_t*)js_value_get_pointer(array);
+    VAL* out = js_alloc(sizeof(VAL) * ary->length);
+    memcpy(out, ary->items, sizeof(VAL) * ary->items_length);
+    uint32_t i;
+    for(i = ary->items_length; i < ary->length; i++) {
+        out[i] = js_value_undefined();
+    }
+    *count = ary->length;
+    return out;
 }
 
 static void array_put(js_array_t* ary, uint32_t index, VAL val)
