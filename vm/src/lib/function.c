@@ -29,9 +29,31 @@ static VAL Function_prototype_call(js_vm_t* vm, void* state, VAL this, uint32_t 
     if(argc == 0) {
         return js_call(this, vm->global_scope->global_object, 0, NULL);
     } else {
-        VAL* new_args = js_alloc(sizeof(VAL) * (argc - 1));
-        memcpy(new_args, argv, sizeof(VAL) * (argc - 1));
+        VAL* new_args = NULL;
+        if(argc >= 2) {
+            js_alloc(sizeof(VAL) * (argc - 1));
+            memcpy(new_args, argv, sizeof(VAL) * (argc - 1));
+        }
         return js_call(this, argv[0], argc - 1, new_args);
+    }
+}
+
+static VAL Function_prototype_apply(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "object is not a function");
+    }
+    if(argc == 0) {
+        return js_call(this, vm->global_scope->global_object, 0, NULL);
+    } else if(argc == 1) {
+        return Function_prototype_call(vm, state, this, argc, argv);
+    } else {
+        if(js_value_get_type(argv[1]) != JS_T_ARRAY) {
+            js_throw_error(vm->lib.TypeError, "expected array as second parameter to Function.prototype.apply");
+        }
+        uint32_t new_argc;
+        VAL* new_args = js_array_items(argv[1], &new_argc);
+        return js_call(this, argv[0], new_argc, new_args);
     }
 }
 
@@ -49,4 +71,5 @@ void js_lib_function_initialize(struct js_vm* vm)
     
     js_object_put(vm->lib.Function_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), Function_prototype_toString, NULL));
     js_object_put(vm->lib.Function_prototype, js_cstring("call"), js_value_make_native_function(vm, NULL, js_cstring("call"), Function_prototype_call, NULL));
+    js_object_put(vm->lib.Function_prototype, js_cstring("apply"), js_value_make_native_function(vm, NULL, js_cstring("apply"), Function_prototype_apply, NULL));
 }
