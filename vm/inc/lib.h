@@ -38,6 +38,7 @@ VAL js_make_object(struct js_vm* vm);
 /* Array */
 void js_lib_array_initialize(struct js_vm* vm);
 VAL js_make_array(struct js_vm* vm, uint32_t count, VAL* items);
+VAL* js_array_items(VAL array, uint32_t* count);
 
 /* Number */
 void js_lib_number_initialize(struct js_vm* vm);
