@@ -101,7 +101,9 @@ static VAL VM_prototype_expose_function(js_vm_t* vm, void* state, VAL this, uint
     memcpy(user_fn, kernel_fn, sizeof(js_function_t));
     user_fn->base.object.class = target_vm->lib.Function;
     user_fn->base.object.prototype = target_vm->lib.Function_prototype;
-    return js_value_make_pointer((js_value_t*)user_fn);
+    VAL user_fn_val = js_value_make_pointer((js_value_t*)user_fn);
+    js_object_put(user_fn_val, js_cstring("prototype"), js_value_make_object(target_vm->lib.Object, user_fn_val));
+    return user_fn_val;
 }
 
 static VAL VM_prototype_create_object(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
