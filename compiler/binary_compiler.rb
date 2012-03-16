@@ -634,13 +634,15 @@ module JSOS
       output :poptry
 
       output [:label, catch_label]
-      if @scope_stack.any?
-        output :catch, create_local_var(node.catch_variable)
-      else
-        output :catchg, node.catch_variable
+      if node.catch_statements
+        if @scope_stack.any?
+          output :catch, create_local_var(node.catch_variable)
+        else
+          output :catchg, node.catch_variable
+        end
+        node.catch_statements.each { |n| compile_node n }
+        output :popcatch
       end
-      node.catch_statements.each { |n| compile_node n } if node.catch_statements
-      output :popcatch
 
       output [:label, finally_label]
       output :finally
