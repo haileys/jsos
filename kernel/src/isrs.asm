@@ -1,3 +1,5 @@
+use32
+
 global asm_isr_init
 extern isr_dispatch
 extern idt_register_handler
@@ -87,7 +89,5 @@ asm_isr_init:
 	isr 47
 	isr 48
 	isr 49
-
-	isr 0x80
 
 	ret
