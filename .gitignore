@@ -12,3 +12,5 @@ userland
 .gdbinit
 *.sys
 kernel/build/jsos.rgb
+*.256
+*.bxrc
