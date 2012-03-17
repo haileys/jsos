@@ -107,7 +107,7 @@ static void unhandled_exception(VAL exception)
             js_value_get_pointer(js_to_string(exception))->string.buff,
             js_value_get_pointer(exception)->object.stack_trace->buff);
     } else {
-        panicf("Unhandled exception: %s\n%s", js_value_get_pointer(js_to_string(exception))->string.buff);
+        panicf("Unhandled exception: %s\n", js_value_get_pointer(js_to_string(exception))->string.buff);
     }
 }
 
@@ -142,8 +142,12 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     idt_init(vm);
     io_init(vm);
     
+    VAL Kernel = js_object_get(vm->global_scope->global_object, js_cstring("Kernel"));
+    
+    js_object_put(Kernel, js_cstring("bootDevice"), js_value_make_double(mbd->boot_device >> 24));
+    
     VAL modules = js_make_object(vm);
-    js_object_put(js_object_get(vm->global_scope->global_object, js_cstring("Kernel")), js_cstring("modules"), modules);
+    js_object_put(Kernel, js_cstring("modules"), modules);
     load_modules(modules, (multiboot_module_t*)mbd->mods_addr, mbd->mods_count);
     
     VAL vinit = js_object_get(modules, js_cstring("/kernel/init.jmg"));
@@ -174,6 +178,7 @@ void kmain(struct multiboot_info* mbd, uint32_t magic)
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC)         panic("multiboot did not pass correct magic number");
     if(!(mbd->flags & MULTIBOOT_INFO_MEMORY))       panic("multiboot did not pass memory information");
     if(!(mbd->flags & MULTIBOOT_INFO_MEM_MAP))      panic("multiboot did not pass memory map");
+    if(!(mbd->flags & MULTIBOOT_INFO_BOOTDEV))      panic("multiboot did not pass boot device");
     
     int dummy;
     js_gc_init(&dummy);
