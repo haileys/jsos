@@ -60,6 +60,7 @@ static js_instruction_t insns[] = {
     { "bitnot",     OPERAND_NONE },
     { "line",       OPERAND_UINT32 },
     { "debugger",   OPERAND_NONE },
+    { "instanceof", OPERAND_NONE },
     { "negate",     OPERAND_NONE },
     { "try",        OPERAND_UINT32_UINT32 },
     { "poptry",     OPERAND_NONE },
@@ -153,14 +154,14 @@ struct vm_locals {
     VAL temp_slot;
     uint32_t current_line;
     
-    js_exception_handler_t handler;
-    struct exception_frame* exception_stack;
     bool exception_thrown;
     bool return_after_finally;
     bool will_return;
     VAL return_val;
     VAL return_after_finally_val;
     VAL exception;
+    struct exception_frame* exception_stack;
+    js_exception_handler_t handler;
 };
 
 static VAL vm_exec(struct vm_locals* L);
@@ -200,13 +201,16 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     
     L.handler.previous = js_current_exception_handler();
     js_set_exception_handler(&L.handler);
-    
-    return vm_exec(&L);
+    VAL retn = vm_exec(&L);
+    js_set_exception_handler(L.handler.previous);
+    return retn;
 }
 
 static VAL vm_exec(struct vm_locals* L)
 {
+    volatile char buff[1024];
     uint32_t opcode;
+    (void)buff;
     
     if(setjmp(L->handler.env)) {
         // exception was thrown
@@ -235,7 +239,6 @@ static VAL vm_exec(struct vm_locals* L)
             js_gc_run();
         }
         if(L->will_return) {
-            js_set_exception_handler(L->handler.previous);
             return L->return_val;
         }
         opcode = NEXT_UINT32();
@@ -250,7 +253,6 @@ static VAL vm_exec(struct vm_locals* L)
                     L->return_after_finally = true;
                     L->IP = L->exception_stack->finally;
                 } else {
-                    js_set_exception_handler(L->handler.previous);
                     return POP();
                 }
                 break;
@@ -674,8 +676,8 @@ static VAL vm_exec(struct vm_locals* L)
             
             case JS_OP_POPTRY: {
                 struct exception_frame* frame = L->exception_stack;
-                L->exception_stack = frame->prev;
                 L->IP = frame->finally;
+                L->exception_stack = frame->prev;
                 break;
             }
             
@@ -690,6 +692,8 @@ static VAL vm_exec(struct vm_locals* L)
             case JS_OP_CATCHG: {
                 L->exception_stack->catch = 0;
                 js_scope_set_global_var(L->scope, NEXT_STRING(), L->exception);
+                L->exception = js_value_undefined();
+                L->exception_thrown = false;
                 break;
             }
             
@@ -699,7 +703,6 @@ static VAL vm_exec(struct vm_locals* L)
             }
             
             case JS_OP_FINALLY: {
-                L->exception_stack = L->exception_stack->prev;
                 break;
             }
             
