@@ -1,4 +1,4 @@
-(function() {    
+(function() {
     Drivers = {};
     
     Kernel.loadImage(Kernel.modules["/kernel/drivers/bios_hdd.jmg"]);
@@ -14,13 +14,14 @@
     } else {
         Console.write("Detected IDE drive of size " + Math.round(hdd.getDriveSize() / 1024 / 1024) + " MiB\n");
     }
+    
     var mbr = new Drivers.MBR(hdd);
     var fs = new Drivers.FAT16(mbr.partitions[0]);
     fs.init();
     Kernel.filesystem = fs;
     
     var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
-                    "drivers/serial", "drivers/pit", "process",
+                    "drivers/serial", "drivers/pit", "vm", "process",
                     "drivers/rtc", "drivers/vga" ];
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
@@ -43,12 +44,8 @@
     }
     
     Drivers.PIT.init(50);
-    Drivers.PIT.subscribe(function() {
-        Process.tick();
-    });
     
     Kernel.reboot = function() {
-        
         while(Kernel.inb(0x64) & 0x02);
         Kernel.outb(0x64, 0xFE);
         while(true) { }
@@ -58,22 +55,19 @@
     var time = Drivers.RTC.readTime();
     Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n\n");
     
-    Console.write("jit compiling a function... ");
-    var fn = Kernel.jit(function() { return 123; });
-    Console.write("it returns: ");
-    Console.write(fn() + "\n");
-    while(true) { }
+    Kernel.keyboard.onKeyDown = function(char, scancode) { Console.write(char); };
     
     var a = new Process();
-    a._vm.globals.log = a._vm.exposeFunction(Console.write);
-    a._vm.globals.yield = a._vm.exposeFunction(Process.yield);
     a._vm.globals.processName = "A";
+    a.enqueueCallback(function() { a.load("/userland.jmg"); });
     
     var b = new Process();
-    b._vm.globals.log = b._vm.exposeFunction(Console.write);
-    b._vm.globals.yield = b._vm.exposeFunction(Process.yield);
     b._vm.globals.processName = "B";
+    b.enqueueCallback(function() { b.load("/userland.jmg"); });
     
-    Process.yield(function() { a.load("/userland.jmg"); });
-    Process.yield(function() { b.load("/userland.jmg"); });
+    while(true) {
+        if(!Process.scheduleNext()) {
+            Kernel.panic("no processes scheduled");
+        }
+    }
 })();

@@ -1,5 +1,4 @@
 (function cb() {
-    log(processName);
-    yield(cb);
+    OS.log(processName);
+    OS.yield(cb);
 })();
-
