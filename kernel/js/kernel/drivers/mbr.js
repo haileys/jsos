@@ -32,6 +32,7 @@
         this.endCylinder    = sectorCylinder >> 6;
         this.relativeSector = BinaryUtils.readU32(buffer, 8);
         this.totalSectors   = BinaryUtils.readU32(buffer, 12);
+        this.systemName     = MBR.systemIDs[this.systemID];
     };
     MBR.Partition.prototype.readSector = function(sector) {
         return this.drive.readSector(sector + this.relativeSector);
