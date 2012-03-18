@@ -13,6 +13,7 @@
 #include "lib.h"
 
 bool x86_64_support();
+uint32_t rdtsc();
 
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
@@ -25,79 +26,6 @@ void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
         VAL data = js_value_make_string((char*)modules[i].mod_start, size);
         js_object_put(object, name, data);
     }
-}
-
-static void check_struct_align()
-{
-    #define check(expr) \
-        if((uint32_t)&(expr) & 3) { \
-            panicf("alignment check failed: %s", #expr); \
-        } \
-        if(sizeof(expr) & 3) { \
-            panicf("size check failed: %s", #expr); \
-        }
-    
-    js_string_t string;
-    check(string);
-    check(string.buff);
-    
-    js_object_t object;
-    check(object);
-    check(object.vtable);
-    check(object.prototype);
-    check(object.class);
-    check(object.stack_trace);
-    check(object.state);
-    check(object.properties);
-    
-    js_value_t value;
-    check(value);
-    check(value.string);
-    check(value.object);
-    
-    js_function_t function;
-    check(function);
-    check(function.base);
-    check(function.vm);
-    check(function.name);
-    check(function.native.state);
-    check(function.native.call);
-    check(function.native.construct);
-    check(function.js.image);
-    check(function.js.outer_scope);
-    
-    js_property_descriptor_t property_descriptor;
-    check(property_descriptor);
-    check(property_descriptor.data.value);
-    check(property_descriptor.accessor.get);
-    check(property_descriptor.accessor.set);
-    
-    js_vm_t vm;
-    check(vm);
-    check(vm.global_scope);
-    check(vm.lib);
-    
-    js_lib_t lib;
-    check(lib.Function);
-    check(lib.Function_prototype);
-    check(lib.Object);
-    check(lib.Object_prototype);
-    check(lib.Array);
-    check(lib.Array_prototype);
-    check(lib.Number);
-    check(lib.Number_prototype);
-    check(lib.String);
-    check(lib.String_prototype);
-    check(lib.Error);
-    check(lib.Error_prototype);
-    check(lib.RangeError);
-    check(lib.RangeError_prototype);
-    check(lib.ReferenceError);
-    check(lib.ReferenceError_prototype);
-    check(lib.TypeError);
-    check(lib.TypeError_prototype);
-    
-    #undef check
 }
 
 static void unhandled_exception(VAL exception)
@@ -125,13 +53,11 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
         }
     }
     
-    // run alignment checks before using the gc
-    check_struct_align();
-    
     mm_init((multiboot_memory_map_t*)mbd->mmap_addr, mbd->mmap_length, highest_module);
     gdt_init();
     
     js_vm_t* vm = js_vm_new();
+    js_lib_math_seed_random(rdtsc());
     js_set_panic_handler(js_panic_handler);
     
     console_init(vm);
@@ -161,7 +87,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     
     VAL exception;
     JS_TRY({
-        js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
+        js_vm_exec(vm, image, 0, vm->global_scope, vm->global_scope->global_object, 0, NULL);
         for(;;) {
             interrupt_dispatch_events();
             __asm__ volatile("hlt");
