@@ -1,6 +1,7 @@
 global gdt_reload_segment_registers
 global paging_set_directory
 global x86_64_support
+global rdtsc
 
 gdt_reload_segment_registers:
     jmp 0x08:.flush_cs
@@ -11,6 +12,10 @@ gdt_reload_segment_registers:
     mov fs, ax
     mov gs, ax
     mov ss, ax
+    ret
+
+rdtsc:
+    rdtsc
     ret
 
 paging_set_directory:

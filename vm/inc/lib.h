@@ -56,5 +56,6 @@ void js_throw_error(VAL class, char* fmt, ...) __attribute__((noreturn));
 
 /* Math */
 void js_lib_math_initialize(struct js_vm* vm);
+void js_lib_math_seed_random(int seed);
 
 #endif
