@@ -83,7 +83,7 @@ static VAL VM_prototype_execute(js_vm_t* vm, void* state, VAL this, uint32_t arg
         section = fn->js.section;
     }
     
-    return js_vm_exec(target_vm, image, section, target_vm->global_scope, js_value_null(), 0, NULL);
+    return js_vm_exec(target_vm, image, section, target_vm->global_scope, target_vm->global_scope->global_object, 0, NULL);
 }
 
 static VAL VM_prototype_expose_function(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
