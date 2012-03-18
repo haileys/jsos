@@ -178,6 +178,10 @@
         this.name = entry.filename;
     };
     
+    FAT16.Directory.prototype.isFile = function() {
+        return false;
+    };
+    
     FAT16.Directory.prototype.readEntries = function() {
         var cluster = this.fs.readClusterChain(this.entry.firstCluster);
         return this.fs.readDirectoryEntries(cluster);
@@ -188,6 +192,10 @@
         this.entry = entry;
         this.name = entry.filename;
         this.size = entry.size;
+    };
+    
+    FAT16.File.prototype.isFile = function() {
+        return true;
     };
     
     FAT16.File.prototype.readAllBytes = function() {

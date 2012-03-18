@@ -2,23 +2,23 @@
     Drivers = {};
     
     Kernel.loadImage(Kernel.modules["/kernel/drivers/bios_hdd.jmg"]);
-    Kernel.loadImage(Kernel.modules["/kernel/drivers/ide.jmg"]);
+    Kernel.loadImage(Kernel.modules["/kernel/fs.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/mbr.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/fat16.jmg"]);
     
-    Console.write("Booting from drive number " + Kernel.bootDevice + "\n");
+    Kernel.filesystem = new Filesystem();
+    var hdd = new Drivers.BiosHDD(Kernel.bootDevice);
+    var mbr = new Drivers.MBR(hdd);
+    Kernel.filesystem.mount("/", new Drivers.FAT16(mbr.partitions[0]));
     
+    /*
     var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
     if(!hdd.detect()) {
         Kernel.panic("did not detect IDE drive on 0x1f0:MASTER")
     } else {
         Console.write("Detected IDE drive of size " + Math.round(hdd.getDriveSize() / 1024 / 1024) + " MiB\n");
     }
-    
-    var mbr = new Drivers.MBR(hdd);
-    var fs = new Drivers.FAT16(mbr.partitions[0]);
-    fs.init();
-    Kernel.filesystem = fs;
+    */
     
     var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
                     "drivers/serial", "drivers/pit", "vm", "process",
@@ -26,11 +26,11 @@
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
         Console.write("Loading " + path + "... ");
-        var file = fs.find(path);
-        if(!(file instanceof Drivers.FAT16.File)) {
+        var data = Kernel.filesystem.read(path);
+        if(!data) {
             throw new Error("could not load " + path);
         }
-        Kernel.loadImage(file.readAllBytes());
+        Kernel.loadImage(data);
         Console.write("ok.\n");
     }
     
@@ -58,16 +58,18 @@
     Kernel.keyboard.onKeyDown = function(char, scancode) { Console.write(char); };
     
     var a = new Process();
-    a._vm.globals.processName = "A";
     a.enqueueCallback(function() { a.load("/userland.jmg"); });
     
-    var b = new Process();
-    b._vm.globals.processName = "B";
-    b.enqueueCallback(function() { b.load("/userland.jmg"); });
+    Console.write("Have some random numbers!\n");
+    for(var i = 0; i < 10; i++) {
+        Console.write(Math.random() + "\n");
+    }
     
+    /*
     while(true) {
         if(!Process.scheduleNext()) {
             Kernel.panic("no processes scheduled");
         }
     }
+    */
 })();
