@@ -20,7 +20,7 @@ static VAL Kernel_load_image(js_vm_t* vm, void* state, VAL this, uint32_t argc, 
     if(!image) {
         js_throw_message(vm, "Couldn't parse image");
     }
-    js_vm_exec(vm, image, 0, vm->global_scope, js_value_null(), 0, NULL);
+    js_vm_exec(vm, image, 0, vm->global_scope, vm->global_scope->global_object, 0, NULL);
     return js_value_true();
 }
 
