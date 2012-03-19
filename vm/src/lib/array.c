@@ -208,6 +208,54 @@ static VAL Array_prototype_slice(js_vm_t* vm, void* state, VAL this, uint32_t ar
     return js_value_make_pointer((js_value_t*)new_ary);
 }
 
+static VAL Array_prototype_splice(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_ARRAY) {
+        js_throw_error(vm->lib.TypeError, "Array.prototype.splice is not generic");
+    }
+    js_array_t* ary = (js_array_t*)js_value_get_pointer(this);
+    if(argc == 0) {
+        return js_make_array(vm, 0, NULL);
+    }
+    uint32_t begin = js_to_uint32(argv[0]);
+    uint32_t length = ary->length - begin;
+    if(argc >= 2) {
+        length = js_to_uint32(argv[1]);
+        if(length > ary->length - begin) {
+            length = ary->length - begin;
+        }
+    }
+    uint32_t removed_real_length = begin + length > ary->items_length ? ary->items_length - begin : length;
+    VAL* removed = js_alloc(sizeof(VAL) * removed_real_length);
+    if(begin < ary->items_length) {
+        memcpy(removed, ary->items + begin, sizeof(VAL) * removed_real_length);
+    }
+    VAL retn = js_make_array(vm, removed_real_length, removed);
+    ((js_array_t*)js_value_get_pointer(retn))->length = length;
+    uint32_t replace_length = argc > 2 ? argc - 2 : 0;
+    if(ary->items_length < begin + replace_length) {
+        ary->items_length = begin + replace_length;
+        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
+    }
+    if(replace_length > length) {
+        uint32_t diff = replace_length - length;
+        ary->length += diff;
+        ary->items_length += diff;
+        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
+        memmove(ary->items + begin + length + diff, ary->items + begin + length, sizeof(VAL) * (ary->items_length - begin - diff));
+    } else if(replace_length < length) {
+        uint32_t diff = length - replace_length;
+        ary->length -= diff;
+        ary->items_length -= diff;
+        memmove(ary->items + begin, ary->items + begin + diff, sizeof(VAL) * diff);
+        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
+    }
+    if(replace_length != 0) {
+        memcpy(ary->items + begin, argv + 2, sizeof(VAL) * replace_length);
+    }
+    return retn;
+}
+
 static VAL Array_prototype_join(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     js_array_t* ary = as_array(vm, this);
@@ -239,5 +287,6 @@ void js_lib_array_initialize(js_vm_t* vm)
     js_object_put(vm->global_scope->global_object, js_cstring("Array"), vm->lib.Array);
     js_object_put(vm->lib.Array_prototype, js_cstring("push"), js_value_make_native_function(vm, NULL, js_cstring("push"), Array_prototype_push, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("slice"), js_value_make_native_function(vm, NULL, js_cstring("slice"), Array_prototype_slice, NULL));
+    js_object_put(vm->lib.Array_prototype, js_cstring("splice"), js_value_make_native_function(vm, NULL, js_cstring("splice"), Array_prototype_splice, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("join"), js_value_make_native_function(vm, NULL, js_cstring("join"), Array_prototype_join, NULL));
 }
