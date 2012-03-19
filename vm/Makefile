@@ -17,7 +17,7 @@ runner: $(OBJS)
 
 compile: $(OBJS)
 
-%.o: %.c
+%.o: %.c Makefile
 	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
