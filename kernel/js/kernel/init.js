@@ -6,10 +6,37 @@
     Kernel.loadImage(Kernel.modules["/kernel/drivers/mbr.jmg"]);
     Kernel.loadImage(Kernel.modules["/kernel/drivers/fat16.jmg"]);
     
-    Kernel.filesystem = new Filesystem();
-    var hdd = new Drivers.BiosHDD(Kernel.bootDevice);
-    var mbr = new Drivers.MBR(hdd);
-    Kernel.filesystem.mount("/", new Drivers.FAT16(mbr.partitions[0]));
+    (function() {
+        Kernel.filesystem = new Filesystem();
+        var hdd = new Drivers.BiosHDD(Kernel.bootDevice);
+        var mbr = new Drivers.MBR(hdd);
+        Kernel.filesystem.mount("/", new Drivers.FAT16(mbr.partitions[0]));  
+    })();
+    
+    (function() {
+        Console.write("Detecting IDE... ");
+        var ideDriver = Kernel.filesystem.read("/kernel/drivers/ide.jmg");
+        if(ideDriver === null) {
+            Console.write("could not load driver\n");
+            return;
+        }
+        Kernel.loadImage(ideDriver);
+        var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
+        if(!hdd.detect()) {
+            Console.write("no IDE drive detected\n");
+            return;
+        }
+        var mbr = new Drivers.MBR(hdd);
+        var fat16 = new Drivers.FAT16(mbr.partitions[0]);
+        fat16.init();
+        if(fat16.find("/kernel/drivers/fat16.jmg") === null) {
+            Console.write("did not boot from master on primary channel\n");
+            return;
+        }
+        Kernel.filesystem.unmount("/");
+        Kernel.filesystem.mount("/", fat16);
+        Console.write("ok\n");
+    })();
     
     /*
     var hdd = new Drivers.IDE(0x1f0, Drivers.IDE.MASTER);
@@ -43,7 +70,7 @@
         Kernel.serial.writeString(str + "\n");
     }
     
-    Drivers.PIT.init(50);
+    Drivers.PIT.init(100);
     
     Kernel.reboot = function() {
         while(Kernel.inb(0x64) & 0x02);
@@ -60,16 +87,11 @@
     var a = new Process();
     a.enqueueCallback(function() { a.load("/userland.jmg"); });
     
-    Console.write("Have some random numbers!\n");
-    for(var i = 0; i < 10; i++) {
-        Console.write(Math.random() + "\n");
-    }
-    
-    /*
     while(true) {
+        Console.write(".");
+        Kernel.dispatchInterrupts();
         if(!Process.scheduleNext()) {
             Kernel.panic("no processes scheduled");
         }
     }
-    */
 })();
