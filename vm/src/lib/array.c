@@ -217,43 +217,54 @@ static VAL Array_prototype_splice(js_vm_t* vm, void* state, VAL this, uint32_t a
     if(argc == 0) {
         return js_make_array(vm, 0, NULL);
     }
+    
     uint32_t begin = js_to_uint32(argv[0]);
-    uint32_t length = ary->length - begin;
-    if(argc >= 2) {
-        length = js_to_uint32(argv[1]);
-        if(length > ary->length - begin) {
-            length = ary->length - begin;
+    uint32_t remove_length = argc > 1 ? js_to_uint32(argv[1]) : ary->length - begin;
+    if(remove_length + begin > ary->length) {
+        remove_length = ary->length - begin;
+    }
+    uint32_t replace_length = argc > 2 ? argc - 2 : 0;
+    uint32_t trailer_begin = begin + remove_length;
+    
+    uint32_t new_length = ary->length - remove_length + replace_length;
+    
+    // i'm going to ignore outputting sparse arrays for now:
+    uint32_t i;
+    VAL* old_items = js_alloc(sizeof(VAL) * (remove_length > 4 ? remove_length : 4));
+    for(i = 0; i < remove_length; i++) {
+        uint32_t ary_i = begin + i;
+        if(ary_i > ary->items_length) {
+            old_items[i] = js_value_undefined();
+        } else {
+            old_items[i] = ary->items[ary_i];
         }
     }
-    uint32_t removed_real_length = begin + length > ary->items_length ? ary->items_length - begin : length;
-    VAL* removed = js_alloc(sizeof(VAL) * removed_real_length);
-    if(begin < ary->items_length) {
-        memcpy(removed, ary->items + begin, sizeof(VAL) * removed_real_length);
+    
+    VAL* new_items = js_alloc(sizeof(VAL) * (new_length > 4 ? new_length : 4));
+    uint32_t new_index = 0;
+    for(i = 0; i < begin; i++) {
+        if(i > ary->items_length) {
+            new_items[new_index++] = js_value_undefined();
+        } else {
+            new_items[new_index++] = ary->items[i];
+        }
     }
-    VAL retn = js_make_array(vm, removed_real_length, removed);
-    ((js_array_t*)js_value_get_pointer(retn))->length = length;
-    uint32_t replace_length = argc > 2 ? argc - 2 : 0;
-    if(ary->items_length < begin + replace_length) {
-        ary->items_length = begin + replace_length;
-        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
+    for(i = 0; i < replace_length; i++) {
+        new_items[new_index++] = argv[2 + i];
     }
-    if(replace_length > length) {
-        uint32_t diff = replace_length - length;
-        ary->length += diff;
-        ary->items_length += diff;
-        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
-        memmove(ary->items + begin + length + diff, ary->items + begin + length, sizeof(VAL) * (ary->items_length - begin - diff));
-    } else if(replace_length < length) {
-        uint32_t diff = length - replace_length;
-        ary->length -= diff;
-        ary->items_length -= diff;
-        memmove(ary->items + begin, ary->items + begin + diff, sizeof(VAL) * diff);
-        ary->items = js_realloc(ary->items, sizeof(VAL) * ary->items_length);
+    for(i = trailer_begin; i < ary->items_length; i++) {
+        if(i > ary->items_length) {
+            new_items[new_index++] = js_value_undefined();
+        } else {
+            new_items[new_index++] = ary->items[i];
+        }
     }
-    if(replace_length != 0) {
-        memcpy(ary->items + begin, argv + 2, sizeof(VAL) * replace_length);
-    }
-    return retn;
+    ary->items_length = new_length;
+    ary->length = new_length;
+    ary->capacity = new_length > 4 ? new_length : 4;
+    ary->items = new_items;
+    
+    return js_make_array(vm, remove_length, old_items);
 }
 
 static VAL Array_prototype_join(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
