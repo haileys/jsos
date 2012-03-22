@@ -11,7 +11,7 @@ static idt_entry_t* idt = (idt_entry_t*)0x1600;
 
 static VAL js_isr_table;
 
-#define MAX_QUEUED_INTERRUPTS 16
+#define MAX_QUEUED_INTERRUPTS 32
 
 static struct {
     uint32_t interrupt;
@@ -42,21 +42,6 @@ static void remap_irqs()
 }
 
 void asm_isr_init();
-
-void idt_init(js_vm_t* vm)
-{    
-    cli();
-    asm_isr_init();
-    remap_irqs();
-    idtr.size = (256*8) - 1;
-    idtr.offset = (uint32_t)idt;
-    __asm__ volatile("lidt (%0)" :: "m"(idtr));
-    
-    js_isr_table = js_make_object(vm);
-    js_gc_register_global(&js_isr_table, sizeof(js_isr_table));
-    js_object_put(js_object_get(vm->global_scope->global_object, js_cstring("Kernel")), js_cstring("isrs"), js_isr_table);
-    sti();
-}
 
 void idt_register_handler(uint8_t gate, uint32_t isr)
 {
@@ -128,4 +113,27 @@ void interrupt_dispatch_events()
             js_call(isr, js_isr_table, 1, &errcode);
         }
     }
+}
+
+static VAL Kernel_dispatch_interrupts(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    interrupt_dispatch_events();
+    return js_value_undefined();
+}
+
+void idt_init(js_vm_t* vm)
+{    
+    cli();
+    asm_isr_init();
+    remap_irqs();
+    idtr.size = (256*8) - 1;
+    idtr.offset = (uint32_t)idt;
+    __asm__ volatile("lidt (%0)" :: "m"(idtr));
+    
+    js_isr_table = js_make_object(vm);
+    js_gc_register_global(&js_isr_table, sizeof(js_isr_table));
+    VAL Kernel = js_object_get(vm->global_scope->global_object, js_cstring("Kernel"));
+    js_object_put(Kernel, js_cstring("isrs"), js_isr_table);
+    js_object_put(Kernel, js_cstring("dispatchInterrupts"), js_value_make_native_function(vm, NULL, js_cstring("dispatchInterrupts"), Kernel_dispatch_interrupts, NULL));
+    sti();
 }
