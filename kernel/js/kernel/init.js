@@ -97,7 +97,7 @@
     while(true) {
         Kernel.dispatchInterrupts();
         if(!Process.scheduleNext()) {
-//            Kernel.hlt();
+            Kernel.hlt();
         }
     }
 })();
