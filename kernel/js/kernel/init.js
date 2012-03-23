@@ -66,10 +66,6 @@
     Kernel.serial = new Drivers.Serial(Drivers.Serial.COM1);
     Kernel.serial.init();
     
-    Kernel.log = function(str) {
-        Kernel.serial.writeString(str + "\n");
-    }
-    
     Drivers.PIT.init(100);
     
     Kernel.reboot = function() {
@@ -78,20 +74,30 @@
         while(true) { }
     };
     
-    Console.write("\nReading time...\n");
-    var time = Drivers.RTC.readTime();
-    Console.write("The time is: " + time.hours + ":" + time.minutes + ":" + time.seconds + "  " + time.day + "/" + time.month + "/" + time.year + "\n\n");
-    
-    Kernel.keyboard.onKeyDown = function(char, scancode) { Console.write(char); };
-    
-    var a = new Process();
-    a.enqueueCallback(function() { a.load("/userland.jmg"); });
+    (function() {
+        var init = new Process();
+        init.enqueueCallback(function() { init.load("/userland.jmg"); });
+        // stdin:
+        var stdinReaders = new Pipe();
+        init.fds[0] = new Pipe.Source(function(callback) {
+            stdinReaders.read(callback);
+        });
+        Kernel.keyboard.onKeyDown = function(c, scancode) {
+            if(c) {
+                stdinReaders.write(c);
+            }
+        };
+        // stdout/stderr:
+        init.fds[1] = new Pipe.Sink(function(data) {
+            Console.write(data);
+        });
+        init.fds[2] = init.fds[1];
+    })();
     
     while(true) {
-        Console.write(".");
         Kernel.dispatchInterrupts();
         if(!Process.scheduleNext()) {
-            Kernel.panic("no processes scheduled");
+//            Kernel.hlt();
         }
     }
 })();

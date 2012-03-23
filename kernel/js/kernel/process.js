@@ -3,11 +3,14 @@ Process = (function() {
     var yieldQueue = new Queue();
     var pidIncrement = 1;
     
-    function Process(path) {
+    function Process(opts) {
+        opts = opts || {};
         this._vm = new VM();
         this._running = true;
         this.setupEnvironment();
         this.id = pidIncrement++;
+        this.fds = [new Pipe(), new Pipe(), new Pipe()];
+        this.parent = opts.parent || null;
     }
 
     Process.prototype.isRunning = function() {
@@ -29,18 +32,67 @@ Process = (function() {
         }
         this._vm.execute(file.readAllBytes());
     };
+    
+    Process.prototype.createSystemError = function(message) {
+        return new this.systemErrorClass(message);
+    };
 
     Process.prototype.setupEnvironment = function() {
         var vm = this._vm, g = vm.globals, self = this;
+        
+        this.systemErrorClass = vm.exposeFunction(function(message) {
+            this.message = message;
+        });
+        this.systemErrorClass.prototype = new g.Error();
+        g.SystemError = this.systemErrorClass;
+        
         g.OS = vm.createObject();
+        g.OS.stdin = 0;
+        g.OS.stdout = 1;
+        g.OS.stderr = 2;
         g.OS.yield = vm.exposeFunction(function(callback) {
             self.enqueueCallback(callback);
         });
         g.OS.log = vm.exposeFunction(function(msg) {
             Console.write("[#" + self.id + "] " + msg + "\n");
         });
-        g.OS.pid = vm.exposeFunction(function(msg) {
+        g.OS.pid = vm.exposeFunction(function() {
             return self.id;
+        });
+        g.OS.parentPid = vm.exposeFunction(function() {
+            if(self.parent) {
+                return self.parent.id;
+            } else {
+                return null;
+            }
+        });
+        g.OS.read = vm.exposeFunction(function(fd, callback) {
+            if(typeof fd !== "number" || typeof callback !== "function") {
+                throw self.createSystemError("expected 'fd' to be a number and 'callback' to be a function");
+            }
+            if(!self.fds[fd]) {
+                throw self.createSystemError("bad file descriptor");
+            }
+            self.fds[fd].read(function(err, data) {
+                self.enqueueCallback(callback, [err, data]);
+            });
+        });
+        g.OS.write = vm.exposeFunction(function(fd, data) {
+            if(typeof fd !== "number" || typeof data !== "string") {
+                throw self.createSystemError("expected 'fd' to be a number and 'data' to be a string");
+            }
+            if(!self.fds[fd]) {
+                throw self.createSystemError("bad file descriptor");
+            }
+            self.fds[fd].write(data);
+        });
+        g.OS.spawnChild = vm.exposeFunction(function(callback) {
+            if(typeof callback !== "function" && typeof callback !== "undefined") {
+                throw self.createSystemError("expected 'callback' to be either a function or undefined");
+            }
+            var child = new Process({ parent: self });
+            child.enqueueCallback(callback, []);
+            return child.id;
         });
         
         var userlib = Kernel.filesystem.find("/kernel/userlib.jmg");
@@ -72,7 +124,10 @@ Process = (function() {
             yielder.process.safeCall(yielder.callback, yielder.args || []);
         } catch(e) {
             // user process threw exception
-            Console.write("[#" + yielder.process.id + "] Unhandled exception: " + e.toString() + ", killed.\n");
+            Console.write("[#" + yielder.process.id + "] Unhandled exception: " + String(e) + ", killed.\n");
+            if(typeof e === "object" && e.stack) {
+                Console.write(e.stack + "\n");
+            }
             yielder.process.kill();
         }
         return true;
