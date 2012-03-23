@@ -45,29 +45,56 @@ Queue.prototype.pop = function() {
 
 function Pipe() {
     this._buffer = new Queue();
-    this._readers = [];
+    this._readers = new Queue();
 }
 
 Pipe.prototype.read = function(callback) {
     if(!this._buffer.isEmpty()) {
-        callback(this._buffer.pop());
+        callback(false, this._buffer.pop());
     } else {
         this._readers.push(callback);
     }
 };
 
 Pipe.prototype.write = function(object) {
-    if(this._readers.count > 0) {
-        var readers = this._readers;
-        this._readers = [];
-        for(var i = 0; i < this._readers.count; i++) {
-            readers[i](object);
-        }
-    } else {
+    if(this._readers.isEmpty()) {
         this._buffer.push(object);
+    } else {
+        var callback = this._readers.pop();
+        callback(false, object);
     }
 };
 
-Pipe.prototype.clear = function() {
-    this._buffer = new Queue();
+//
+// Pipe.Sink
+//
+
+Pipe.Sink = function(fn) {
+    this.fn = fn;
+};
+
+Pipe.Sink.prototype.read = function(callback) {
+    callback("not open for reading");
+};
+
+Pipe.Sink.prototype.write = function(object) {
+    this.fn(object);
+};
+
+//
+// Pipe.Source
+//
+
+Pipe.Source = function(fn) {
+    this.fn = fn;
+};
+
+Pipe.Source.prototype.read = function(callback) {
+    this.fn(function(err, data) {
+        callback(err, data);
+    });
+};
+
+Pipe.Source.prototype.write = function(object) {
+    callback("not open for writing");
 };
