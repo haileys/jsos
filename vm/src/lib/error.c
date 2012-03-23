@@ -41,6 +41,15 @@ static VAL Error_toString(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL
     return js_value_wrap_string(str);
 }
 
+static VAL Error_prototype_stack(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_OBJECT) {
+        // wtf?
+        js_throw_error(vm->lib.TypeError, "can't access Error.prototype.stack on non object");
+    }
+    return js_value_wrap_string(js_value_get_pointer(this)->object.stack_trace);
+}
+
 VAL js_make_error(VAL class, js_string_t* message)
 {
     VAL msg = js_value_wrap_string(message);
@@ -64,6 +73,7 @@ void js_lib_error_initialize(struct js_vm* vm)
     vm->lib.Error_prototype = js_value_make_object(vm->lib.Object_prototype, vm->lib.Error);
     js_object_put(vm->lib.Error, js_cstring("prototype"), vm->lib.Error_prototype);
     js_object_put(vm->lib.Error_prototype, js_cstring("toString"), js_value_make_native_function(vm, js_cstring("Error"), js_cstring("toString"), Error_toString, NULL));
+    js_object_put_accessor(vm, vm->lib.Error_prototype, "stack", Error_prototype_stack, NULL);
     
     vm->lib.RangeError = js_value_make_native_function(vm, NULL, js_cstring("RangeError"), RangeError_construct, RangeError_construct);
     vm->lib.RangeError_prototype = js_value_make_object(vm->lib.Error_prototype, vm->lib.Error);
