@@ -47,7 +47,7 @@
     }
     */
     
-    var images = [  "utils", "keyboard", "keymaps", "drivers/ps2kb",
+    var images = [  "utils", "keyboard", "drivers/ps2kb",
                     "drivers/serial", "drivers/pit", "vm", "process",
                     "drivers/rtc", "drivers/vga" ];
     for(var i = 0; i < images.length; i++) {
