@@ -2,7 +2,7 @@
     var KEY_RELEASE = 0x80;
     var KEY_CAPS_LOCK = 58;
     
-    function Keyboard(driver, keyMap) {
+    function Keyboard(driver) {
         var self = this;
     
         this.driver = driver;
@@ -12,26 +12,18 @@
             this.keyStates[i] = false;
         }
         
-        this.setKeyMap(keyMap);
         this.driver.onScanCode = function(scanCode) {
             self.dispatchScanCode(scanCode);
         };
-        this.driver.enable();
+        this.driver.init();
     }
     
-    Keyboard.keyMaps = {};
-    
-    Keyboard.prototype.setKeyMap = function(keyMap) {
-        this.keyMapName = keyMap;
-        this.keyMap = Keyboard.keyMaps[keyMap];
-    };
-    
     Keyboard.prototype.shiftState = function() {
-        return !!this.keyStates[42];
+        return !!(this.keyStates[42] || this.keyStates[54]);
     };
     
     Keyboard.prototype.controlState = function() {
-        return !!this.keyStates[29];
+        return !!(this.keyStates[29]);
     };
     
     Keyboard.prototype.altState = function() {
@@ -43,10 +35,11 @@
         if(this.capsLock) {
             shiftState = !shiftState;
         }
-        return this.keyMap[scanCode * 2 + Number(shiftState)];
+        return Keyboard.keyMap[scanCode * 2 + Number(shiftState)];
     };
     
     Keyboard.prototype.dispatchScanCode = function(scanCode) {
+        Kernel.serial.writeString("SCANCODE: " + scanCode + "\n");
         if(scanCode & KEY_RELEASE) {
             scanCode -= KEY_RELEASE;
             this.keyStates[scanCode] = false;
@@ -65,5 +58,104 @@
     };
     
     this.Keyboard = Keyboard;
+    
+    Keyboard.keyMap = [
+        // 0x00
+        null, null,
+        null, null,
+        "1", "!",
+        "2", "@",
+        "3", "#",
+        "4", "$",
+        "5", "%",
+        "6", "^",
+        "7", "&",
+        "8", "*",
+        "9", "(",
+        "0", ")",
+        "-", "_",
+        "=", "+",
+        "\x7f", "\x7f", // backspace
+        " ", " ",
+
+        // 0x10
+        "q", "Q",
+        "w", "W",
+        "e", "E",
+        "r", "R",
+        "t", "T",
+        "y", "Y",
+        "u", "U",
+        "i", "I",
+        "o", "O",
+        "p", "P",
+        "[", "{",
+        "]", "}",
+        "\n", "\n",
+        null, null,  
+        "a", "A",
+        "s", "S",
+
+        // 0x20
+        "d", "D",
+        "f", "F",
+        "g", "G",
+        "h", "H",
+        "j", "J",
+        "k", "K",
+        "l", "L",
+        ";", ":",
+        "'", "\"",
+        "`", "~",
+        null, null,
+        "\\", "|",
+        "z", "Z",
+        "x", "X",
+        "c", "C",
+        "v", "V",
+
+        // 0x30
+        "b", "B",
+        "n", "N",
+        "m", "M",
+        ",", "<",
+        ".", ">",
+        "/", "?",
+        null, null,
+        "*", "*",
+        null, null,
+        " ", " ",
+        null, null,
+        null, null,
+        null, null,
+        null, null,
+        null, null,
+        null, null,
+
+        // 0x40
+        null,  null,
+        null,  null,
+        null,  null,
+        null,  null,
+        null,  null,
+        null,  null,
+        null,  null,
+        "7", "7",
+        "8", "8",
+        "9", "9",
+        "-", "-",
+        "4", "4",
+        "5", "5",
+        "6", "6",
+        "+", "+",
+        "1", "1",
+
+        // 0x50
+        "2", "2",
+        "3", "3",
+        "0", "0",
+        ".", ".",
+        null, null
+    ];
 })();
 
