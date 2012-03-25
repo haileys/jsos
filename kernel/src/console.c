@@ -63,7 +63,11 @@ void console_init(js_vm_t* vm)
 
 void console_clear()
 {
-    memset((void*)0xb8000, 0, width*height*2);
+    uint32_t i;
+    uint16_t* vram = (uint16_t*)0xb8000;
+    for(i = 0; i < 80*25; i++) {
+        vram[i] = ' ' | (7 << 8);
+    }
     col = 0;
     row = 0;
 }
@@ -71,7 +75,7 @@ void console_clear()
 void console_write(char* s, size_t length)
 {
     char* vram = (char*)0xb8000;
-    size_t i;
+    size_t i, j;
     for(i = 0; i < length; i++) {
         if(s[i] != '\n') {
             vram[(row * width + col) * 2] = s[i];
@@ -87,7 +91,10 @@ void console_write(char* s, size_t length)
         }
         if(row == height) {
             memmove(vram, vram + width * 2, (height - 1) * width * 2);
-            memset(vram + (height - 1) * width * 2, 0, width * 2);
+            for(j = 0; j < 80; j++) {
+                (vram + (height - 1) * width * 2)[j * 2] = ' ';
+                (vram + (height - 1) * width * 2)[j * 2 + 1] = 7;
+            }
             row = height - 1;
         }
     }
