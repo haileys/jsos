@@ -36,6 +36,12 @@ Process = (function() {
     Process.prototype.createSystemError = function(message) {
         return new this.systemErrorClass(message);
     };
+    
+    Process.prototype.appendFileDescriptor = function(pipe) {
+        var fd = this.fds.length;
+        this.fds[fd] = pipe;
+        return fd;
+    };
 
     Process.prototype.setupEnvironment = function() {
         var vm = this._vm, g = vm.globals, self = this;
@@ -92,14 +98,25 @@ Process = (function() {
             }
             var child = new Process({ parent: self });
             child.enqueueCallback(callback, []);
-            return child.id;
+            return {
+                pid: child.id,
+                stdin: self.appendFileDescriptor(child.fds[0]),
+                stdout: self.appendFileDescriptor(child.fds[1]),
+                stderr: self.appendFileDescriptor(child.fds[2]),
+            };
         });
-        
-        var userlib = Kernel.filesystem.find("/kernel/userlib.jmg");
-        if(!(userlib instanceof Drivers.FAT16.File)) {
-            throw new Process.LoadError("Could not load /kernel/userlib.jmg");
-        }
-        vm.execute(userlib.readAllBytes());
+        g.OS.ioctl = vm.exposeFunction(function(fd, method, args) {
+            if(typeof fd !== "number" || typeof method !== "string") {
+                throw self.createSystemError("expected 'fd' to be a number and 'method' to be a string");
+            }
+            if(!self.fds[fd]) {
+                throw self.createSystemError("bad file descriptor");
+            }
+            if(typeof self.fds[fd].ioctl !== "object" || !self.fds[fd].ioctl.hasOwnProperty(method)) {
+                throw self.createSystemError("file descriptor does not support this operation");
+            }
+            return self.fds[fd].ioctl[method](self, args);
+        });
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {
