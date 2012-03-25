@@ -46,6 +46,7 @@ Queue.prototype.pop = function() {
 function Pipe() {
     this._buffer = new Queue();
     this._readers = new Queue();
+    this.ioctl = {};
 }
 
 Pipe.prototype.read = function(callback) {
@@ -71,6 +72,7 @@ Pipe.prototype.write = function(object) {
 
 Pipe.Sink = function(fn) {
     this.fn = fn;
+    this.ioctl = {};
 };
 
 Pipe.Sink.prototype.read = function(callback) {
@@ -87,6 +89,7 @@ Pipe.Sink.prototype.write = function(object) {
 
 Pipe.Source = function(fn) {
     this.fn = fn;
+    this.ioctl = {};
 };
 
 Pipe.Source.prototype.read = function(callback) {
