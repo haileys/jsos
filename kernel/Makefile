@@ -25,7 +25,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb \
 
 .coffee.o:
 	@echo "  coffee  $<"
-	@coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin > $@
+	@coffee -cs < $< | ruby ../compiler/compile.rb /dev/stdin $< > $@
 
 .asm.o:
 	@echo "    nasm  $<"
