@@ -6,7 +6,7 @@ file = File.open ARGV.first, "r"
 parser = Twostroke::Parser.new Twostroke::Lexer.new file.read
 parser.parse
 
-compiler = JSOS::BinaryCompiler.new parser.statements, ARGV.first
+compiler = JSOS::BinaryCompiler.new parser.statements, ARGV.last
 compiler.compile
 
 print compiler.bytecode
