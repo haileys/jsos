@@ -89,10 +89,18 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             case 'u': {
                 char buff[64];
                 int len;
-                utoa(va_arg(ap, unsigned int), buff, 10);
+                unsigned int u = va_arg(ap, unsigned int);
+                int j = 63;
+                buff[j--] = 0;
+                buff[j] = '0';
+                while(u) {
+                    buff[j] = '0' + u % 10;
+                    u /= 10;
+                    j--;
+                }
                 len = strlen(buff);
                 if(i + len < size - 1) {
-                    memcpy(str + i, buff, len);
+                    memcpy(str + i, buff + j, len);
                 } else {
                     goto end_of_loop;
                 }
@@ -105,7 +113,19 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             case 'x': {
                 char buff[64];
                 int len;
-                utoa(va_arg(ap, int), buff, 16);
+                unsigned int u = va_arg(ap, int);
+                int j = 63;
+                buff[j--] = 0;
+                buff[j] = '0';
+                while(u) {
+                    if(u % 16 < 10) {
+                        buff[j] = '0' + u % 16;
+                    } else {
+                        buff[j] = 'a' + (u % 16) - 10;
+                    }
+                    u /= 10;
+                    j--;
+                }
                 len = strlen(buff);
                 if(i + len < size - 1) {
                     memcpy(str + i, buff, len);

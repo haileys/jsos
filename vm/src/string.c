@@ -5,9 +5,13 @@
 #include "string.h"
 #include "gc.h"
 #include "value.h"
+#include "exception.h"
 
 js_string_t* js_string_concat(js_string_t* a, js_string_t* b)
 {
+    if(a == NULL || b == NULL) {
+        js_throw(js_value_make_cstring("js_string_concat received a NULL pointer"));
+    }
     js_string_t* str = js_alloc(sizeof(js_string_t));
     str->length = a->length + b->length;
     str->buff = js_alloc_no_pointer(str->length + 1);

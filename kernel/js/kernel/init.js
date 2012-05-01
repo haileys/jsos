@@ -76,7 +76,7 @@
     
     (function() {
         var init = new Process();
-        init.enqueueCallback(function() { init.load("/userland.jmg"); });
+        init.enqueueCallback(function() { init.load("/bin/init.jmg"); });
         // stdin:
         var stdinReaders = new Pipe();
         init.fds[0] = new Pipe.Source(function(callback) {

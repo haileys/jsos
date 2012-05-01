@@ -68,7 +68,8 @@ static js_instruction_t insns[] = {
     { "catchg",     OPERAND_STRING },
     { "popcatch",   OPERAND_NONE },
     { "finally",    OPERAND_NONE },
-    { "popfinally", OPERAND_NONE }
+    { "popfinally", OPERAND_NONE },
+    { "closenamed", OPERAND_UINT32_STRING },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -236,7 +237,7 @@ static VAL vm_exec(struct vm_locals* L)
     while(1) {
         if(++global_instruction_counter >= VM_CYCLES_PER_COLLECTION) {
             global_instruction_counter = 0;
-            js_gc_run();
+            //js_gc_run();
         }
         if(L->will_return) {
             return L->return_val;
@@ -716,6 +717,15 @@ static VAL vm_exec(struct vm_locals* L)
                     L->return_val = L->return_after_finally_val;
                     L->return_after_finally_val = js_value_undefined();
                 }
+                break;
+            }
+            
+            case JS_OP_CLOSENAMED: {
+                uint32_t sect = NEXT_UINT32();
+                js_string_t* name = NEXT_STRING();
+                VAL function = js_value_make_function(L->vm, L->image, sect, L->scope);
+                ((js_function_t*)js_value_get_pointer(function))->name = name;
+                PUSH(function);
                 break;
             }
         

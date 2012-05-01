@@ -84,6 +84,7 @@ module JSOS
       popcatch:   58,
       finally:    59,
       popfinally: 60,
+      closenamed: 61,
     }
 
   private
@@ -409,7 +410,11 @@ module JSOS
         output :undefined
         output :ret
         pop_section
-        output :close, fnid
+        if node.name
+          output :closenamed, fnid, node.name
+        else
+          output :close, fnid
+        end
         if node.name && !node.as_expression
           if idx = create_local_var(node.name)
             output :setvar, create_local_var(node.name), 0 
@@ -417,8 +422,12 @@ module JSOS
             output :setglobal, node.name
           end
         end
-      else  
-        output :close, fnid
+      else
+        if node.name
+          output :closenamed, fnid, node.name
+        else
+          output :close, fnid
+        end
       end
     end
   

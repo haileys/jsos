@@ -13,8 +13,9 @@ OBJS=	src/loader.o src/main.o src/mm.o src/panic.o src/malloc.o src/console.o \
 JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb \
 		kernel/drivers/ide kernel/drivers/ps2mouse kernel/drivers/fat16 \
 		kernel/drivers/serial kernel/drivers/mbr kernel/drivers/vga \
-		kernel/drivers/pit kernel/drivers/rtc kernel/utils kernel/userlib \
-		kernel/process userland kernel/drivers/bios_hdd kernel/vm kernel/fs
+		kernel/drivers/pit kernel/drivers/rtc kernel/utils \
+		kernel/process kernel/drivers/bios_hdd kernel/vm kernel/fs \
+		bin/init
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 

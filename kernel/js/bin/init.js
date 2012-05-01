@@ -1,3 +1,6 @@
-OS.read(OS.stdin, function(err, data) {
-    OS.write(OS.stdout, "received '" + data + "'\n");
-});
+OS.write(OS.stdout, "\nListing contents of /:\n");
+var entries = OS.readDirectory("/");
+for(var i = 0; i < entries.length; i++) {
+    OS.write(OS.stdout, "  - " + entries[i].name + "\n");
+}
+

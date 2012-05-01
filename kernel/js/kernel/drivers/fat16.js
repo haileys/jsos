@@ -70,6 +70,9 @@
     }
     
     FAT16.prototype.find = function(path) {
+        if(path === "/") {
+            return new FAT16.RootDirectory(this);
+        }
         if(path[0] !== "/") return null;
         var parts = path.toLowerCase().split("/");
         var entries = this.readRootEntries();
@@ -172,14 +175,27 @@
         }
     };
     
+    FAT16.RootDirectory = function(fs) {
+        this.fs = fs;
+        this.name = "";
+    };
+    
+    FAT16.RootDirectory.prototype.getType = function() {
+        return "directory";
+    };
+    
+    FAT16.RootDirectory.prototype.readEntries = function() {
+        return this.fs.readRootEntries();
+    };
+    
     FAT16.Directory = function(fs, entry) {
         this.fs = fs;
         this.entry = entry;
         this.name = entry.filename;
     };
     
-    FAT16.Directory.prototype.isFile = function() {
-        return false;
+    FAT16.Directory.prototype.getType = function() {
+        return "directory";
     };
     
     FAT16.Directory.prototype.readEntries = function() {
@@ -194,8 +210,8 @@
         this.size = entry.size;
     };
     
-    FAT16.File.prototype.isFile = function() {
-        return true;
+    FAT16.File.prototype.getType = function() {
+        return "file";
     };
     
     FAT16.File.prototype.readAllBytes = function() {

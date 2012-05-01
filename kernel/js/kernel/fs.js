@@ -27,7 +27,7 @@
     
     Filesystem.prototype.read = function(path) {
         var file = this.find(path);
-        if(file === null || !file.isFile()) {
+        if(file === null || file.getType() !== "file") {
             return null;
         }
         return file.readAllBytes();
@@ -53,6 +53,15 @@
             }
         }
         return bestMatch;
+    };
+    
+    Filesystem.FileDescriptor = function(file) {
+        this.file = file;
+        this.offset = 0;
+    }
+    Filesystem.FileDescriptor.prototype.ioctl = {};
+    Filesystem.FileDescriptor.prototype.read = function() {
+        
     };
     
     function Path(path) {
@@ -104,5 +113,6 @@
         return new Path("/" + parts.join("/"));
     };
     
-    this.Filesystem = Filesystem;    
+    this.Filesystem = Filesystem;
+    this.Path = Path;
 }).call(this);

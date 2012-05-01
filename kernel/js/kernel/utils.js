@@ -39,19 +39,39 @@ Queue.prototype.pop = function() {
     return obj;
 };
 
+Queue.prototype.pushFront = function(object) {
+    if(!this.isEmpty()) {
+        this._head = { next: this._head, object: object };
+    } else {
+        this._head = this._tail = { next: null, object: object };
+    }
+};
+
 //
 // Pipe
 //
 
 function Pipe() {
-    this._buffer = new Queue();
+    this._buffer = "";
     this._readers = new Queue();
     this.ioctl = {};
 }
 
-Pipe.prototype.read = function(callback) {
-    if(!this._buffer.isEmpty()) {
-        callback(false, this._buffer.pop());
+Pipe.prototype.read = function(size, callback) {
+    if(callback === undefined) {
+        callback = size;
+        size = undefined;
+    }
+    if(size === undefined ? this._buffer.length > 0 : this._buffer.length >= size) {
+        if(size === undefined) {
+            var buff = this._buffer;
+            this._buffer = "";
+            callback(false, buff);
+        } else {
+            var buff = this._buffer.substr(0, size);
+        }
+        var obj = this._buffer.pop();
+        callback(false, obj);
     } else {
         this._readers.push(callback);
     }
@@ -92,7 +112,7 @@ Pipe.Source = function(fn) {
     this.ioctl = {};
 };
 
-Pipe.Source.prototype.read = function(callback) {
+Pipe.Source.prototype.read = function(size, callback) {
     this.fn(function(err, data) {
         callback(err, data);
     });
