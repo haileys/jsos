@@ -62,6 +62,12 @@ int main()
                     op = image->sections[i].instructions[++j];
                     printf("\"%s\" (%d)\n", image->strings[op]->buff, op);
                     break;
+                case OPERAND_UINT32_STRING:
+                    op = image->sections[i].instructions[++j];
+                    printf("%u, ", op);
+                    op = image->sections[i].instructions[++j];
+                    printf("\"%s\" (%d)\n", image->strings[op]->buff, op);
+                    break;
             }
         }
     }

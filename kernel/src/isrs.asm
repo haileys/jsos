@@ -50,7 +50,22 @@ asm_isr_init:
 	isr 11, WITH_ERROR
 	isr 12, WITH_ERROR
 	isr 13, WITH_ERROR
-	isr 14, WITH_ERROR
+	
+;	isr 14, WITH_ERROR
+jmp isr_14.fin
+isr_14:
+    pop eax
+    pop ecx
+    pop edx
+    pop ebx
+    cli
+    hlt
+.fin:
+push isr_14
+push 14
+call idt_register_handler
+add esp, 8
+
 	isr 15
 	isr 16
 	isr 17, WITH_ERROR

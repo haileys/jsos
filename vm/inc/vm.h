@@ -80,6 +80,7 @@ enum js_opcode {
     JS_OP_POPCATCH      = 58,
     JS_OP_FINALLY       = 59,
     JS_OP_POPFINALLY    = 60,
+    JS_OP_CLOSENAMED    = 61,
 };
 
 typedef struct {
@@ -90,6 +91,7 @@ typedef struct {
         OPERAND_UINT32,
         OPERAND_UINT32_UINT32,
         OPERAND_STRING,
+        OPERAND_UINT32_STRING,
     } operand;
 } js_instruction_t;
 

@@ -46,8 +46,10 @@ void js_throw(VAL exception)
 {
     if(js_value_is_object(exception) && !js_value_get_pointer(exception)->object.stack_trace) {
         VAL class = js_value_get_pointer(exception)->object.class;
-        if(js_value_get_type(class) == JS_T_FUNCTION) {
+        if(js_value_get_type(class) == JS_T_FUNCTION && ((js_function_t*)js_value_get_pointer(class))->name) {
             js_value_get_pointer(exception)->object.stack_trace = ((js_function_t*)js_value_get_pointer(class))->name;
+        } else {
+            js_value_get_pointer(exception)->object.stack_trace = js_cstring("(anonymous)");
         }
     }
     if(js_current_exception_handler() == NULL) {

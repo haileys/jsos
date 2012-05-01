@@ -12,10 +12,10 @@ void panic(char* message)
 
 void panicf(char* fmt, ...)
 {
-    char buff[2048];
+    char buff[512];
     va_list va;
     va_start(va, fmt);
-    vsnprintf(buff, 2047, fmt, va);
+    vsnprintf(buff, 511, fmt, va);
     va_end(va);
     panic(buff);
 }

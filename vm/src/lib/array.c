@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "lib.h"
 #include "gc.h"
 #include "object.h"
@@ -129,6 +130,28 @@ static bool array_vtable_has_property(js_value_t* obj, js_string_t* prop)
         return index <= ary->items_length;
     }
     return js_object_base_vtable()->has_property(obj, prop);
+}
+
+char* utoa(unsigned int value, char* buff, int base)
+{
+    char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char* ret = buff;
+    char scratch[64];
+    int idx = 0;
+    if(value == 0) {
+        *buff++ = '0';
+        *buff = 0;
+        return ret;
+    }
+    while(value > 0) {
+        scratch[idx++] = charset[value % base];
+        value /= base;
+    }
+    while(idx > 0) {
+        *buff++ = scratch[--idx];
+    }
+    *buff = 0;
+    return ret;
 }
 
 static js_array_t* as_array(js_vm_t* vm, VAL val)

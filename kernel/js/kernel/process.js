@@ -27,7 +27,7 @@ Process = (function() {
 
     Process.prototype.load = function(path) {
         var file = Kernel.filesystem.find(path);
-        if(!(file instanceof Drivers.FAT16.File)) {
+        if(file === null || file.getType() !== "file") {
             throw new Process.LoadError("Could not load '" + path + "' into process");
         }
         this._vm.execute(file.readAllBytes());
@@ -46,10 +46,12 @@ Process = (function() {
     Process.prototype.setupEnvironment = function() {
         var vm = this._vm, g = vm.globals, self = this;
         
-        this.systemErrorClass = vm.exposeFunction(function(message) {
+        function SystemError(message) {
             this.message = message;
-        });
+        }
+        this.systemErrorClass = vm.exposeFunction(SystemError);
         this.systemErrorClass.prototype = new g.Error();
+        this.systemErrorClass.prototype.name = "SystemError";
         g.SystemError = this.systemErrorClass;
         
         g.OS = vm.createObject();
@@ -117,6 +119,39 @@ Process = (function() {
             }
             return self.fds[fd].ioctl[method](self, args);
         });
+        g.OS.readDirectory = vm.exposeFunction(function(path) {
+            if(typeof path !== "string") {
+                throw self.createSystemError("expected 'path' to be a string");
+            }
+            var dir = Kernel.filesystem.find(path);
+            if(dir === null) {
+                throw self.createSystemError("'" + path + "' not found");
+            }
+            if(dir.getType() !== "directory") {
+                throw self.createSystemError("'" + path + "' is not a directory");
+            }
+            var entries = dir.readEntries();
+            var arr = vm.createArray();
+            for(var i = 0; i < entries.length; i++) {
+                var obj = vm.createObject();
+                obj.name = entries[i].name;
+                obj.type = entries[i].getType();
+                arr.push(obj);
+            }
+            return arr;
+        });
+        g.OS.open = vm.exposeFunction(function(path) {
+            if(typeof path !== "string") {
+                throw self.createSystemError("expected 'path' to be a string");
+            }
+            var file = Kernel.filesystem.find(path);
+            if(file === null) {
+                throw self.createSystemError("'" + path + "' not found");
+            }
+            if(file.getType() !== "file") {
+                throw self.createSystemError("'" + path + "' is not a file");
+            }
+        });
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {
@@ -152,8 +187,9 @@ Process = (function() {
 
     Process.LoadError = function(str) {
         Error.call(this, str);
-    };
+    }
     Process.LoadError.prototype = new Error();
+    Process.LoadError.prototype.name = "LoadError";
     
     return Process;
 })();
