@@ -78,13 +78,10 @@
         var init = new Process();
         init.enqueueCallback(function() { init.load("/bin/init.jmg"); });
         // stdin:
-        var stdinReaders = new Pipe();
-        init.fds[0] = new Pipe.Source(function(callback) {
-            stdinReaders.read(callback);
-        });
+        init.fds[0] = new Pipe();
         Kernel.keyboard.onKeyDown = function(c, scancode) {
             if(c) {
-                stdinReaders.write(c);
+                init.fds[0].write(c);
             }
         };
         // stdout/stderr:
