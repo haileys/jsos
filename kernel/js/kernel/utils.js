@@ -62,29 +62,38 @@ Pipe.prototype.read = function(size, callback) {
         callback = size;
         size = undefined;
     }
-    if(size === undefined ? this._buffer.length > 0 : this._buffer.length >= size) {
-        if(size === undefined) {
-            var buff = this._buffer;
-            this._buffer = "";
-            callback(false, buff);
-        } else {
-            var buff = this._buffer.substr(0, size);
-        }
-        var obj = this._buffer.pop();
-        callback(false, obj);
-    } else {
-        this._readers.push(callback);
+    if(size < 0) {
+        return;
     }
+    this._readers.push({ size: size || 0, callback: callback });
+    this._trigger();
 };
 
 Pipe.prototype.write = function(object) {
-    if(this._readers.isEmpty()) {
-        this._buffer.push(object);
-    } else {
-        var callback = this._readers.pop();
-        callback(false, object);
-    }
+    this._buffer += object.toString();
+    this._trigger();
 };
+
+Pipe.prototype._trigger = function() {
+    if(this._readers.empty()) {
+        return;
+    }
+    var reader = this._readers.front();
+    if(reader.size === 0 && this._buffer.length > 0) {
+        this._readers.pop();
+        var buff = this._buffer;
+        this._buffer = "";
+        reader.callback(false, buff);
+        return;
+    }
+    if(reader.size <= this._buffer.length) {
+        this._readers.pop();
+        var buff = this._buffer.substr(0, reader.size);
+        this._buffer = this._buffer.substr(reader.size);
+        reader.callback(false, buff);
+        return;
+    }
+}
 
 //
 // Pipe.Sink
@@ -95,7 +104,7 @@ Pipe.Sink = function(fn) {
     this.ioctl = {};
 };
 
-Pipe.Sink.prototype.read = function(callback) {
+Pipe.Sink.prototype.read = function(size, callback) {
     callback("not open for reading");
 };
 
