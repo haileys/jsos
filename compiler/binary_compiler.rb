@@ -433,7 +433,7 @@ module JSOS
   
     def MultiExpression(node)
       compile_node node.left
-      output :pop
+      output :pop unless node.left.is_a? Twostroke::AST::Declaration
       compile_node node.right
     end
   
