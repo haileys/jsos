@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <setjmp.h>
+#include <math.h>
 #include "vm.h"
 #include "gc.h"
 #include "object.h"
@@ -70,6 +71,14 @@ static js_instruction_t insns[] = {
     { "finally",    OPERAND_NONE },
     { "popfinally", OPERAND_NONE },
     { "closenamed", OPERAND_UINT32_STRING },
+    { "delete",     OPERAND_NONE },
+    { "mod",        OPERAND_NONE },
+    { "arguments",  OPERAND_UINT32 },
+    { "dupn",       OPERAND_UINT32 },
+    { "enum",       OPERAND_NONE },
+    { "enumnext",   OPERAND_NONE },
+    { "jend",       OPERAND_UINT32 },
+    { "enumpop",    OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -138,6 +147,13 @@ struct exception_frame {
     struct exception_frame* prev;
 };
 
+struct enum_frame {
+    js_string_t** keys;
+    uint32_t count;
+    uint32_t index;
+    struct enum_frame* prev;
+};
+
 struct vm_locals {
     js_vm_t* vm;
     js_image_t* image;
@@ -163,6 +179,8 @@ struct vm_locals {
     VAL exception;
     struct exception_frame* exception_stack;
     js_exception_handler_t handler;
+    
+    struct enum_frame* enum_stack;
 };
 
 static VAL vm_exec(struct vm_locals* L);
@@ -195,6 +213,8 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     L.return_val = js_value_undefined();
     L.return_after_finally_val = js_value_undefined();
     L.exception = js_value_undefined();
+    
+    L.enum_stack = NULL;
     
     if((uint32_t)&L < (uint32_t)stack_limit) {
         js_throw_error(vm->lib.RangeError, "Stack overflow");
@@ -244,11 +264,12 @@ static VAL vm_exec(struct vm_locals* L)
         }
         opcode = NEXT_UINT32();
         switch(opcode) {
-            case JS_OP_UNDEFINED:
+            case JS_OP_UNDEFINED: {
                 PUSH(js_value_undefined());
                 break;
+            }
         
-            case JS_OP_RET:
+            case JS_OP_RET: {
                 if(L->exception_stack) {
                     L->return_after_finally_val = POP();
                     L->return_after_finally = true;
@@ -257,6 +278,7 @@ static VAL vm_exec(struct vm_locals* L)
                     return POP();
                 }
                 break;
+            }
         
             case JS_OP_PUSHNUM: {
                 double d = NEXT_DOUBLE();
@@ -323,17 +345,20 @@ static VAL vm_exec(struct vm_locals* L)
                 break;
             }
         
-            case JS_OP_TRUE:
+            case JS_OP_TRUE: {
                 PUSH(js_value_true());
                 break;
+            }
             
-            case JS_OP_FALSE:
+            case JS_OP_FALSE: {
                 PUSH(js_value_false());
                 break;
+            }
 
-            case JS_OP_NULL:
+            case JS_OP_NULL: {
                 PUSH(js_value_null());
                 break;
+            }
             
             case JS_OP_JMP: {
                 uint32_t next = NEXT_UINT32();
@@ -454,9 +479,10 @@ static VAL vm_exec(struct vm_locals* L)
                 break;
             }
         
-            case JS_OP_POP:
+            case JS_OP_POP: {
                 (void)POP();
                 break;
+            }
         
             case JS_OP_ARRAY: {
                 uint32_t i, count = NEXT_UINT32();
@@ -582,7 +608,7 @@ static VAL vm_exec(struct vm_locals* L)
                 if(js_scope_global_var_exists(L->scope, var)) {
                     PUSH(js_typeof(js_scope_get_global_var(L->scope, var)));
                 } else {
-                    PUSH(js_value_undefined());
+                    PUSH(js_value_make_cstring("undefined"));
                 }
                 break;
             }
@@ -726,6 +752,74 @@ static VAL vm_exec(struct vm_locals* L)
                 VAL function = js_value_make_function(L->vm, L->image, sect, L->scope);
                 ((js_function_t*)js_value_get_pointer(function))->name = name;
                 PUSH(function);
+                break;
+            }
+            
+            case JS_OP_DELETE: {
+                VAL index = js_to_string(POP());
+                VAL object = POP();
+                if(js_value_is_primitive(object)) {
+                    object = js_to_object(L->vm, object);
+                }
+                js_object_delete(object, js_to_js_string_t(index));
+                break;
+            }
+            
+            case JS_OP_MOD: {
+                VAL r = js_to_number(POP());
+                VAL l = js_to_number(POP());
+                PUSH(js_value_make_double(fmod(js_value_get_double(js_to_number(l)), js_value_get_double(js_to_number(r)))));
+                break;
+            }
+            
+            case JS_OP_ARGUMENTS: {
+                uint32_t idx = NEXT_UINT32();
+                VAL arguments = js_make_array(L->vm, L->argc, L->argv);
+                js_object_put(arguments, js_cstring("callee"), L->scope->locals.callee);
+                js_scope_set_var(L->scope, idx, 0, arguments);
+                break;
+            }
+            
+            case JS_OP_DUPN: {
+                uint32_t n = NEXT_UINT32();
+                VAL* dup = js_alloc(sizeof(VAL) * n);
+                uint32_t i;
+                for(i = 0; i < n; i++) {
+                    dup[i] = POP();
+                }
+                for(i = n; i > 0; i--) {
+                    PUSH(dup[i - 1]);
+                }
+                for(i = n; i > 0; i--) {
+                    PUSH(dup[i - 1]);
+                }
+                break;
+            }
+            
+            case JS_OP_ENUM: {
+                struct enum_frame* frame = js_alloc(sizeof(struct enum_frame));
+                frame->prev = L->enum_stack;
+                frame->index = 0;
+                frame->keys = js_object_keys(js_to_object(L->vm, POP()), &frame->count);
+                L->enum_stack = frame;
+                break;
+            }
+            
+            case JS_OP_ENUMNEXT: {
+                PUSH(js_value_wrap_string(L->enum_stack->keys[L->enum_stack->index++]));
+                break;
+            }
+            
+            case JS_OP_JEND: {
+                uint32_t ip = NEXT_UINT32();
+                if(L->enum_stack->index == L->enum_stack->count) {
+                    L->IP = ip;
+                }
+                break;
+            }
+            
+            case JS_OP_ENUMPOP: {
+                L->enum_stack = L->enum_stack->prev;
                 break;
             }
         

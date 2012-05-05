@@ -152,6 +152,33 @@ static bool js_object_base_define_own_property(js_value_t* obj, js_string_t* pro
     return true;
 }
 
+static bool js_object_base_delete(js_value_t* obj, js_string_t* prop)
+{
+    st_data_t tmp;
+    st_delete(obj->object.properties, (st_data_t*)&prop, &tmp);
+    return true;
+}
+
+struct key_iter {
+    js_string_t** keys;
+    uint32_t index;
+};
+
+static int js_object_base_keys_iter(st_data_t key, st_data_t record, st_data_t arg)
+{
+    struct key_iter* state = (struct key_iter*)arg;
+    state->keys[state->index] = (js_string_t*)key;
+    return ST_CONTINUE;
+}
+
+static js_string_t** js_object_base_keys(js_value_t* obj, uint32_t* count)
+{
+    *count = obj->object.properties->num_entries;
+    struct key_iter state = { js_alloc(sizeof(js_string_t*) * *count), 0 };
+    st_foreach(obj->object.properties, js_object_base_keys_iter, (st_data_t)&state);
+    return state.keys;
+}
+
 static js_object_internal_methods_t object_base_vtable = {
     /* get */                   js_object_base_get,
     /* get_own_property */      NULL,
@@ -159,9 +186,10 @@ static js_object_internal_methods_t object_base_vtable = {
     /* put */                   js_object_base_put,
     /* can_put */               NULL,
     /* has_property */          js_object_base_has_property,
-    /* delete */                NULL,
+    /* delete */                js_object_base_delete,
     /* default_value */         js_object_base_default_value,
     /* define_own_property */   js_object_base_define_own_property,
+    /* keys */                  js_object_base_keys,
     // @TODO: ^^ all those
 };
 

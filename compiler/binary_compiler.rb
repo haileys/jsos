@@ -85,6 +85,14 @@ module JSOS
       finally:    59,
       popfinally: 60,
       closenamed: 61,
+      delete:     62,
+      mod:        63,
+      arguments:  64,
+      dupn:       65,
+      enum:       66,
+      enumnext:   67,
+      jend:       68,
+      popenum:    69,
     }
 
   private
@@ -147,6 +155,10 @@ module JSOS
     def pop_scope
       @scope_stack.pop
     end
+    
+    def current_scope
+      @scope_stack.last
+    end
   
     def create_local_var(var)
       if @scope_stack.any?
@@ -202,9 +214,16 @@ module JSOS
     end
   
     def hoist(node)
+      seen_arguments = false
       node.walk do |node|
         if node.is_a? Twostroke::AST::Declaration
           create_local_var node.name
+        elsif node.is_a? Twostroke::AST::Variable
+          if node.name == "arguments"
+            next if seen_arguments
+            seen_arguments = true
+            output :arguments, create_local_var("arguments")
+          end
         elsif node.is_a? Twostroke::AST::Function
           if node.name
             create_local_var node.name
@@ -479,6 +498,22 @@ module JSOS
       compile_node node.index
       output :index
     end
+    
+    def Delete(node)
+      if type(node.value) == :MemberAccess
+        compile_node node.value.object
+        output :pushstr, node.value.member.to_s
+        output :delete
+      elsif type(node.value) == :Index
+        compile_node node.value.object
+        compile_node node.value.index
+        output :delete
+      elsif typeof(node.value) == :Variable
+        error! "Global deletion not yet implemented"
+      else
+        error! "Invalid lval in delete"
+      end
+    end
   
     def New(node)
       compile_node node.callee
@@ -633,6 +668,42 @@ module JSOS
       output [:label, end_label]
       @continue_stack.pop
       @break_stack.pop
+    end
+    
+    def ForIn(node)
+      end_label = uniqid
+      loop_label = uniqid
+      @break_stack.push end_label
+      @continue_stack.push loop_label
+      compile node.object
+      output :enum
+      output [:label, loop_label]
+      output :jend, [:ref, end_label]
+      case node.lval
+      when Twostroke::AST::Declaration, Twostroke::AST::Variable
+        output :enumnext
+        idx, sc = lookup_var node.name
+        if idx
+          output :setvar, idx, sc
+        else
+          output :setglobal, node.left.name
+        end
+      when Twostroke::AST::MemberAccess
+        compile_node node.lval
+        output :enumnext
+        output :setprop, node.lval.member
+      when Twostroke::AST::Index
+        compile_node node.lval.object
+        compile_node node.lval.index
+        output :enumnext
+        output :setindex
+      end
+      compile_node node.body
+      output :jmp, [:ref, loop_label]
+      output [:label, end_label]
+      output :popenum
+      @break_stack.pop
+      @continue_stack.pop
     end
     
     def Try(node)
