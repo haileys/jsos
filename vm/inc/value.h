@@ -94,6 +94,7 @@ typedef struct js_object_internal_methods {
     bool                        (*delete)               (js_value_t*, js_string_t*);
     VAL                         (*default_value)        (js_value_t*, js_type_t);
     bool                        (*define_own_property)  (js_value_t*, js_string_t*, js_property_descriptor_t*);
+    js_string_t**               (*keys)                 (js_value_t*, uint32_t* count);
 } js_object_internal_methods_t;
 
 VAL js_value_make_pointer(js_value_t* ptr);
@@ -134,6 +135,8 @@ void js_object_put(VAL obj, js_string_t* prop, VAL value);
 bool js_object_define_own_property(VAL obj, js_string_t* prop, js_property_descriptor_t* descr);
 bool js_object_has_property(VAL obj, js_string_t* prop);
 VAL js_object_default_value(VAL obj, js_type_t preferred_type);
+bool js_object_delete(VAL obj, js_string_t* prop);
+js_string_t** js_object_keys(VAL obj, uint32_t* count);
 
 void js_object_put_accessor(struct js_vm* vm, VAL obj, char* prop, js_native_callback_t get, js_native_callback_t set);
 

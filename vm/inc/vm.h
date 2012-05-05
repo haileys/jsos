@@ -81,6 +81,14 @@ enum js_opcode {
     JS_OP_FINALLY       = 59,
     JS_OP_POPFINALLY    = 60,
     JS_OP_CLOSENAMED    = 61,
+    JS_OP_DELETE        = 62,
+    JS_OP_MOD           = 63,
+    JS_OP_ARGUMENTS     = 64,
+    JS_OP_DUPN          = 65,
+    JS_OP_ENUM          = 66,
+    JS_OP_ENUMNEXT      = 67,
+    JS_OP_JEND          = 68,
+    JS_OP_ENUMPOP       = 69,
 };
 
 typedef struct {

@@ -127,9 +127,23 @@ static bool array_vtable_has_property(js_value_t* obj, js_string_t* prop)
     js_array_t* ary = (js_array_t*)obj;
     if(is_string_integer(prop)) {
         index = atoi(prop->buff);
-        return index <= ary->items_length;
+        return index < ary->items_length;
     }
     return js_object_base_vtable()->has_property(obj, prop);
+}
+
+static bool array_vtable_delete(js_value_t* obj, js_string_t* prop)
+{
+    uint32_t index;
+    js_array_t* ary = (js_array_t*)obj;
+    if(is_string_integer(prop)) {
+        index = atoi(prop->buff);
+        if(index < ary->items_length) {
+            ary->items[index] = js_value_undefined();
+        }
+        return true;
+    }
+    return js_object_base_vtable()->delete(obj, prop);
 }
 
 char* utoa(unsigned int value, char* buff, int base)
@@ -204,6 +218,9 @@ static VAL Array_prototype_push(js_vm_t* vm, void* state, VAL this, uint32_t arg
 
 static VAL Array_prototype_slice(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
+    if(argv == 0) {
+        js_panic("argv == NULL");
+    }
     js_array_t* ary = as_array(vm, this);
     if(argc == 0) {
         return js_value_make_pointer((js_value_t*)ary);
@@ -314,6 +331,7 @@ void js_lib_array_initialize(js_vm_t* vm)
         array_vtable.get = array_vtable_get;
         array_vtable.put = array_vtable_put;
         array_vtable.has_property = array_vtable_has_property;
+        array_vtable.delete = array_vtable_delete;
     }
     
     vm->lib.Array = js_value_make_native_function(vm, NULL, js_cstring("Array"), Array_call, Array_call);

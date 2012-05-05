@@ -251,8 +251,7 @@ VAL js_to_object(js_vm_t* vm, VAL value)
         case JS_T_UNDEFINED:
             js_throw_error(vm->lib.TypeError, "cannot convert undefined to object");
         case JS_T_BOOLEAN:
-            js_panic("converting boolean to object not yet supported");
-            // @TODO convert to Boolean object
+            return js_make_boolean_object(vm, js_value_is_truthy(value));
         case JS_T_NUMBER:
             return js_make_number_object(vm, js_value_get_double(value));
         case JS_T_STRING:
@@ -450,6 +449,28 @@ void js_object_put_accessor(js_vm_t* vm, VAL obj, char* prop, js_native_callback
     accessor->accessor.get = get ? js_value_make_native_function(vm, NULL, NULL, get, NULL) : js_value_undefined();
     accessor->accessor.set = set ? js_value_make_native_function(vm, NULL, NULL, set, NULL) : js_value_undefined();
     js_object_define_own_property(obj, js_cstring(prop), accessor);
+}
+
+bool js_object_delete(VAL obj, js_string_t* prop)
+{
+    js_value_t* val;
+    if(js_value_is_primitive(obj)) {
+        // @TODO throw
+        js_panic("precondition failed, expected object but received primitive");
+    }
+    val = js_value_get_pointer(obj);
+    return val->object.vtable->delete(val, prop);
+}
+
+js_string_t** js_object_keys(VAL obj, uint32_t* count)
+{
+    js_value_t* val;
+    if(js_value_is_primitive(obj)) {
+        // @TODO throw
+        js_panic("precondition failed, expected object but received primitive");
+    }
+    val = js_value_get_pointer(obj);
+    return val->object.vtable->keys(val, count);
 }
 
 VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv)
