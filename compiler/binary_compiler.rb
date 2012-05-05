@@ -675,18 +675,18 @@ module JSOS
       loop_label = uniqid
       @break_stack.push end_label
       @continue_stack.push loop_label
-      compile node.object
+      compile_node node.object
       output :enum
       output [:label, loop_label]
       output :jend, [:ref, end_label]
       case node.lval
       when Twostroke::AST::Declaration, Twostroke::AST::Variable
         output :enumnext
-        idx, sc = lookup_var node.name
+        idx, sc = lookup_var node.lval.name
         if idx
           output :setvar, idx, sc
         else
-          output :setglobal, node.left.name
+          output :setglobal, node.lval.name
         end
       when Twostroke::AST::MemberAccess
         compile_node node.lval
