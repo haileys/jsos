@@ -31,8 +31,8 @@ static VAL Function_prototype_call(js_vm_t* vm, void* state, VAL this, uint32_t 
     } else {
         VAL* new_args = NULL;
         if(argc >= 2) {
-            js_alloc(sizeof(VAL) * (argc - 1));
-            memcpy(new_args, argv, sizeof(VAL) * (argc - 1));
+            new_args = js_alloc(sizeof(VAL) * (argc - 1));
+            memcpy(new_args, argv + 1, sizeof(VAL) * (argc - 1));
         }
         return js_call(this, argv[0], argc - 1, new_args);
     }
