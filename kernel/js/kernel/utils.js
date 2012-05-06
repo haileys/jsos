@@ -75,7 +75,7 @@ Pipe.prototype.write = function(object) {
 };
 
 Pipe.prototype._trigger = function() {
-    if(this._readers.empty()) {
+    if(this._readers.isEmpty()) {
         return;
     }
     var reader = this._readers.front();
