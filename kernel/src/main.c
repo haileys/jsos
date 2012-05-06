@@ -82,6 +82,9 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
     }
     js_value_t* sinit = js_value_get_pointer(vinit);
     js_image_t* image = js_image_parse(sinit->string.buff, sinit->string.length);
+    if(!image) {
+        panic("/kernel/init.jmg is an invalid image file");
+    }
     
     kprintf("Handing over control to JavaScript:\n\n");
     

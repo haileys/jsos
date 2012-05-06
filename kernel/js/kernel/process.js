@@ -7,10 +7,11 @@ Process = (function() {
         opts = opts || {};
         this._vm = new VM();
         this._running = true;
-        this.setupEnvironment();
         this.id = pidIncrement++;
         this.fds = [new Pipe(), new Pipe(), new Pipe()];
         this.parent = opts.parent || null;
+        this.env = {};
+        this.setupEnvironment();
     }
 
     Process.prototype.isRunning = function() {
@@ -22,7 +23,7 @@ Process = (function() {
     };
 
     Process.prototype.loadImage = function(image) {
-        this._vm.execute(image);
+        return this._vm.execute(image);
     };
 
     Process.prototype.load = function(path) {
@@ -30,7 +31,7 @@ Process = (function() {
         if(file === null || file.getType() !== "file") {
             throw new Process.LoadError("Could not load '" + path + "' into process");
         }
-        this._vm.execute(file.readAllBytes());
+        return this.loadImage(file.readAllBytes());
     };
     
     Process.prototype.createSystemError = function(message) {
@@ -74,14 +75,14 @@ Process = (function() {
                 return null;
             }
         });
-        g.OS.read = vm.exposeFunction(function(fd, callback) {
-            if(typeof fd !== "number" || typeof callback !== "function") {
-                throw self.createSystemError("expected 'fd' to be a number and 'callback' to be a function");
+        g.OS.read = vm.exposeFunction(function(fd, size, callback) {
+            if(typeof fd !== "number" || typeof size !== "number" || typeof callback !== "function") {
+                throw self.createSystemError("expected 'fd' to be a number, 'size' to be a number and 'callback' to be a function");
             }
             if(!self.fds[fd]) {
                 throw self.createSystemError("bad file descriptor");
             }
-            self.fds[fd].read(function(err, data) {
+            self.fds[fd].read(size, function(err, data) {
                 self.enqueueCallback(callback, [err, data]);
             });
         });
@@ -107,6 +108,12 @@ Process = (function() {
                 stderr: self.appendFileDescriptor(child.fds[2]),
             };
         });
+        g.OS.loadImage = vm.exposeFunction(function(image) {
+            if(typeof image !== "string") {
+                throw self.createSystemError("expected 'image' to be a string");
+            }
+            return self.loadImage(image);
+        });
         g.OS.ioctl = vm.exposeFunction(function(fd, method, args) {
             if(typeof fd !== "number" || typeof method !== "string") {
                 throw self.createSystemError("expected 'fd' to be a number and 'method' to be a string");
@@ -117,11 +124,14 @@ Process = (function() {
             if(typeof self.fds[fd].ioctl !== "object" || !self.fds[fd].ioctl.hasOwnProperty(method)) {
                 throw self.createSystemError("file descriptor does not support this operation");
             }
-            return self.fds[fd].ioctl[method](self, args);
+            return self.fds[fd].ioctl[method](self, self.fds[fd], args);
         });
-        g.OS.readDirectory = vm.exposeFunction(function(path) {
+        g.OS.readDirectory = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
                 throw self.createSystemError("expected 'path' to be a string");
+            }
+            if(typeof callback !== "function") {
+                throw self.createSystemError("expected 'callback' to be a function");
             }
             var dir = Kernel.filesystem.find(path);
             if(dir === null) {
@@ -138,20 +148,36 @@ Process = (function() {
                 obj.type = entries[i].getType();
                 arr.push(obj);
             }
-            return arr;
+            callback(false, arr);
         });
-        g.OS.open = vm.exposeFunction(function(path) {
+        g.OS.open = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
                 throw self.createSystemError("expected 'path' to be a string");
             }
+            if(typeof callback !== "function") {
+                throw self.createSystemError("expected 'callback' to be a function");
+            }
             var file = Kernel.filesystem.find(path);
             if(file === null) {
-                throw self.createSystemError("'" + path + "' not found");
+                self.enqueueCallback(callback, ["'" + path + "' not found"]);
+                return;
             }
             if(file.getType() !== "file") {
-                throw self.createSystemError("'" + path + "' is not a file");
+                self.enqueueCallback(callback, ["'" + path + "' is not a file"]);
+                return;
             }
+            self.enqueueCallback(callback, [false, self.appendFileDescriptor(new Filesystem.FileDescriptor(file))]);
         });
+        g.OS.close = vm.exposeFunction(function(fd) {
+            if(typeof fd !== "number") {
+                throw self.createSystemError("expected 'fd' to be a number");
+            }
+            if(!self.fds[fd]) {
+                throw self.createSystemError("invalid fd");
+            }
+            self.fds[fd].close();
+            delete self.fds[fd];
+        })
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {

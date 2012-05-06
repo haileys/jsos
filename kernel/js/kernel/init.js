@@ -47,7 +47,7 @@
     }
     */
     
-    var images = [  "utils", "keyboard", "drivers/ps2kb",
+    var images = [  "utils", "keyboard", "drivers/ps2kb", "console",
                     "drivers/serial", "drivers/pit", "vm", "process",
                     "drivers/rtc", "drivers/vga" ];
     for(var i = 0; i < images.length; i++) {
@@ -78,11 +78,10 @@
         var init = new Process();
         init.enqueueCallback(function() { init.load("/bin/init.jmg"); });
         // stdin:
-        init.fds[0] = new Pipe();
+        var stdin = new Console.STDIN();
+        init.fds[0] = stdin;
         Kernel.keyboard.onKeyDown = function(c, scancode) {
-            if(c) {
-                init.fds[0].write(c);
-            }
+            stdin.postKey(c, scancode);
         };
         // stdout/stderr:
         init.fds[1] = new Pipe.Sink(function(data) {
