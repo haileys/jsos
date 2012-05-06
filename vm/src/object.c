@@ -167,7 +167,7 @@ struct key_iter {
 static int js_object_base_keys_iter(st_data_t key, st_data_t record, st_data_t arg)
 {
     struct key_iter* state = (struct key_iter*)arg;
-    state->keys[state->index] = (js_string_t*)key;
+    state->keys[state->index++] = (js_string_t*)key;
     return ST_CONTINUE;
 }
 
