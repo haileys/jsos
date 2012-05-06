@@ -3,8 +3,7 @@ OS.readDirectory "/", (err, ents) ->
     for ent in ents
         OS.write OS.stdout, "  - #{ent.name}\n"
 
-OS.open "/bin/sh.jmg", (err, fd) ->
-    OS.write OS.stdout, "fd for /bin/sh.jmg: #{fd}\n"
-    OS.read fd, 1024, (err, buff) ->
-        OS.loadImage buff
-        OS.write OS.stdout, "HI!\n"
+OS.stat "/bin/sh.jmg", (err, stat) ->
+    OS.open stat.path, (err, fd) ->
+        OS.read fd, stat.size, (err, buff) ->
+            OS.loadImage buff
