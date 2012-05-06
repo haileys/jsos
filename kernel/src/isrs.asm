@@ -58,6 +58,7 @@ isr_14:
     pop ecx
     pop edx
     pop ebx
+    push ecx
     cli
     hlt
 .fin:
