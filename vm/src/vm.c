@@ -734,7 +734,6 @@ static VAL vm_exec(struct vm_locals* L)
             }
             
             case JS_OP_POPFINALLY: {
-                L->exception_stack = L->exception_stack->prev;
                 if(L->exception_thrown) {
                     js_throw(L->exception);
                 }
