@@ -42,13 +42,20 @@ static VAL Console_cursor(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL
     return js_value_undefined();
 }
 
-static VAL Console_set_size(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+static VAL Console_size(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     uint32_t w, h;
-    js_scan_args(vm, argc, argv, "II", &w, &h);
-    width = w;
-    height = h;
-    return js_value_undefined();
+    if(argc == 0) {
+        VAL* wh = js_alloc(sizeof(VAL) * 2);
+        wh[0] = js_value_make_double(width);
+        wh[1] = js_value_make_double(height);
+        return js_make_array(vm, 2, wh);
+    } else {
+        js_scan_args(vm, argc, argv, "II", &w, &h);
+        width = w;
+        height = h;
+        return js_value_undefined();
+    }
 }
 
 void console_init(js_vm_t* vm)
@@ -58,7 +65,7 @@ void console_init(js_vm_t* vm)
     js_object_put(Console, js_cstring("clear"), js_value_make_native_function(vm, NULL, js_cstring("clear"), Console_clear, NULL));
     js_object_put(Console, js_cstring("write"), js_value_make_native_function(vm, NULL, js_cstring("write"), Console_write, NULL));
     js_object_put(Console, js_cstring("cursor"), js_value_make_native_function(vm, NULL, js_cstring("cursor"), Console_cursor, NULL));
-    js_object_put(Console, js_cstring("setSize"), js_value_make_native_function(vm, NULL, js_cstring("setSize"), Console_set_size, NULL));
+    js_object_put(Console, js_cstring("size"), js_value_make_native_function(vm, NULL, js_cstring("size"), Console_size, NULL));
 }
 
 void console_clear()
