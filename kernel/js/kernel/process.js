@@ -177,7 +177,36 @@ Process = (function() {
             }
             self.fds[fd].close();
             delete self.fds[fd];
-        })
+        });
+        g.OS.stat = vm.exposeFunction(function(path, callback) {
+            if(typeof path !== "string") {
+                throw self.createSystemError("expected 'path' to be a string");
+            }
+            if(typeof callback !== "function") {
+                throw self.createSystemError("expected 'callback' to be a function");
+            }
+            var file = Kernel.filesystem.find(path);
+            if(file === null) {
+                self.enqueueCallback(callback, ["'" + path + "' not found"]);
+                return;
+            }
+            if(file.getType() === "file") {
+                var stat = vm.createObject();
+                stat.size = file.size;
+                stat.name = file.name;
+                stat.type = "file";
+                stat.path = path;
+                self.enqueueCallback(callback, [false, stat]);
+            } else if(file.getType() === "directory") {
+                var stat = vm.createObject();
+                stat.name = file.name;
+                stat.type = "directory";
+                stat.path = path;
+                self.enqueueCallback(callback, [false, stat]);
+            } else {
+                self.enqueueCallback(callback, ["'" + path + "' is of unknown type"]);
+            }
+        });
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {
