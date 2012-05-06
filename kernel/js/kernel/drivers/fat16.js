@@ -191,6 +191,7 @@
     FAT16.Directory = function(fs, entry) {
         this.fs = fs;
         this.entry = entry;
+        this.size = entry.size;
         this.name = entry.filename;
     };
     
@@ -216,6 +217,31 @@
     
     FAT16.File.prototype.readAllBytes = function() {
         return this.fs.readClusterChain(this.entry.firstCluster).substr(0, this.size);
+    };
+    
+    FAT16.File.prototype.readBytes = function(offset, length) {
+        if(offset >= this.size) {
+            return "";
+        }
+        if(offset + length > this.size) {
+            length = this.size - offset;
+        }
+        var clus = this.entry.firstCluster;
+        var cluster_size = this.fs.bpb.sectorsPerCluster * 512;
+        var start_cluster_index = offset / cluster_size;
+        var end_cluster_index = (offset + length + cluster_size - 1) / cluster_size;
+        var current_cluster_index = 0;
+        var buff = "";
+        while(current_cluster_index < start_cluster_index) {
+            clus = this.fs.findNextCluster(clus);
+            current_cluster_index++;
+        }
+        while(current_cluster_index < end_cluster_index) {
+            buff += this.fs.readCluster(clus);
+            clus = this.fs.findNextCluster(clus);
+            current_cluster_index++;
+        }
+        return buff.substr(offset % cluster_size, length);
     };
     
     Drivers.FAT16 = FAT16;
