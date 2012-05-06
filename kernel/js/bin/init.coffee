@@ -1,4 +1,4 @@
-OS.write OS.stdout, "\n Listening contents of /:\n"
+OS.write OS.stdout, "\n Listing contents of /:\n"
 OS.readDirectory "/", (err, ents) ->
     for ent in ents
         OS.write OS.stdout, "  - #{ent.name}\n"
