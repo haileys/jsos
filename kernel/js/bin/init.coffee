@@ -6,4 +6,5 @@ OS.readDirectory "/", (err, ents) ->
 OS.stat "/bin/sh.jmg", (err, stat) ->
     OS.open stat.path, (err, fd) ->
         OS.read fd, stat.size, (err, buff) ->
-            OS.loadImage buff
+            OS.spawnChild ->
+                OS.loadImage buff
