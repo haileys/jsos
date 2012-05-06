@@ -99,7 +99,7 @@ void* js_alloc(size_t sz)
         js_gc_run();
         ptr = malloc(sz);
         if(ptr == NULL) {
-            js_panic("malloc(%lu) failed - out of memory!", sz);
+            js_panic("malloc(%u) failed - out of memory!", sz);
         }
     }
     memory_usage += sz;
