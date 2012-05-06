@@ -46,6 +46,28 @@ int snprintf(char* str, size_t size, const char* format, ...)
     return bytes;
 }
 
+static char* utoa(unsigned int value, char* buff, int base)
+{
+    char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char* ret = buff;
+    char scratch[64];
+    int idx = 0;
+    if(value == 0) {
+        *buff++ = '0';
+        *buff = 0;
+        return ret;
+    }
+    while(value > 0) {
+        scratch[idx++] = charset[value % base];
+        value /= base;
+    }
+    while(idx > 0) {
+        *buff++ = scratch[--idx];
+    }
+    *buff = 0;
+    return ret;
+}
+
 int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
 {
     size_t i;
@@ -89,18 +111,10 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             case 'u': {
                 char buff[64];
                 int len;
-                unsigned int u = va_arg(ap, unsigned int);
-                int j = 63;
-                buff[j--] = 0;
-                buff[j] = '0';
-                while(u) {
-                    buff[j] = '0' + u % 10;
-                    u /= 10;
-                    j--;
-                }
+                utoa(va_arg(ap, unsigned int), buff, 10);
                 len = strlen(buff);
                 if(i + len < size - 1) {
-                    memcpy(str + i, buff + j, len);
+                    memcpy(str + i, buff, len);
                 } else {
                     goto end_of_loop;
                 }
@@ -113,19 +127,7 @@ int vsnprintf(char* str, size_t size, const char* fmt, va_list ap)
             case 'x': {
                 char buff[64];
                 int len;
-                unsigned int u = va_arg(ap, int);
-                int j = 63;
-                buff[j--] = 0;
-                buff[j] = '0';
-                while(u) {
-                    if(u % 16 < 10) {
-                        buff[j] = '0' + u % 16;
-                    } else {
-                        buff[j] = 'a' + (u % 16) - 10;
-                    }
-                    u /= 10;
-                    j--;
-                }
+                utoa(va_arg(ap, unsigned int), buff, 16);
                 len = strlen(buff);
                 if(i + len < size - 1) {
                     memcpy(str + i, buff, len);
