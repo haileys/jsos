@@ -89,6 +89,7 @@ enum js_opcode {
     JS_OP_ENUMNEXT      = 67,
     JS_OP_JEND          = 68,
     JS_OP_ENUMPOP       = 69,
+    JS_OP_EQ            = 70,
 };
 
 typedef struct {
