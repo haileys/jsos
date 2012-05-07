@@ -201,7 +201,8 @@ Process = (function() {
             if(!self.fds[fd]) {
                 throw self.createSystemError("invalid fd");
             }
-            self.fds[fd].close();
+            // @TODO
+            //self.fds[fd].close();
             delete self.fds[fd];
         });
         g.OS.stat = vm.exposeFunction(function(path, callback) {
