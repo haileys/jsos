@@ -15,7 +15,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 		kernel/drivers/serial kernel/drivers/mbr kernel/drivers/vga \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils \
 		kernel/process kernel/drivers/bios_hdd kernel/vm kernel/fs \
-		bin/init bin/jsh bin/cowsay bin/ls bin/stat
+		bin/init bin/jsh bin/cowsay bin/ls bin/stat bin/fortune
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
@@ -36,7 +36,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 	@${CC} ${CFLAGS} -c -o $@ $<
 
 hdd.img: $(patsubst %, build/%.jmg, $(JSIMGS)) build/kernel.sys \
-	 	build/boot/grub/menu.lst build/jsos.256
+	 	build/boot/grub/menu.lst build/etc/fortune.txt
 	@echo "creating image"
 	@cp hdd.base.img hdd.img
 	@sudo rm -rf mnt
@@ -77,3 +77,6 @@ build/%.256: %.png
 	@convert $< -depth 8 tmp.rgb
 	@ruby scripts/rgb-to-256indexed.rb tmp.rgb > $@
 	@rm -f tmp.rgb
+
+build/etc/fortune.txt: /usr/share/fortune/perl
+	@cp /usr/share/fortune/perl build/etc/fortune.txt
