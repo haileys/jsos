@@ -17,12 +17,12 @@ chomp = (str) ->
     else
         str
         
-print "I'm JSH on pid##{OS.pid()}\n"
+print "I'm JSH on pid##{OS.pid()}\n\n"
 
 do prompt = ->
     print "$ "
-    OS.read OS.stdin, 0, (err, cmd) ->
-        cmd = cmd.trim()
+    OS.read OS.stdin, 0, (err, buff) ->
+        [cmd, argv...] = buff.trim().split " "
         if cmd is "exit"
             OS.exit()
         else
@@ -31,7 +31,7 @@ do prompt = ->
                     OS.open stat.path, (err, fd) ->
                         OS.read fd, stat.size, (err, buff) ->
                             OS.close fd
-                            proc = OS.spawnChild buff
+                            proc = OS.spawnChild buff, cmd, argv...
                             OS.wait proc.pid, ->
                                 do prompt
                 else
