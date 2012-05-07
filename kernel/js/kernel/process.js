@@ -11,6 +11,7 @@ Process = (function() {
         Process.processes[this.id] = this;
         this.fds = {};
         this.parent = opts.parent || null;
+        this.argv = opts.argv || [];
         this.env = {};
         this.callbacksPending = 0;
         this.waiters = [];
@@ -36,7 +37,6 @@ Process = (function() {
         for(var i = 0; i < this.waiters.length; i++) {
             var waiter = this.waiters[i];
             waiter.process.enqueueCallback(waiter.callback, [this.exitStatus]);
-            waiter.process.callbacksPending--;
         }
         if(this.waiters.length) {
             delete Process.processes[this.id];
@@ -83,6 +83,10 @@ Process = (function() {
         g.OS.yield = vm.exposeFunction(function(callback) {
             self.enqueueCallback(callback);
         });
+        g.OS.argv = vm.createArray();
+        for(var i = 0; i < this.argv.length; i++) {
+            g.OS.argv[i] = this.argv[i];
+        }
         g.OS.log = vm.exposeFunction(function(msg) {
             Console.write("[#" + self.id + "] " + msg + "\n");
         });
@@ -121,7 +125,11 @@ Process = (function() {
             if(typeof image !== "string") {
                 throw self.createSystemError("expected 'image' to be a string");
             }
-            var child = new Process({ parent: self });
+            var argv = [];
+            for(var i = 1; i < arguments.length; i++) {
+                argv.push(arguments[i]);
+            }
+            var child = new Process({ parent: self, argv: argv });
             child.enqueueCallback(function() {
                 child.loadImage(image);
             }, []);
@@ -295,7 +303,6 @@ Process = (function() {
         if(!yielder.process.isRunning()) {
             return Process.scheduleNext();
         }
-        yielder.process.callbacksPending--;
         try {
             yielder.process.safeCall(yielder.callback, yielder.args || []);
         } catch(e) {
@@ -307,8 +314,9 @@ Process = (function() {
             yielder.process.kill();
             return;
         }
-        if(yielder.process.callbacksPending === 0) {
-//            yielder.process.kill();
+        if(--yielder.process.callbacksPending === 0) {
+            //Console.write("yielder.process.callbacksPending == 0 for PID " + yielder.process.id + "\n");
+            //yielder.process.kill();
         }
         return true;
     };
