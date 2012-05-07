@@ -92,7 +92,8 @@ module JSOS
       enum:       66,
       enumnext:   67,
       jend:       68,
-      popenum:    69,
+      enumpop:    69,
+      eq:         70,
     }
 
   private
@@ -701,7 +702,7 @@ module JSOS
       compile_node node.body
       output :jmp, [:ref, loop_label]
       output [:label, end_label]
-      output :popenum
+      output :enumpop
       @break_stack.pop
       @continue_stack.pop
     end
