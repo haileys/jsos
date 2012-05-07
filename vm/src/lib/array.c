@@ -146,6 +146,19 @@ static bool array_vtable_delete(js_value_t* obj, js_string_t* prop)
     return js_object_base_vtable()->delete(obj, prop);
 }
 
+static js_string_t** array_vtable_keys(js_value_t* obj, uint32_t* out_count)
+{
+    uint32_t count, i;
+    js_array_t* ary = (js_array_t*)obj;
+    js_string_t** keys = js_object_base_vtable()->keys(obj, &count);
+    keys = js_realloc(keys, sizeof(*keys) * (count + ary->items_length));
+    for(i = 0; i < ary->items_length; i++) {
+        keys[count + i] = js_string_format("%d", i);
+    }
+    *out_count = count + ary->items_length;
+    return keys;
+}
+
 char* utoa(unsigned int value, char* buff, int base)
 {
     char* charset = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -332,6 +345,7 @@ void js_lib_array_initialize(js_vm_t* vm)
         array_vtable.put = array_vtable_put;
         array_vtable.has_property = array_vtable_has_property;
         array_vtable.delete = array_vtable_delete;
+        array_vtable.keys = array_vtable_keys;
     }
     
     vm->lib.Array = js_value_make_native_function(vm, NULL, js_cstring("Array"), Array_call, Array_call);
