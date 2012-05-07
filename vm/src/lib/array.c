@@ -231,7 +231,7 @@ static VAL Array_prototype_push(js_vm_t* vm, void* state, VAL this, uint32_t arg
 
 static VAL Array_prototype_slice(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
-    if(argv == 0) {
+    if(argc && argv == 0) {
         js_panic("argv == NULL");
     }
     js_array_t* ary = as_array(vm, this);
@@ -336,6 +336,45 @@ static VAL Array_prototype_join(js_vm_t* vm, void* state, VAL this, uint32_t arg
     return js_value_wrap_string(str);
 }
 
+static VAL Array_prototype_concat(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_array_t* ary = as_array(vm, this);
+    uint32_t total_len = ary->length;
+    uint32_t i;
+    for(i = 0; i < argc; i++) {
+        if(js_value_get_type(argv[i]) == JS_T_ARRAY) {
+            total_len += ((js_array_t*)js_value_get_pointer(argv[i]))->length;
+        } else {
+            total_len++;
+        }
+    }
+    VAL* vec = js_alloc(sizeof(VAL) * total_len);
+    for(i = 0; i < ary->length; i++) {
+        if(i < ary->items_length) {
+            vec[i] = ary->items[i];
+        } else {
+            vec[i] = js_value_undefined();
+        }
+    }
+    uint32_t j;
+    for(j = 0; j < argc; j++) {
+        if(js_value_get_type(argv[j]) == JS_T_ARRAY) {
+            js_array_t* argary = (js_array_t*)js_value_get_pointer(argv[j]);
+            uint32_t k;
+            for(k = 0; k < argary->length; k++) {
+                if(k < argary->items_length) {
+                    vec[i++] = argary->items[k];
+                } else {
+                    vec[i++] = js_value_undefined();
+                }
+            }
+        } else {
+            vec[i++] = argv[j];
+        }
+    }
+    return js_make_array(vm, total_len, vec);
+}
+
 void js_lib_array_initialize(js_vm_t* vm)
 {
     if(!statically_initialized) {
@@ -355,4 +394,5 @@ void js_lib_array_initialize(js_vm_t* vm)
     js_object_put(vm->lib.Array_prototype, js_cstring("slice"), js_value_make_native_function(vm, NULL, js_cstring("slice"), Array_prototype_slice, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("splice"), js_value_make_native_function(vm, NULL, js_cstring("splice"), Array_prototype_splice, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("join"), js_value_make_native_function(vm, NULL, js_cstring("join"), Array_prototype_join, NULL));
+    js_object_put(vm->lib.Array_prototype, js_cstring("concat"), js_value_make_native_function(vm, NULL, js_cstring("concat"), Array_prototype_concat, NULL));
 }
