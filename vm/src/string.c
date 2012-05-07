@@ -60,7 +60,7 @@ js_string_t* js_string_from_double(double number)
     }
     double whole = floor(number);
     double frac = fabs(number) - fabs(whole);
-    char buff[200];
+    char buff[1024];
     char* ptr = buff;
     if(whole < 0) {
         *ptr++ = '-';
@@ -69,8 +69,8 @@ js_string_t* js_string_from_double(double number)
     if(whole == 0) {
         *ptr++ = '0';
     }
-    char minibuff[200];
-    memset(minibuff, 0, 200);
+    char minibuff[1024];
+    memset(minibuff, 0, 1024);
     uint32_t minibuff_i = 0;
     while(whole > 0) {
         minibuff[minibuff_i++] = '0' + (int)fmod(whole, 10.0);
