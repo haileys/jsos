@@ -386,6 +386,41 @@ bool js_seq(VAL a, VAL b)
     }
 }
 
+bool js_eq(js_vm_t* vm, VAL a, VAL b)
+{
+    js_type_t ta = js_value_get_type(a);
+    js_type_t tb = js_value_get_type(b);
+    if(ta == tb) {
+        return js_seq(a, b);
+    } else {
+        if(ta == JS_T_NULL && tb == JS_T_UNDEFINED) {
+            return true;
+        }
+        if(ta == JS_T_UNDEFINED && tb == JS_T_UNDEFINED) {
+            return true;
+        }
+        if(ta == JS_T_NUMBER && tb == JS_T_STRING) {
+            return js_eq(vm, a, js_to_number(b));
+        }
+        if(ta == JS_T_STRING && tb == JS_T_NUMBER) {
+            return js_eq(vm, js_to_number(a), b);
+        }
+        if(ta == JS_T_BOOLEAN) {
+            return js_eq(vm, js_to_number(a), b);
+        }
+        if(tb == JS_T_BOOLEAN) {
+            return js_eq(vm, a, js_to_number(b));
+        }
+        if((ta == JS_T_STRING || ta == JS_T_NUMBER) && tb == JS_T_OBJECT) {
+            return js_eq(vm, a, js_to_primitive(b));
+        }
+        if(ta == JS_T_OBJECT && (tb == JS_T_STRING || tb == JS_T_NUMBER)) {
+            return js_eq(vm, js_to_primitive(a), b);
+        }
+        return false;
+    }
+}
+
 VAL js_object_get(VAL obj, js_string_t* prop)
 {
     js_value_t* val;

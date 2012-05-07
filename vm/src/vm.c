@@ -79,6 +79,7 @@ static js_instruction_t insns[] = {
     { "enumnext",   OPERAND_NONE },
     { "jend",       OPERAND_UINT32 },
     { "enumpop",    OPERAND_NONE },
+    { "eq",         OPERAND_NONE },
 };
 
 js_instruction_t* js_instruction(uint32_t opcode)
@@ -229,9 +230,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
 
 static VAL vm_exec(struct vm_locals* L)
 {
-    volatile char buff[1024];
     uint32_t opcode;
-    (void)buff;
     
     if(setjmp(L->handler.env)) {
         // exception was thrown
@@ -257,7 +256,7 @@ static VAL vm_exec(struct vm_locals* L)
     while(1) {
         if(++global_instruction_counter >= VM_CYCLES_PER_COLLECTION) {
             global_instruction_counter = 0;
-            //js_gc_run();
+            js_gc_run();
         }
         if(L->will_return) {
             return L->return_val;
@@ -820,6 +819,13 @@ static VAL vm_exec(struct vm_locals* L)
             
             case JS_OP_ENUMPOP: {
                 L->enum_stack = L->enum_stack->prev;
+                break;
+            }
+            
+            case JS_OP_EQ: {
+                VAL r = POP();
+                VAL l = POP();
+                PUSH(js_value_make_boolean(js_eq(L->vm, l, r)));
                 break;
             }
         
