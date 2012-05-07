@@ -3,8 +3,11 @@ OS.readDirectory "/", (err, ents) ->
     for ent in ents
         OS.write OS.stdout, "  - #{ent.name}\n"
 
-OS.stat "/bin/sh.jmg", (err, stat) ->
+OS.env "PATH", "/bin"
+
+OS.stat "/bin/jsh.jmg", (err, stat) ->
     OS.open stat.path, (err, fd) ->
         OS.read fd, stat.size, (err, buff) ->
-            OS.spawnChild ->
-                OS.loadImage buff
+            proc = OS.spawnChild buff
+            OS.wait proc.pid, (status) ->
+                OS.write OS.stdout, "#{stat.path} (##{proc.pid}) exited with status '#{status}'"

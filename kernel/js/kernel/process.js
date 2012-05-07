@@ -8,9 +8,21 @@ Process = (function() {
         this._vm = new VM();
         this._running = true;
         this.id = pidIncrement++;
-        this.fds = [new Pipe(), new Pipe(), new Pipe()];
+        Process.processes[this.id] = this;
+        this.fds = {};
         this.parent = opts.parent || null;
         this.env = {};
+        this.callbacksPending = 0;
+        this.waiters = [];
+        this.exitStatus = null;
+        if(this.parent) {
+            for(var k in this.parent.env) {
+                this.env[k] = this.parent.env[k];
+            }
+            for(var i in this.parent.fds) {
+                this.fds[i] = this.parent.fds[i];
+            }
+        }
         this.setupEnvironment();
     }
 
@@ -18,8 +30,17 @@ Process = (function() {
         return this._running;
     };
     
-    Process.prototype.kill = function() {
+    Process.prototype.kill = function(exitStatus) {
+        this.exitStatus = exitStatus || "";
         this._running = false;
+        for(var i = 0; i < this.waiters.length; i++) {
+            var waiter = this.waiters[i];
+            waiter.process.enqueueCallback(waiter.callback, [this.exitStatus]);
+            waiter.process.callbacksPending--;
+        }
+        if(this.waiters.length) {
+            delete Process.processes[this.id];
+        }
     };
 
     Process.prototype.loadImage = function(image) {
@@ -39,7 +60,7 @@ Process = (function() {
     };
     
     Process.prototype.appendFileDescriptor = function(pipe) {
-        var fd = this.fds.length;
+        for(var fd = 3; this.fds[fd]; fd++) ;
         this.fds[fd] = pipe;
         return fd;
     };
@@ -82,6 +103,7 @@ Process = (function() {
             if(!self.fds[fd]) {
                 throw self.createSystemError("bad file descriptor");
             }
+            self.callbacksPending++;
             self.fds[fd].read(size, function(err, data) {
                 self.enqueueCallback(callback, [err, data]);
             });
@@ -95,12 +117,14 @@ Process = (function() {
             }
             self.fds[fd].write(data);
         });
-        g.OS.spawnChild = vm.exposeFunction(function(callback) {
-            if(typeof callback !== "function" && typeof callback !== "undefined") {
-                throw self.createSystemError("expected 'callback' to be either a function or undefined");
+        g.OS.spawnChild = vm.exposeFunction(function(image) {
+            if(typeof image !== "string") {
+                throw self.createSystemError("expected 'image' to be a string");
             }
             var child = new Process({ parent: self });
-            child.enqueueCallback(callback, []);
+            child.enqueueCallback(function() {
+                child.loadImage(image);
+            }, []);
             return {
                 pid: child.id,
                 stdin: self.appendFileDescriptor(child.fds[0]),
@@ -134,11 +158,12 @@ Process = (function() {
                 throw self.createSystemError("expected 'callback' to be a function");
             }
             var dir = Kernel.filesystem.find(path);
+            self.callbacksPending++;
             if(dir === null) {
-                throw self.createSystemError("'" + path + "' not found");
+                self.enqueueCallback(callback, ["'" + path + "' not found"]);
             }
             if(dir.getType() !== "directory") {
-                throw self.createSystemError("'" + path + "' is not a directory");
+                self.enqueueCallback(callback, ["'" + path + "' is not a directory"]);
             }
             var entries = dir.readEntries();
             var arr = vm.createArray();
@@ -148,7 +173,7 @@ Process = (function() {
                 obj.type = entries[i].getType();
                 arr.push(obj);
             }
-            callback(false, arr);
+            self.enqueueCallback(callback, [false, arr]);
         });
         g.OS.open = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
@@ -158,6 +183,7 @@ Process = (function() {
                 throw self.createSystemError("expected 'callback' to be a function");
             }
             var file = Kernel.filesystem.find(path);
+            self.callbacksPending++;
             if(file === null) {
                 self.enqueueCallback(callback, ["'" + path + "' not found"]);
                 return;
@@ -186,6 +212,7 @@ Process = (function() {
                 throw self.createSystemError("expected 'callback' to be a function");
             }
             var file = Kernel.filesystem.find(path);
+            self.callbacksPending++;
             if(file === null) {
                 self.enqueueCallback(callback, ["'" + path + "' not found"]);
                 return;
@@ -207,6 +234,44 @@ Process = (function() {
                 self.enqueueCallback(callback, ["'" + path + "' is of unknown type"]);
             }
         });
+        g.OS.env = vm.exposeFunction(function(name, value) {
+            if(typeof name !== "string") {
+                throw self.createSystemError("expected 'name' to be a string");
+            }
+            if(typeof value !== "undefined" && typeof value !== "string") {
+                throw self.createSystemError("expected 'value' to be a string");
+            }
+            if(typeof value === "undefined") {
+                return self.env[name];
+            } else {
+                return self.env[name] = value;
+            }
+        });
+        g.OS.wait = vm.exposeFunction(function(pid, callback) {
+            if(typeof pid !== "number") {
+                throw self.createSystemError("expected 'pid' to be a number");
+            }
+            if(typeof callback !== "function") {
+                throw self.createSystemError("expected 'callback' to be a function");
+            }
+            if(self.id === pid) {
+                throw self.createSystemError("cannot wait on self");
+            }
+            var proc = Process.processes[pid];
+            if(!proc) {
+                throw self.createSystemError("no such process: " + pid);
+            }
+            self.callbacksPending++;
+            if(proc.isRunning()) {
+                proc.waiters.push({ process: self, callback: callback });
+            } else {
+                self.enqueueCallback(callback, [proc.exitStatus]);
+                delete Process.processes[pid];
+            }
+        });
+        g.OS.exit = vm.exposeFunction(function() {
+            self.kill();
+        });
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {
@@ -216,6 +281,8 @@ Process = (function() {
     Process.prototype.safeCall = function(callback, args) {
         return this._vm.safeCall(callback, args || []);
     };
+    
+    Process.processes = {};
     
     Process.scheduleNext = function() {
         // @TODO check for processes waiting on I/O etcetera
@@ -227,6 +294,7 @@ Process = (function() {
         if(!yielder.process.isRunning()) {
             return Process.scheduleNext();
         }
+        yielder.process.callbacksPending--;
         try {
             yielder.process.safeCall(yielder.callback, yielder.args || []);
         } catch(e) {
@@ -236,6 +304,10 @@ Process = (function() {
                 Console.write(e.stack + "\n");
             }
             yielder.process.kill();
+            return;
+        }
+        if(yielder.process.callbacksPending === 0) {
+//            yielder.process.kill();
         }
         return true;
     };
