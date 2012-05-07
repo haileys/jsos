@@ -11,7 +11,7 @@ static idt_entry_t* idt = (idt_entry_t*)0x1600;
 
 static VAL js_isr_table;
 
-#define MAX_QUEUED_INTERRUPTS 32
+#define MAX_QUEUED_INTERRUPTS 2048
 
 static struct {
     uint32_t interrupt;
@@ -65,6 +65,11 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
 {
     if(interrupt == 39 /* spurious */) {
         return 0;
+    }
+    
+    if(interrupt == 33 /* kb wat */) {
+        int a = 1;
+        (void)a;
     }
     
     if(interrupt == 14 /* page fault */) {
