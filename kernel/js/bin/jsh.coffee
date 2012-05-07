@@ -9,7 +9,7 @@ findInPath = (cmd, callback, paths) ->
         if err or stat.type isnt "file"
             return findInPath cmd, callback, paths[1..]
         else
-            callback stat.path
+            callback stat
 
 chomp = (str) ->
     if str[str.length - 1] is "\n"
@@ -21,14 +21,19 @@ print "I'm JSH on pid##{OS.pid()}\n"
 
 do prompt = ->
     print "$ "
-    OS.read OS.stdin, 0, (err, buff) ->
-        buff = buff.trim()
-        if buff is "exit"
+    OS.read OS.stdin, 0, (err, cmd) ->
+        cmd = cmd.trim()
+        if cmd is "exit"
             OS.exit()
         else
-            findInPath buff, (path) ->
-                if path
-                    print "would execute: #{path}\n"
+            findInPath cmd, (stat) ->
+                if stat
+                    OS.open stat.path, (err, fd) ->
+                        OS.read fd, stat.size, (err, buff) ->
+                            OS.close fd
+                            proc = OS.spawnChild buff
+                            OS.wait proc.pid, ->
+                                do prompt
                 else
-                    print "-jsh: #{buff}: command not found\n"
-                do prompt
+                    print "-jsh: #{cmd}: command not found\n"
+                    do prompt
