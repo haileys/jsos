@@ -7,9 +7,9 @@
             self.onInterrupt();
         };
         // disable and re-enable keyboard device
-        var b = Kernel.inb(0x61);
-        Kernel.outb(0x61, b | 0x80);
-        Kernel.outb(0x61, b & 0x7f);
+//        var b = Kernel.inb(0x61);
+//        Kernel.outb(0x61, b | 0x80);
+//        Kernel.outb(0x61, b & 0x7f);
         for(var i = 0; i < 16; i++) {
             Kernel.inb(0x60);
         }
