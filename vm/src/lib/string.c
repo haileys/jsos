@@ -215,6 +215,30 @@ static VAL String_prototype_toLowerCase(js_vm_t* vm, void* state, VAL this, uint
     return js_value_make_pointer(new_str);
 }
 
+static VAL String_prototype_trim(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    if(js_value_get_type(this) != JS_T_STRING_OBJECT) {
+        // @TODO throw exception
+        js_panic("String.prototype.trim() is not generic");
+    }
+    js_string_object_t* str = (js_string_object_t*)js_value_get_pointer(this);
+    uint32_t trimBegin = 0;
+    uint32_t trimEnd = str->string.length;
+    for(; trimBegin < str->string.length; trimBegin++) {
+        char c = str->string.buff[trimBegin];
+        if(c != ' ' && c != '\n' && c != '\t') {
+            break;
+        }
+    }
+    for(; trimEnd > trimBegin; trimEnd--) {
+        char c = str->string.buff[trimEnd - 1];
+        if(c != ' ' && c != '\n' && c != '\t') {
+            break;
+        }
+    }
+    return js_value_make_string(str->string.buff + trimBegin, trimEnd - trimBegin);
+}
+
 void js_lib_string_initialize(js_vm_t* vm)
 {
     if(!statically_initialized) {
@@ -237,4 +261,5 @@ void js_lib_string_initialize(js_vm_t* vm)
     js_object_put(vm->lib.String_prototype, js_cstring("indexOf"), js_value_make_native_function(vm, NULL, js_cstring("indexOf"), String_prototype_indexOf, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("split"), js_value_make_native_function(vm, NULL, js_cstring("split"), String_prototype_split, NULL));
     js_object_put(vm->lib.String_prototype, js_cstring("toLowerCase"), js_value_make_native_function(vm, NULL, js_cstring("toLowerCase"), String_prototype_toLowerCase, NULL));
+    js_object_put(vm->lib.String_prototype, js_cstring("trim"), js_value_make_native_function(vm, NULL, js_cstring("trim"), String_prototype_trim, NULL));
 }
