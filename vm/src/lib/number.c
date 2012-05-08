@@ -86,7 +86,7 @@ double js_number_parse(js_string_t* str)
     bool neg = false, negexp = false;
     uint32_t i;
     for(i = 0; i < str->length; i++) {
-        if(is_char_whitespace(str->buff[i])) {
+        if(!is_char_whitespace(str->buff[i])) {
             break;
         }
     }
