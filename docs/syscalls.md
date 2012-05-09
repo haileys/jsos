@@ -1,75 +1,77 @@
 # JSOS System Calls
 ### yield(`callback`)
 
-Yields control to another process
+> 
+> Yields control to another process
+> 
 
-**callback:** A function the operating system should return control to
+> **callback:** A function the operating system should return control to
 
 ### log(`msg`)
 
-undocumented
+> undocumented
 
 ### pid()
 
-undocumented
+> undocumented
 
 ### parentPid()
 
-undocumented
+> undocumented
 
 ### read(`fd`, `size`, `callback`)
 
-undocumented
+> undocumented
 
 ### write(`fd`, `data`)
 
-undocumented
+> undocumented
 
 ### spawnChild(`image`)
 
-undocumented
+> undocumented
 
 ### loadImage(`image`)
 
-undocumented
+> undocumented
 
 ### ioctl(`fd`, `method`, `args`)
 
-undocumented
+> undocumented
 
 ### readDirectory(`path`, `callback`)
 
-undocumented
+> undocumented
 
 ### open(`path`, `callback`)
 
-undocumented
+> undocumented
 
 ### close(`fd`)
 
-undocumented
+> undocumented
 
 ### stat(`path`, `callback`)
 
-undocumented
+> undocumented
 
 ### env(`name`, `value`)
 
-undocumented
+> undocumented
 
 ### wait(`pid`, `callback`)
 
-undocumented
+> undocumented
 
 ### exit()
 
-undocumented
+> undocumented
 
 ### dup(`src`, `dest`)
 
-undocumented
+> undocumented
 
 ### pipe()
 
-undocumented
+> undocumented
 
