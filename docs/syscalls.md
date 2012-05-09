@@ -11,103 +11,180 @@
 
 ### log(`msg`)
 
-> undocumented
+> 
+> Logs a message to the text console along with the process's ID
+> 
 
-[Source](../kernel/js/kernel/process.js#L97)
+> **msg:** The message to log
+
+[Source](../kernel/js/kernel/process.js#L101)
 
 ### pid()
 
-> undocumented
+> 
+> Returns the current process's ID
 
-[Source](../kernel/js/kernel/process.js#L100)
+[Source](../kernel/js/kernel/process.js#L106)
 
 ### parentPid()
 
-> undocumented
+> 
+> Returns the process ID of the current process's parent process
 
-[Source](../kernel/js/kernel/process.js#L103)
+[Source](../kernel/js/kernel/process.js#L111)
 
 ### read(`fd`, `size`, `callback`)
 
-> undocumented
+> 
+> Reads at most `size` bytes from the file identified by `fd`
+> 
 
-[Source](../kernel/js/kernel/process.js#L110)
+> **fd:** The file descriptor to be read from
+
+> **size:** The maximum number of bytes to be read
+
+> **callback:** The function to be called upon completion of the read.               The callback will be passed two arguments: `error` and `buff`
+
+[Source](../kernel/js/kernel/process.js#L125)
 
 ### write(`fd`, `data`)
 
-> undocumented
+> 
+> Writes data to an open file
+> 
 
-[Source](../kernel/js/kernel/process.js#L122)
+> **fd:** The file descriptor to be written to
+
+> **data:** The data to write
+
+[Source](../kernel/js/kernel/process.js#L142)
 
 ### spawnChild(`image`)
 
-> undocumented
+> 
+> Spawns a child process and returns and object containing the child
+> ID (`pid`)
+> 
 
-[Source](../kernel/js/kernel/process.js#L131)
-
-### loadImage(`image`)
-
-> undocumented
-
-[Source](../kernel/js/kernel/process.js#L150)
-
-### ioctl(`fd`, `method`, `args`)
-
-> undocumented
+> **image:** The image as a binary buffer to load and execute in the new process
 
 [Source](../kernel/js/kernel/process.js#L156)
 
+### loadImage(`image`)
+
+> 
+> Loads and executes an image in the current process
+> 
+
+> **image:** The image as a binary buffer
+
+[Source](../kernel/js/kernel/process.js#L176)
+
+### ioctl(`fd`, `method`, `args`)
+
+> 
+> Calls a device specific method on an open file
+> 
+
+> **fd:** The file descriptor to call the method on
+
+> **method:** The method to call. This is a device-specific string
+
+> **args:** An argument to pass to the method. May be undefined.
+
+[Source](../kernel/js/kernel/process.js#L188)
+
 ### readDirectory(`path`, `callback`)
 
-> undocumented
+> 
+> Reads all entries from a directory. Each entry is represented as an
+> object with a `name` property and `type` property.
+> 
 
-[Source](../kernel/js/kernel/process.js#L168)
+> **path:** The directory to list
+
+> **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `entries`
+
+[Source](../kernel/js/kernel/process.js#L207)
 
 ### open(`path`, `callback`)
 
-> undocumented
+> 
+> Opens a file
+> 
 
-[Source](../kernel/js/kernel/process.js#L193)
+> **path:** The absolute path to the file to be opened
+
+> **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `fd`
+
+[Source](../kernel/js/kernel/process.js#L238)
 
 ### close(`fd`)
 
-> undocumented
+> 
+> Closes an open file
+> 
 
-[Source](../kernel/js/kernel/process.js#L212)
+> **fd:** The file descriptor to close
+
+[Source](../kernel/js/kernel/process.js#L261)
 
 ### stat(`path`, `callback`)
 
-> undocumented
+> 
+> Returns an object with metadata about a file. The object will have
+> the properties `size` (the size of the file in bytes), `name` (the
+> name of the file), `type` (one of "file" or "directory"), and `path`
+> (the absolute path to the file)
+> 
 
-[Source](../kernel/js/kernel/process.js#L223)
+> **path:** The absolute path to the file
+
+> **callback:** The function to be called upon completion of the operation.               The callback will be passed two parameters: `error` and `stat`
+
+[Source](../kernel/js/kernel/process.js#L281)
 
 ### env(`name`, `value`)
 
-> undocumented
+> 
+> Gets or sets an environment variable for the current process
+> 
 
-[Source](../kernel/js/kernel/process.js#L253)
+> **name:** The name of the variable to get/set
+
+> **value:** Optional. If omitted, `OS.env` will return the current           value of the environment variable `name`. If set, the           environment variable will be set to this value
+
+[Source](../kernel/js/kernel/process.js#L318)
 
 ### wait(`pid`, `callback`)
 
-> undocumented
+> 
+> Waits for a process to terminate
+> 
 
-[Source](../kernel/js/kernel/process.js#L266)
+> **pid:** The ID of the process to wait on
+
+> **callback:** The function to call when the process identified by               `pid` exits. This function will be passed the exit status               of the process as its only parameter
+
+[Source](../kernel/js/kernel/process.js#L338)
 
 ### exit()
 
-> undocumented
+> 
+> Terminates the current process. This system call will return, but
+> no more callbacks will be scheduled by the system for this process
 
-[Source](../kernel/js/kernel/process.js#L288)
+[Source](../kernel/js/kernel/process.js#L363)
 
 ### dup(`src`, `dest`)
 
 > undocumented
 
-[Source](../kernel/js/kernel/process.js#L291)
+[Source](../kernel/js/kernel/process.js#L366)
 
 ### pipe()
 
 > undocumented
 
-[Source](../kernel/js/kernel/process.js#L307)
+[Source](../kernel/js/kernel/process.js#L382)
 
