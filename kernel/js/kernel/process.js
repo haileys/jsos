@@ -94,12 +94,20 @@ Process = (function() {
         for(var i = 0; i < this.argv.length; i++) {
             g.OS.argv[i] = this.argv[i];
         }
+        
+        // Logs a message to the text console along with the process's ID
+        // 
+        // msg: The message to log
         g.OS.log = vm.exposeFunction(function(msg) {
             Console.write("[#" + self.id + "] " + msg + "\n");
         });
+        
+        // Returns the current process's ID
         g.OS.pid = vm.exposeFunction(function() {
             return self.id;
         });
+        
+        // Returns the process ID of the current process's parent process
         g.OS.parentPid = vm.exposeFunction(function() {
             if(self.parent) {
                 return self.parent.id;
@@ -107,6 +115,13 @@ Process = (function() {
                 return null;
             }
         });
+        
+        // Reads at most `size` bytes from the file identified by `fd`
+        // 
+        // fd:          The file descriptor to be read from
+        // size:        The maximum number of bytes to be read
+        // callback:    The function to be called upon completion of the read.
+        //              The callback will be passed two arguments: `error` and `buff`
         g.OS.read = vm.exposeFunction(function(fd, size, callback) {
             if(typeof fd !== "number" || typeof size !== "number" || typeof callback !== "function") {
                 throw self.createSystemError("expected 'fd' to be a number, 'size' to be a number and 'callback' to be a function");
@@ -119,6 +134,11 @@ Process = (function() {
                 self.enqueueCallback(callback, [err, data]);
             });
         });
+        
+        // Writes data to an open file
+        // 
+        // fd:      The file descriptor to be written to
+        // data:    The data to write
         g.OS.write = vm.exposeFunction(function(fd, data) {
             if(typeof fd !== "number" || typeof data !== "string") {
                 throw self.createSystemError("expected 'fd' to be a number and 'data' to be a string");
@@ -128,6 +148,11 @@ Process = (function() {
             }
             self.fds[fd].write(data);
         });
+        
+        // Spawns a child process and returns and object containing the child
+        // ID (`pid`)
+        // 
+        // image: The image as a binary buffer to load and execute in the new process
         g.OS.spawnChild = vm.exposeFunction(function(image) {
             if(typeof image !== "string") {
                 throw self.createSystemError("expected 'image' to be a string");
@@ -141,18 +166,25 @@ Process = (function() {
                 child.loadImage(image);
             }, []);
             return {
-                pid: child.id,
-                stdin: self.appendFileDescriptor(child.fds[0]),
-                stdout: self.appendFileDescriptor(child.fds[1]),
-                stderr: self.appendFileDescriptor(child.fds[2]),
+                pid: child.id
             };
         });
+        
+        // Loads and executes an image in the current process
+        // 
+        // image: The image as a binary buffer
         g.OS.loadImage = vm.exposeFunction(function(image) {
             if(typeof image !== "string") {
                 throw self.createSystemError("expected 'image' to be a string");
             }
             return self.loadImage(image);
         });
+        
+        // Calls a device specific method on an open file
+        // 
+        // fd:      The file descriptor to call the method on
+        // method:  The method to call. This is a device-specific string
+        // args:    An argument to pass to the method. May be undefined.
         g.OS.ioctl = vm.exposeFunction(function(fd, method, args) {
             if(typeof fd !== "number" || typeof method !== "string") {
                 throw self.createSystemError("expected 'fd' to be a number and 'method' to be a string");
@@ -165,6 +197,13 @@ Process = (function() {
             }
             return self.fds[fd].ioctl[method](self, self.fds[fd], args);
         });
+        
+        // Reads all entries from a directory. Each entry is represented as an
+        // object with a `name` property and `type` property.
+        // 
+        // path:        The directory to list
+        // callback:    The function to be called upon completion of the operation.
+        //              The callback will be passed two arguments: `error` and `entries`
         g.OS.readDirectory = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
                 throw self.createSystemError("expected 'path' to be a string");
@@ -190,6 +229,12 @@ Process = (function() {
             }
             self.enqueueCallback(callback, [false, arr]);
         });
+        
+        // Opens a file
+        // 
+        // path:        The absolute path to the file to be opened
+        // callback:    The function to be called upon completion of the operation.
+        //              The callback will be passed two arguments: `error` and `fd`
         g.OS.open = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
                 throw self.createSystemError("expected 'path' to be a string");
@@ -209,6 +254,10 @@ Process = (function() {
             }
             self.enqueueCallback(callback, [false, self.appendFileDescriptor(new Filesystem.FileDescriptor(file))]);
         });
+        
+        // Closes an open file
+        // 
+        // fd: The file descriptor to close
         g.OS.close = vm.exposeFunction(function(fd) {
             if(typeof fd !== "number") {
                 throw self.createSystemError("expected 'fd' to be a number");
@@ -220,6 +269,15 @@ Process = (function() {
             //self.fds[fd].close();
             delete self.fds[fd];
         });
+        
+        // Returns an object with metadata about a file. The object will have
+        // the properties `size` (the size of the file in bytes), `name` (the
+        // name of the file), `type` (one of "file" or "directory"), and `path`
+        // (the absolute path to the file)
+        // 
+        // path:        The absolute path to the file
+        // callback:    The function to be called upon completion of the operation.
+        //              The callback will be passed two parameters: `error` and `stat`
         g.OS.stat = vm.exposeFunction(function(path, callback) {
             if(typeof path !== "string") {
                 throw self.createSystemError("expected 'path' to be a string");
@@ -250,6 +308,13 @@ Process = (function() {
                 self.enqueueCallback(callback, ["'" + path + "' is of unknown type"]);
             }
         });
+        
+        // Gets or sets an environment variable for the current process
+        // 
+        // name:    The name of the variable to get/set
+        // value:   Optional. If omitted, `OS.env` will return the current
+        //          value of the environment variable `name`. If set, the
+        //          environment variable will be set to this value
         g.OS.env = vm.exposeFunction(function(name, value) {
             if(typeof name !== "string") {
                 throw self.createSystemError("expected 'name' to be a string");
@@ -263,6 +328,13 @@ Process = (function() {
                 return self.env[name] = value;
             }
         });
+        
+        // Waits for a process to terminate
+        // 
+        // pid:         The ID of the process to wait on
+        // callback:    The function to call when the process identified by
+        //              `pid` exits. This function will be passed the exit status
+        //              of the process as its only parameter
         g.OS.wait = vm.exposeFunction(function(pid, callback) {
             if(typeof pid !== "number") {
                 throw self.createSystemError("expected 'pid' to be a number");
@@ -285,6 +357,9 @@ Process = (function() {
                 delete Process.processes[pid];
             }
         });
+        
+        // Terminates the current process. This system call will return, but 
+        // no more callbacks will be scheduled by the system for this process
         g.OS.exit = vm.exposeFunction(function() {
             self.kill();
         });
