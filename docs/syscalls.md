@@ -3,7 +3,7 @@
 
 Yields control to another process
 
-**`callback`:** A function the operating system should return control to
+**callback:** A function the operating system should return control to
 
 ### log(`msg`)
 
