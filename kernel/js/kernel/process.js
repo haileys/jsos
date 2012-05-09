@@ -80,7 +80,14 @@ Process = (function() {
         g.OS.stdin = 0;
         g.OS.stdout = 1;
         g.OS.stderr = 2;
+        
+        // Yields control to another process
+        // 
+        // callback: A function the operating system should return control to
         g.OS.yield = vm.exposeFunction(function(callback) {
+            if(typeof callback !== "function") {
+                throw self.createSystemError("expected 'callback' to be a function");
+            }
             self.enqueueCallback(callback);
         });
         g.OS.argv = vm.createArray();
@@ -280,6 +287,25 @@ Process = (function() {
         });
         g.OS.exit = vm.exposeFunction(function() {
             self.kill();
+        });
+        g.OS.dup = vm.exposeFunction(function(src, dest) {
+            if(typeof src !== "number") {
+                throw self.createSystemError("expected 'src' to be a number");
+            }
+            if(!self.fds[src]) {
+                throw self.createSystemError("bad file descriptor");
+            }
+            if(typeof dest === "undefined") {
+                return self.appendFileDescriptor(self.fds[src]);
+            }
+            if(typeof dest !== "number") {
+                throw self.createSystemError("expected 'dest' to be a number");
+            }
+            self.fds[dest] = self.fds[src];
+            return dest;
+        });
+        g.OS.pipe = vm.exposeFunction(function() {
+            return self.appendFileDescriptor(new Pipe());
         });
     };
 

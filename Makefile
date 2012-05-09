@@ -4,7 +4,8 @@ CFLAGS=-m32 -Wall -Wextra -iquote inc -g -Wno-unused-parameter -nostdlib \
 
 LDFLAGS=-nostdlib -static
 
-kernel: twostroke/LICENSE libc/libc.a vm/libjsvm.a kernel/hdd.img
+all: twostroke/LICENSE libc/libc.a vm/libjsvm.a kernel/hdd.img \
+	 docs/syscalls.md
 
 twostroke/LICENSE:
 	git submodule update --init
@@ -20,9 +21,14 @@ kernel/hdd.img:
 
 .PHONY: libc/libc.a vm/libjsvm.a kernel/hdd.img
 
+docs/syscalls.md: kernel/js/kernel/process.js scripts/generate-syscall-docs.rb
+	@ruby scripts/generate-syscall-docs.rb > $@
+	@echo "     doc  $@"
+
 clean:
 	rm -f userland
 	rm -f *.o
+	rm -f docs/*.md
 	make -C libc clean
 	make -C vm clean
 	make -C kernel clean
