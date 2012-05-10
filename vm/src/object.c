@@ -167,15 +167,18 @@ struct key_iter {
 static int js_object_base_keys_iter(st_data_t key, st_data_t record, st_data_t arg)
 {
     struct key_iter* state = (struct key_iter*)arg;
-    state->keys[state->index++] = (js_string_t*)key;
+    js_property_descriptor_t* descr = (js_property_descriptor_t*)record;
+    if(descr->enumerable) {
+        state->keys[state->index++] = (js_string_t*)key;
+    }
     return ST_CONTINUE;
 }
 
 static js_string_t** js_object_base_keys(js_value_t* obj, uint32_t* count)
 {
-    *count = obj->object.properties->num_entries;
-    struct key_iter state = { js_alloc(sizeof(js_string_t*) * *count), 0 };
+    struct key_iter state = { js_alloc(sizeof(js_string_t*) * obj->object.properties->num_entries), 0 };
     st_foreach(obj->object.properties, js_object_base_keys_iter, (st_data_t)&state);
+    *count = state.index;
     return state.keys;
 }
 
