@@ -67,11 +67,6 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
         return 0;
     }
     
-    if(interrupt == 33 /* kb wat */) {
-        int a = 1;
-        (void)a;
-    }
-    
     if(interrupt == 14 /* page fault */) {
         uint32_t fault_address;
         __asm__ volatile ("movl %%cr2, %0" : "=r"(fault_address));
@@ -85,6 +80,7 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
     // isr_dispatch is already in a cli/hlt so there's no need to do any locking
     if((queue_back + 1) % MAX_QUEUED_INTERRUPTS == queue_front) {
         // ring buffer is full, this interrupt needs to be dropped
+        panic("interrupt buffer full!");
         return 1;
     }
     
