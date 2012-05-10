@@ -178,13 +178,26 @@
 
 ### dup(`src`, `dest`)
 
-> undocumented
+> 
+> Duplicates an open file descriptor. This creates an alias for the
+> same open file on a different descriptor number.
+> 
 
-[Source](../kernel/js/kernel/process.js#L366)
+> **src:** The existing file descriptor to duplicate
+
+> **dest:** Optional. If set, this will be the descriptor number for           alias. This will overwrite any existing file descriptor on           this number. If omitted, a descriptor number will be picked           by the OS.
+
+> **returns:** The descriptor number of the alias
+
+[Source](../kernel/js/kernel/process.js#L376)
 
 ### pipe()
 
-> undocumented
+> 
+> Creates a new bi-directional pipe
+> 
 
-[Source](../kernel/js/kernel/process.js#L382)
+> **returns:** The file descriptor the pipe is open on
+
+[Source](../kernel/js/kernel/process.js#L396)
 
