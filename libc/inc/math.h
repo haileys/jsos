@@ -15,5 +15,6 @@ double fabs(double x);
 double cos(double x);
 double sin(double x);
 double sqrt(double x);
+double pow(double base, double exponent);
 
 #endif
