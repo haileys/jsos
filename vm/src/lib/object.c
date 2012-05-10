@@ -16,6 +16,17 @@ VAL js_make_object(struct js_vm* vm)
     return js_value_make_object(vm->lib.Object_prototype, vm->lib.Object);
 }
 
+static VAL Object_prototype_hasOwnProperty(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_string_t* str;
+    if(argc) {
+        str = js_to_js_string_t(argv[0]);
+    } else {
+        str = js_cstring("undefined");
+    }
+    return js_value_make_boolean(js_object_has_property(this, str));
+}
+
 static VAL Object_prototype_toString(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     VAL class = js_value_get_pointer(this)->object.class;
@@ -39,6 +50,7 @@ void js_lib_object_initialize(struct js_vm* vm)
     js_object_put(vm->lib.Object, js_cstring("prototype"), vm->lib.Object_prototype);
     js_object_put(vm->global_scope->global_object, js_cstring("Object"), vm->lib.Object);
     
+    js_object_put(vm->lib.Object_prototype, js_cstring("hasOwnProperty"), js_value_make_native_function(vm, NULL, js_cstring("hasOwnProperty"), Object_prototype_hasOwnProperty, NULL));
     js_object_put(vm->lib.Object_prototype, js_cstring("valueOf"), js_value_make_native_function(vm, NULL, js_cstring("valueOf"), Object_prototype_valueOf, NULL));
     js_object_put(vm->lib.Object_prototype, js_cstring("toString"), js_value_make_native_function(vm, NULL, js_cstring("toString"), Object_prototype_toString, NULL));
 }
