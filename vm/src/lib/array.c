@@ -375,6 +375,56 @@ static VAL Array_prototype_concat(js_vm_t* vm, void* state, VAL this, uint32_t a
     return js_make_array(vm, total_len, vec);
 }
 
+static VAL Array_prototype_reduce(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_array_t* ary = as_array(vm, this);
+    uint32_t i = 0;
+    VAL callback = argc ? argv[0] : js_value_undefined();
+    if(js_value_get_type(callback) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "First argument to Array.prototype.reduce must be a function");
+    }
+    if(ary->items_length == 0 && argc < 2) {
+        js_throw_error(vm->lib.TypeError, "Reduce of empty array with no initial value");
+    }
+    VAL acc;
+    if(argc > 1) {
+        acc = argv[1];
+    } else {
+        acc = ary->items[0];
+        i++;
+    }
+    for(; i < ary->items_length; i++) {
+        VAL args[] = { acc, ary->items[i], js_value_make_double(i), js_value_make_pointer((js_value_t*)ary) };
+        acc = js_call(callback, js_value_null(), 4, args);
+    }
+    return acc;
+}
+
+static VAL Array_prototype_reduceRight(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    js_array_t* ary = as_array(vm, this);
+    uint32_t i = 0;
+    VAL callback = argc ? argv[0] : js_value_undefined();
+    if(js_value_get_type(callback) != JS_T_FUNCTION) {
+        js_throw_error(vm->lib.TypeError, "First argument to Array.prototype.reduce must be a function");
+    }
+    if(ary->items_length == 0 && argc < 2) {
+        js_throw_error(vm->lib.TypeError, "Reduce of empty array with no initial value");
+    }
+    VAL acc;
+    if(argc > 1) {
+        acc = argv[1];
+    } else {
+        acc = ary->items[ary->items_length - 1];
+        i++;
+    }
+    for(; i < ary->items_length; i++) {
+        VAL args[] = { acc, ary->items[ary->items_length - i - 1], js_value_make_double(ary->items_length - i - 1), js_value_make_pointer((js_value_t*)ary) };
+        acc = js_call(callback, js_value_null(), 4, args);
+    }
+    return acc;
+}
+
 void js_lib_array_initialize(js_vm_t* vm)
 {
     if(!statically_initialized) {
@@ -395,4 +445,6 @@ void js_lib_array_initialize(js_vm_t* vm)
     js_object_put(vm->lib.Array_prototype, js_cstring("splice"), js_value_make_native_function(vm, NULL, js_cstring("splice"), Array_prototype_splice, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("join"), js_value_make_native_function(vm, NULL, js_cstring("join"), Array_prototype_join, NULL));
     js_object_put(vm->lib.Array_prototype, js_cstring("concat"), js_value_make_native_function(vm, NULL, js_cstring("concat"), Array_prototype_concat, NULL));
+    js_object_put(vm->lib.Array_prototype, js_cstring("reduce"), js_value_make_native_function(vm, NULL, js_cstring("reduce"), Array_prototype_reduce, NULL));
+    js_object_put(vm->lib.Array_prototype, js_cstring("reduceRight"), js_value_make_native_function(vm, NULL, js_cstring("reduceRight"), Array_prototype_reduceRight, NULL));
 }
