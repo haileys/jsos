@@ -363,6 +363,16 @@ Process = (function() {
         g.OS.exit = vm.exposeFunction(function() {
             self.kill();
         });
+        
+        // Duplicates an open file descriptor. This creates an alias for the
+        // same open file on a different descriptor number.
+        // 
+        // src:     The existing file descriptor to duplicate
+        // dest:    Optional. If set, this will be the descriptor number for
+        //          alias. This will overwrite any existing file descriptor on
+        //          this number. If omitted, a descriptor number will be picked
+        //          by the OS.
+        // returns: The descriptor number of the alias
         g.OS.dup = vm.exposeFunction(function(src, dest) {
             if(typeof src !== "number") {
                 throw self.createSystemError("expected 'src' to be a number");
@@ -379,6 +389,10 @@ Process = (function() {
             self.fds[dest] = self.fds[src];
             return dest;
         });
+        
+        // Creates a new bi-directional pipe
+        // 
+        // returns: The file descriptor the pipe is open on
         g.OS.pipe = vm.exposeFunction(function() {
             return self.appendFileDescriptor(new Pipe());
         });
