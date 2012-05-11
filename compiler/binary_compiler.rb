@@ -453,7 +453,9 @@ module JSOS
     
     def ExpressionStatement(node)
       compile_node node.expr
-      output :pop
+      if node.expr.is_a? Twostroke::AST::Call
+        output :pop
+      end
     end
   
     def MultiExpression(node)
