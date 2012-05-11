@@ -4,6 +4,7 @@ global asm_isr_init
 extern isr_dispatch
 extern idt_register_handler
 extern kprintf
+extern panic
 
 lol: db "interrupt %d", 10, 0
 
@@ -59,8 +60,11 @@ isr_14:
     pop edx
     pop ebx
     push ecx
+    push .msg
+    call panic
     cli
     hlt
+    .msg db "Page Fault", 0
 .fin:
 push isr_14
 push 14
