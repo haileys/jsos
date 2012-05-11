@@ -450,6 +450,11 @@ module JSOS
         end
       end
     end
+    
+    def ExpressionStatement(node)
+      compile_node node.expr
+      output :pop
+    end
   
     def MultiExpression(node)
       compile_node node.left
