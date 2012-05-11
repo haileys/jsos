@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <math.h>
+#include <string.h>
 #include "vm.h"
 #include "gc.h"
 #include "object.h"
@@ -133,6 +134,7 @@ static int comparison_oper(VAL left, VAL right)
 #define PUSH(v) do { \
                     if(L->SP >= L->SMAX) { \
                         L->SMAX *= 2; \
+                        if(L->STACK_CSTACK) L->STACK = memcpy(js_alloc(L->SMAX / 2 * sizeof(VAL)), L->STACK, L->SMAX / 2 * sizeof(VAL)); \
                         L->STACK = js_realloc(L->STACK, sizeof(VAL) * L->SMAX); \
                     } \
                     L->STACK[L->SP++] = (v); \
@@ -168,6 +170,7 @@ struct vm_locals {
     uint32_t* INSNS;
     uint32_t SP;
     uint32_t SMAX;
+    bool STACK_CSTACK;
     VAL* STACK;
     VAL temp_slot;
     uint32_t current_line;
@@ -186,8 +189,12 @@ struct vm_locals {
 
 static VAL vm_exec(struct vm_locals* L);
 
+int kprintf();
+
 VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* scope, VAL this, uint32_t argc, VAL* argv)
 {
+    VAL fast_stack[32];
+    
     struct vm_locals L;
     
     L.vm = vm;
@@ -202,8 +209,9 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     L.INSNS = image->sections[section].instructions;
     
     L.SP = 0;
-    L.SMAX = 8;
-    L.STACK = js_alloc(sizeof(VAL) * L.SMAX);
+    L.SMAX = sizeof(fast_stack) / sizeof(VAL);
+    L.STACK_CSTACK = true;
+    L.STACK = fast_stack;
     L.temp_slot = js_value_undefined();
     L.current_line = 1;
     
