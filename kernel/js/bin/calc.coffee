@@ -50,7 +50,7 @@ class Parser
         [type, val] = @next_token()
         for t in types
             return [type, val] if t == type
-        throw new Parser.Error "Expected one of #{types.join()}; got #{type}"
+        throw new Parser.Error "Expected one of #{types.join(", ")}; got #{type}"
         
     functions: {}
     
@@ -399,5 +399,9 @@ else
             if str is "q" or str is "quit" or str is "exit"
                 do OS.exit
             else
-                puts "=> #{evaluate str}"
+                try
+                    puts "=> #{evaluate str}"
+                catch e
+                    throw e unless e instanceof Parser.Error
+                    puts "Syntax Error: #{e.message}"
                 do prompt
