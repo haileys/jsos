@@ -8,7 +8,7 @@ all: twostroke/LICENSE libc/libc.a vm/libjsvm.a kernel/hdd.img \
 	 docs/syscalls.md
 
 twostroke/LICENSE:
-	git submodule update --init
+	git submodule update
 
 libc/libc.a:
 	@make -C libc libc.a
