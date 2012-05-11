@@ -136,45 +136,44 @@ void* js_realloc_impl(void* ptr, size_t sz, char* file, int line)
 void* js_realloc(void* ptr, size_t sz)
 #endif
 {
-    #ifdef JS_GC_DEBUG
-        void* new_ptr = js_alloc_impl(sz, file, line);
-    #else
-        void* new_ptr = js_alloc(sz);
-    #endif
-    alloc_t* alloc = allocs_lookup(ptr);
-    if(alloc) {
-        memcpy(new_ptr, ptr, sz > alloc->size ? alloc->size : sz);
-    }
-    return new_ptr;
-    // @TODO attempt to realloc existing block
-    /*
     alloc_t* alloc = allocs_lookup(ptr);
     void* new_ptr;
     uint16_t new_hash;
     if(alloc == NULL) {
-        return js_alloc(sz);
+        #ifdef JS_GC_DEBUG
+            return js_alloc_impl(sz, file, line);
+        #else
+            return js_alloc(sz);
+        #endif
     }
     new_ptr = realloc(ptr, sz);
-    if(ptr == new_ptr) {
-        return ptr;
+    if(new_ptr == ptr) {
+        alloc->size = sz;
+        return new_ptr;
     }
-    alloc->ptr = new_ptr;
-    alloc->size = sz;
-    if(alloc->prev) {
+    
+    // pointer has changed, so unlink this alloc from its bucket:    
+    new_hash = pointer_hash(new_ptr);
+    if(alloc->prev == NULL) {
+        allocs[pointer_hash(ptr)] = alloc->next;
+    } else {
         alloc->prev->next = alloc->next;
     }
     if(alloc->next) {
         alloc->next->prev = alloc->prev;
     }
-    new_hash = pointer_hash(alloc->ptr);
-    alloc->prev = NULL;
+    // change the pointer and size:
+    alloc->ptr = new_ptr;
+    alloc->size = sz;
+    // add to the start of its new bucket:
     alloc->next = allocs[new_hash];
     if(alloc->next) {
         alloc->next->prev = alloc;
     }
+    alloc->prev = NULL;
     allocs[new_hash] = alloc;
+    // and return the pointer to the new allocation:
     return new_ptr;
-    */
 }
 
 void js_gc_init(void* stack_ptr)
