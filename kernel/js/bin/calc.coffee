@@ -396,6 +396,7 @@ else
     do prompt = ->
         print ">> "
         gets (str) ->
+            str = str.trim()
             if str is "q" or str is "quit" or str is "exit"
                 do OS.exit
             else
