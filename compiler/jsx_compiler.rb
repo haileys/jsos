@@ -1,5 +1,5 @@
 module JSOS
-  class BinaryCompiler
+  class JSXCompiler
     attr_accessor :bytecode, :ast
   
     def initialize(ast, filename = "")
