@@ -81,13 +81,20 @@ Process = (function() {
         g.OS.stdout = 1;
         g.OS.stderr = 2;
         
+        function expectType(name, val) {
+            for(var i = 2; i < arguments.length; i++) {
+                if(typeof val === arguments[i]) {
+                    return;
+                }
+            }
+            throw self.createSystemError("expected '" + name + "' to be of type " + arguments.slice(2).join(" or "));
+        }
+        
         // Yields control to another process
         // 
         // callback: A function the operating system should return control to
         g.OS.yield = vm.exposeFunction(function(callback) {
-            if(typeof callback !== "function") {
-                throw self.createSystemError("expected 'callback' to be a function");
-            }
+            expectType("callback", callback, "function");
             self.enqueueCallback(callback);
         });
         g.OS.argv = vm.createArray();
