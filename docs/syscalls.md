@@ -7,7 +7,7 @@
 
 > **callback:** A function the operating system should return control to
 
-[Source](../kernel/js/kernel/process.js#L96)
+[Source](../kernel/js/kernel/process.js#L101)
 
 ### log(`msg`)
 
@@ -17,21 +17,21 @@
 
 > **msg:** The message to log
 
-[Source](../kernel/js/kernel/process.js#L108)
+[Source](../kernel/js/kernel/process.js#L109)
 
 ### pid()
 
 > 
 > Returns the current process's ID
 
-[Source](../kernel/js/kernel/process.js#L113)
+[Source](../kernel/js/kernel/process.js#L115)
 
 ### parentPid()
 
 > 
 > Returns the process ID of the current process's parent process
 
-[Source](../kernel/js/kernel/process.js#L118)
+[Source](../kernel/js/kernel/process.js#L120)
 
 ### read(`fd`, `size`, `callback`)
 
@@ -45,7 +45,7 @@
 
 > **callback:** The function to be called upon completion of the read.               The callback will be passed two arguments: `error` and `buff`
 
-[Source](../kernel/js/kernel/process.js#L132)
+[Source](../kernel/js/kernel/process.js#L134)
 
 ### write(`fd`, `data`)
 
@@ -57,7 +57,7 @@
 
 > **data:** The data to write
 
-[Source](../kernel/js/kernel/process.js#L149)
+[Source](../kernel/js/kernel/process.js#L151)
 
 ### spawnChild(`image`)
 
@@ -68,7 +68,7 @@
 
 > **image:** The image as a binary buffer to load and execute in the new process
 
-[Source](../kernel/js/kernel/process.js#L163)
+[Source](../kernel/js/kernel/process.js#L164)
 
 ### loadImage(`image`)
 
@@ -78,7 +78,7 @@
 
 > **image:** The image as a binary buffer
 
-[Source](../kernel/js/kernel/process.js#L183)
+[Source](../kernel/js/kernel/process.js#L182)
 
 ### ioctl(`fd`, `method`, `args`)
 
@@ -92,7 +92,7 @@
 
 > **args:** An argument to pass to the method. May be undefined.
 
-[Source](../kernel/js/kernel/process.js#L195)
+[Source](../kernel/js/kernel/process.js#L192)
 
 ### readDirectory(`path`, `callback`)
 
@@ -105,7 +105,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `entries`
 
-[Source](../kernel/js/kernel/process.js#L214)
+[Source](../kernel/js/kernel/process.js#L210)
 
 ### open(`path`, `callback`)
 
@@ -117,7 +117,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `fd`
 
-[Source](../kernel/js/kernel/process.js#L245)
+[Source](../kernel/js/kernel/process.js#L237)
 
 ### close(`fd`)
 
@@ -127,7 +127,7 @@
 
 > **fd:** The file descriptor to close
 
-[Source](../kernel/js/kernel/process.js#L268)
+[Source](../kernel/js/kernel/process.js#L256)
 
 ### stat(`path`, `callback`)
 
@@ -142,7 +142,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two parameters: `error` and `stat`
 
-[Source](../kernel/js/kernel/process.js#L288)
+[Source](../kernel/js/kernel/process.js#L274)
 
 ### env(`name`, `value`)
 
@@ -154,7 +154,7 @@
 
 > **value:** Optional. If omitted, `OS.env` will return the current           value of the environment variable `name`. If set, the           environment variable will be set to this value
 
-[Source](../kernel/js/kernel/process.js#L325)
+[Source](../kernel/js/kernel/process.js#L307)
 
 ### wait(`pid`, `callback`)
 
@@ -166,7 +166,7 @@
 
 > **callback:** The function to call when the process identified by               `pid` exits. This function will be passed the exit status               of the process as its only parameter
 
-[Source](../kernel/js/kernel/process.js#L345)
+[Source](../kernel/js/kernel/process.js#L323)
 
 ### exit()
 
@@ -174,7 +174,7 @@
 > Terminates the current process. This system call will return, but
 > no more callbacks will be scheduled by the system for this process
 
-[Source](../kernel/js/kernel/process.js#L370)
+[Source](../kernel/js/kernel/process.js#L344)
 
 ### dup(`src`, `dest`)
 
@@ -189,7 +189,7 @@
 
 > **returns:** The descriptor number of the alias
 
-[Source](../kernel/js/kernel/process.js#L383)
+[Source](../kernel/js/kernel/process.js#L357)
 
 ### pipe()
 
@@ -199,5 +199,5 @@
 
 > **returns:** The file descriptor the pipe is open on
 
-[Source](../kernel/js/kernel/process.js#L403)
+[Source](../kernel/js/kernel/process.js#L373)
 

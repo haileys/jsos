@@ -81,6 +81,11 @@ Process = (function() {
         g.OS.stdout = 1;
         g.OS.stderr = 2;
         
+        g.OS.argv = vm.createArray();
+        for(var i = 0; i < this.argv.length; i++) {
+            g.OS.argv[i] = this.argv[i];
+        }
+        
         function expectType(name, val) {
             for(var i = 2; i < arguments.length; i++) {
                 if(typeof val === arguments[i]) {
@@ -97,15 +102,12 @@ Process = (function() {
             expectType("callback", callback, "function");
             self.enqueueCallback(callback);
         });
-        g.OS.argv = vm.createArray();
-        for(var i = 0; i < this.argv.length; i++) {
-            g.OS.argv[i] = this.argv[i];
-        }
         
         // Logs a message to the text console along with the process's ID
         // 
         // msg: The message to log
         g.OS.log = vm.exposeFunction(function(msg) {
+            expectType("msg", msg, "string");
             Console.write("[#" + self.id + "] " + msg + "\n");
         });
         
@@ -130,9 +132,9 @@ Process = (function() {
         // callback:    The function to be called upon completion of the read.
         //              The callback will be passed two arguments: `error` and `buff`
         g.OS.read = vm.exposeFunction(function(fd, size, callback) {
-            if(typeof fd !== "number" || typeof size !== "number" || typeof callback !== "function") {
-                throw self.createSystemError("expected 'fd' to be a number, 'size' to be a number and 'callback' to be a function");
-            }
+            expectType("fd",        fd,         "number");
+            expectType("size",      size,       "number");
+            expectType("callback",  callback,   "function");
             if(!self.fds[fd]) {
                 throw self.createSystemError("bad file descriptor");
             }
@@ -147,9 +149,8 @@ Process = (function() {
         // fd:      The file descriptor to be written to
         // data:    The data to write
         g.OS.write = vm.exposeFunction(function(fd, data) {
-            if(typeof fd !== "number" || typeof data !== "string") {
-                throw self.createSystemError("expected 'fd' to be a number and 'data' to be a string");
-            }
+            expectType("fd",    fd,     "number");
+            expectType("data",  data,   "string");
             if(!self.fds[fd]) {
                 throw self.createSystemError("bad file descriptor");
             }
@@ -161,9 +162,7 @@ Process = (function() {
         // 
         // image: The image as a binary buffer to load and execute in the new process
         g.OS.spawnChild = vm.exposeFunction(function(image) {
-            if(typeof image !== "string") {
-                throw self.createSystemError("expected 'image' to be a string");
-            }
+            expectType("image", image, "string");
             var argv = [];
             for(var i = 1; i < arguments.length; i++) {
                 argv.push(arguments[i]);
@@ -181,9 +180,7 @@ Process = (function() {
         // 
         // image: The image as a binary buffer
         g.OS.loadImage = vm.exposeFunction(function(image) {
-            if(typeof image !== "string") {
-                throw self.createSystemError("expected 'image' to be a string");
-            }
+            expectType("image", image, "string");
             return self.loadImage(image);
         });
         
@@ -193,9 +190,8 @@ Process = (function() {
         // method:  The method to call. This is a device-specific string
         // args:    An argument to pass to the method. May be undefined.
         g.OS.ioctl = vm.exposeFunction(function(fd, method, args) {
-            if(typeof fd !== "number" || typeof method !== "string") {
-                throw self.createSystemError("expected 'fd' to be a number and 'method' to be a string");
-            }
+            expectType("fd",        fd,     "number");
+            expectType("method",    method, "string");
             if(!self.fds[fd]) {
                 throw self.createSystemError("bad file descriptor");
             }
@@ -212,12 +208,8 @@ Process = (function() {
         // callback:    The function to be called upon completion of the operation.
         //              The callback will be passed two arguments: `error` and `entries`
         g.OS.readDirectory = vm.exposeFunction(function(path, callback) {
-            if(typeof path !== "string") {
-                throw self.createSystemError("expected 'path' to be a string");
-            }
-            if(typeof callback !== "function") {
-                throw self.createSystemError("expected 'callback' to be a function");
-            }
+            expectType("path",      path,     "string");
+            expectType("callback",  callback, "function");
             var dir = Kernel.filesystem.find(path);
             self.callbacksPending++;
             if(dir === null) {
@@ -243,12 +235,8 @@ Process = (function() {
         // callback:    The function to be called upon completion of the operation.
         //              The callback will be passed two arguments: `error` and `fd`
         g.OS.open = vm.exposeFunction(function(path, callback) {
-            if(typeof path !== "string") {
-                throw self.createSystemError("expected 'path' to be a string");
-            }
-            if(typeof callback !== "function") {
-                throw self.createSystemError("expected 'callback' to be a function");
-            }
+            expectType("path",      path,       "string");
+            expectType("callback",  callback,   "function");
             var file = Kernel.filesystem.find(path);
             self.callbacksPending++;
             if(file === null) {
@@ -266,9 +254,7 @@ Process = (function() {
         // 
         // fd: The file descriptor to close
         g.OS.close = vm.exposeFunction(function(fd) {
-            if(typeof fd !== "number") {
-                throw self.createSystemError("expected 'fd' to be a number");
-            }
+            expectType("fd", fd, "number");
             if(!self.fds[fd]) {
                 throw self.createSystemError("invalid fd");
             }
@@ -286,12 +272,8 @@ Process = (function() {
         // callback:    The function to be called upon completion of the operation.
         //              The callback will be passed two parameters: `error` and `stat`
         g.OS.stat = vm.exposeFunction(function(path, callback) {
-            if(typeof path !== "string") {
-                throw self.createSystemError("expected 'path' to be a string");
-            }
-            if(typeof callback !== "function") {
-                throw self.createSystemError("expected 'callback' to be a function");
-            }
+            expectType("path",      path,       "string");
+            expectType("callback",  callback,   "function");
             var file = Kernel.filesystem.find(path);
             self.callbacksPending++;
             if(file === null) {
@@ -323,12 +305,8 @@ Process = (function() {
         //          value of the environment variable `name`. If set, the
         //          environment variable will be set to this value
         g.OS.env = vm.exposeFunction(function(name, value) {
-            if(typeof name !== "string") {
-                throw self.createSystemError("expected 'name' to be a string");
-            }
-            if(typeof value !== "undefined" && typeof value !== "string") {
-                throw self.createSystemError("expected 'value' to be a string");
-            }
+            expectType("name",  name,   "string");
+            expectType("value", value,  "string", "undefined");
             if(typeof value === "undefined") {
                 return self.env[name];
             } else {
@@ -343,12 +321,8 @@ Process = (function() {
         //              `pid` exits. This function will be passed the exit status
         //              of the process as its only parameter
         g.OS.wait = vm.exposeFunction(function(pid, callback) {
-            if(typeof pid !== "number") {
-                throw self.createSystemError("expected 'pid' to be a number");
-            }
-            if(typeof callback !== "function") {
-                throw self.createSystemError("expected 'callback' to be a function");
-            }
+            expectType("pid",       pid,        "number");
+            expectType("callback",  callback,   "function");
             if(self.id === pid) {
                 throw self.createSystemError("cannot wait on self");
             }
@@ -381,17 +355,13 @@ Process = (function() {
         //          by the OS.
         // returns: The descriptor number of the alias
         g.OS.dup = vm.exposeFunction(function(src, dest) {
-            if(typeof src !== "number") {
-                throw self.createSystemError("expected 'src' to be a number");
-            }
+            expectType("src",   src,    "number");
+            expectType("dest",  dest,   "number", "undefined");
             if(!self.fds[src]) {
                 throw self.createSystemError("bad file descriptor");
             }
             if(typeof dest === "undefined") {
                 return self.appendFileDescriptor(self.fds[src]);
-            }
-            if(typeof dest !== "number") {
-                throw self.createSystemError("expected 'dest' to be a number");
             }
             self.fds[dest] = self.fds[src];
             return dest;
