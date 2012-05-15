@@ -55,17 +55,6 @@
         return bestMatch;
     };
     
-    Filesystem.FileDescriptor = function(file) {
-        this.file = file;
-        this.offset = 0;
-    }
-    Filesystem.FileDescriptor.prototype.ioctl = {};
-    Filesystem.FileDescriptor.prototype.read = function(size, callback) {
-        var buff = this.file.readBytes(this.offset, size);
-        this.offset += buff.length;
-        callback(false, buff);
-    };
-    
     function Path(path) {
         if(path instanceof Path) {
             return path;

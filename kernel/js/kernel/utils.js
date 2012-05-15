@@ -55,6 +55,7 @@ function Pipe() {
     this._buffer = "";
     this._readers = new Queue();
     this.ioctl = {};
+    this.openCount = 0;
 }
 
 Pipe.prototype.read = function(size, callback) {
@@ -73,6 +74,8 @@ Pipe.prototype.write = function(object) {
     this._buffer += object.toString();
     this._trigger();
 };
+
+Pipe.prototype.close = function() {};
 
 Pipe.prototype._trigger = function() {
     if(this._readers.isEmpty()) {
@@ -102,6 +105,7 @@ Pipe.prototype._trigger = function() {
 Pipe.Sink = function(fn) {
     this.fn = fn;
     this.ioctl = {};
+    this.openCount = 0;
 };
 
 Pipe.Sink.prototype.read = function(size, callback) {
@@ -112,6 +116,8 @@ Pipe.Sink.prototype.write = function(object) {
     this.fn(object);
 };
 
+Pipe.Sink.prototype.close = function() {};
+
 //
 // Pipe.Source
 //
@@ -119,6 +125,7 @@ Pipe.Sink.prototype.write = function(object) {
 Pipe.Source = function(fn) {
     this.fn = fn;
     this.ioctl = {};
+    this.openCount = 0;
 };
 
 Pipe.Source.prototype.read = function(size, callback) {
@@ -130,3 +137,5 @@ Pipe.Source.prototype.read = function(size, callback) {
 Pipe.Source.prototype.write = function(object) {
     callback("not open for writing");
 };
+
+Pipe.Source.prototype.close = function() {};

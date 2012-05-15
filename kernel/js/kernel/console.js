@@ -4,6 +4,7 @@
         this._echo = true;
         this._readers = new Queue();
         this._buffer = "";
+        this.openCount = 0;
     }
     
     STDIN.prototype.postKey = function(c, scancode) {
@@ -90,6 +91,8 @@
     STDIN.prototype.write = function() {
         return false;
     }
+    
+    STDIN.prototype.close = function() {};
     
     Console.STDIN = STDIN;
 })();

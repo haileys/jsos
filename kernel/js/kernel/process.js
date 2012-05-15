@@ -22,6 +22,7 @@ Process = (function() {
             }
             for(var i in this.parent.fds) {
                 this.fds[i] = this.parent.fds[i];
+                this.fds[i].openCount++;
             }
         }
         this.setupEnvironment();
@@ -37,6 +38,11 @@ Process = (function() {
         for(var i = 0; i < this.waiters.length; i++) {
             var waiter = this.waiters[i];
             waiter.process.enqueueCallback(waiter.callback, [this.exitStatus]);
+        }
+        for(var i = 0; i < this.fds.length; i++) {
+            if(--this.fds[i].openCount === 0) {
+                this.fds[i].close();
+            }
         }
         if(this.waiters.length) {
             delete Process.processes[this.id];
@@ -247,7 +253,9 @@ Process = (function() {
                 self.enqueueCallback(callback, ["'" + path + "' is not a file"]);
                 return;
             }
-            self.enqueueCallback(callback, [false, self.appendFileDescriptor(new Filesystem.FileDescriptor(file))]);
+            var f = file.open();
+            f.openCount++;
+            self.enqueueCallback(callback, [false, self.appendFileDescriptor(f)]);
         });
         
         // Closes an open file
@@ -258,8 +266,9 @@ Process = (function() {
             if(!self.fds[fd]) {
                 throw self.createSystemError("invalid fd");
             }
-            // @TODO
-            //self.fds[fd].close();
+            if(--self.fds[fd].openCount === 0) {
+                self.fds[fd].close();
+            }
             delete self.fds[fd];
         });
         
