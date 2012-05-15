@@ -39,7 +39,6 @@
     };
     
     Keyboard.prototype.dispatchScanCode = function(scanCode) {
-        Kernel.serial.writeString("SCANCODE: " + scanCode + "\n");
         if(scanCode & KEY_RELEASE) {
             scanCode -= KEY_RELEASE;
             this.keyStates[scanCode] = false;

@@ -211,6 +211,10 @@
         this.size = entry.size;
     };
     
+    FAT16.File.prototype.open = function() {
+        return new FAT16.FileDescriptor(this);
+    };
+    
     FAT16.File.prototype.getType = function() {
         return "file";
     };
@@ -243,6 +247,23 @@
         }
         return buff.substr(offset % cluster_size, length);
     };
+    
+    FAT16.FileDescriptor = function(file) {
+        this.file = file;
+        this.offset = 0;
+        this.openCount = 0;
+    }
+    FAT16.FileDescriptor.prototype.ioctl = {};
+    FAT16.FileDescriptor.prototype.read = function(size, callback) {
+        var buff = this.file.readBytes(this.offset, size);
+        if(buff !== null) {
+            this.offset += buff.length;
+            callback(false, buff);
+        } else {
+            callback(true);
+        }
+    };
+    FAT16.FileDescriptor.prototype.close = function() {};
     
     Drivers.FAT16 = FAT16;
 })();
