@@ -115,5 +115,17 @@
         }
     };
     
+    Kernel.devfs.register("serial", {
+        open: function() {
+            return {
+                write: function(buff) {
+                    Kernel.serial.writeString(buff);
+                },
+                ioctl: {},
+                close: function() { }
+            };
+        }
+    });
+    
     Drivers.Serial = Serial;
 })();

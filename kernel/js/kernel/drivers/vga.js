@@ -11,6 +11,12 @@
         Kernel.memset(this.baseAddr, 0, 320*200);
     };
     
+    Mode13h.prototype.close = function() {
+        // mov ax, 03h; int 10h; ret
+        var code = "\xb8\x03\x00\xcd\x10\xc3";
+        Kernel.realExec(code);
+    };
+    
     Mode13h.prototype.setPalette = function() {
         // we'll map palette indexes to RGB values like so:
         // RRGGGBBB
@@ -152,7 +158,41 @@
         }
     };
     
+    Mode13h.prototype.clear = function() {
+        this.fillRect(0, 0, 320, 200, 0, 0, 0);
+    };
+    
     Drivers.VGA = {
         Mode13h: Mode13h
     };
+    
+    // /dev/vga device:
+    
+    var openCount = 0;
+    var mode13h = new Mode13h();
+    Kernel.devfs.register("vga", {
+        open: function() {
+            openCount++;
+            if(openCount === 1) {
+                mode13h.init();
+            }
+            return {
+                openCount: 0,
+                read: function(size, callback) {
+                    callback("can't read from /dev/vga");
+                },
+                close: function() {
+                    openCount--;
+                    if(openCount === 0) {
+                        mode13h.close();
+                    }
+                },
+                ioctl: {
+                    clear: function() {
+                        mode13h.clear();
+                    }
+                }
+            };
+        }
+    });
 })();
