@@ -359,7 +359,7 @@ AST =
             new AST.Division @expr.derive(), @expr
         simplify: ->
             expr = @expr.simplify()
-            if expr instanceof AST.Number and node.number is 1
+            if expr instanceof AST.Number and expr.number is 1
                 new AST.Number 0
             else
                 new AST.LogNatural expr
