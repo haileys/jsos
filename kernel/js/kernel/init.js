@@ -47,9 +47,9 @@
     }
     */
     
-    var images = [  "utils", "keyboard", "drivers/ps2kb", "console",
+    var images = [  "utils", "keyboard", "devfs", "drivers/ps2kb", "console",
                     "drivers/serial", "drivers/pit", "vm", "process",
-                    "drivers/rtc", "drivers/vga" ];
+                    "drivers/rtc", "drivers/vga", "drivers/pci" ];
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
         Console.write("Loading " + path + "... ");
@@ -66,7 +66,19 @@
     Kernel.serial = new Drivers.Serial(Drivers.Serial.COM1);
     Kernel.serial.init();
     
-    Drivers.PIT.init(100);
+//    Drivers.PIT.init(50);
+    
+    Kernel.pci = new Drivers.PCI();
+    Kernel.pci.init();
+    
+    Console.write("Probing PCI...\n");
+    var devices = Kernel.pci.enumerateDevices();
+    Console.write("Found " + devices.length + " devices:\n");
+    for(var i = 0; i < devices.length; i++) {
+        Console.write("  - " + Drivers.PCI.classCodes[devices[i].data.classCode]);
+        Console.write(" (" + devices[i].data.classCode + ":" + devices[i].data.subClass + ":" + devices[i].data.progIF + ")\n");
+        Console.write("    vendor: " + devices[i].data.vendorID + " device: " + devices[i].data.deviceID + "\n");
+    }
     
     Kernel.reboot = function() {
         while(Kernel.inb(0x64) & 0x02);
@@ -93,7 +105,10 @@
     while(true) {
         Kernel.dispatchInterrupts();
         if(!Process.scheduleNext()) {
-            Kernel.hlt();
+            //Kernel.sti();
+            // this likes to kill my test machine even if interrupts are
+            // enabled, so I'll comment this for the time being...
+            //Kernel.hlt();
         }
     }
 })();

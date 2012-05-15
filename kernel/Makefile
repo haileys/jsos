@@ -15,7 +15,8 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 		kernel/drivers/serial kernel/drivers/mbr kernel/drivers/vga \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils \
 		kernel/process kernel/drivers/bios_hdd kernel/vm kernel/fs \
-		bin/init bin/jsh bin/cowsay bin/ls bin/stat bin/fortune bin/calc
+		bin/init bin/jsh bin/cowsay bin/ls bin/stat bin/fortune bin/calc \
+		kernel/drivers/pci kernel/devfs bin/graphics
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
@@ -34,6 +35,8 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 %.o: %.c
 	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
+
+all: hdd.img install.bin
 
 hdd.img: $(patsubst %, build/%.jmg, $(JSIMGS)) build/kernel.sys \
 	 	build/boot/grub/menu.lst build/etc/fortune.txt
@@ -80,3 +83,7 @@ build/%.256: %.png
 
 build/etc/fortune.txt: /usr/share/fortune/perl
 	@cp /usr/share/fortune/perl build/etc/fortune.txt
+
+install.bin: install.asm	
+	@echo "    nasm  install.asm"
+	@nasm -fbin -o $@ $<
