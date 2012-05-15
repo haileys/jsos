@@ -43,12 +43,21 @@ static VAL Kernel_real_exec(js_vm_t* vm, void* state, VAL this, uint32_t argc, V
         js_throw_message(vm, "Kernel.realExec() expects string");
     }
     js_string_t* str = js_to_js_string_t(argv[0]);
+    
+    // create a backup of the IDT and GDT
+    char idt_backup[256*8];
+    memcpy(idt_backup, (void*)0x1600, sizeof(idt_backup));
+    
     // copy 16 bit code to 0x9000
     memcpy((void*)0x9000, str->buff, str->length);
     
     // call 32<->16 bit handler which in turn calls into 0x9000
     memcpy((void*)0x8000, &_binary_src_realmode_bin_start, 0x1000);
     ((void(*)())0x8000)();
+    
+    // restore IDT backup
+    memcpy((void*)0x1600, idt_backup, sizeof(idt_backup));
+    __asm__ volatile("sti");
     
     return js_value_undefined();
 }
@@ -147,6 +156,18 @@ static VAL Kernel_hlt(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* ar
     return js_value_undefined();
 }
 
+static VAL Kernel_cli(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    __asm__ volatile("cli");
+    return js_value_undefined();
+}
+
+static VAL Kernel_sti(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    __asm__ volatile("sti");
+    return js_value_undefined();
+}
+
 static VAL Kernel_jit(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     if(argc == 0 || js_value_get_type(argv[0]) != JS_T_FUNCTION) {
@@ -185,6 +206,8 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("poke8"), js_value_make_native_function(vm, NULL, js_cstring("poke8"), Kernel_poke8, NULL));
     js_object_put(Kernel, js_cstring("poke16"), js_value_make_native_function(vm, NULL, js_cstring("poke16"), Kernel_poke16, NULL));
     js_object_put(Kernel, js_cstring("poke32"), js_value_make_native_function(vm, NULL, js_cstring("poke32"), Kernel_poke32, NULL));
+    js_object_put(Kernel, js_cstring("cli"), js_value_make_native_function(vm, NULL, js_cstring("cli"), Kernel_cli, NULL));
+    js_object_put(Kernel, js_cstring("sti"), js_value_make_native_function(vm, NULL, js_cstring("sti"), Kernel_sti, NULL));
     js_object_put(Kernel, js_cstring("hlt"), js_value_make_native_function(vm, NULL, js_cstring("hlt"), Kernel_hlt, NULL));
     js_object_put(Kernel, js_cstring("jit"), js_value_make_native_function(vm, NULL, js_cstring("jit"), Kernel_jit, NULL));
 }
