@@ -66,7 +66,6 @@ protected:
 	mov ss, eax
 	mov esp, [saved_esp]
 	popa
-	sti
 	ret
 
 saved_esp:
