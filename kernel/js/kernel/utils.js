@@ -48,6 +48,61 @@ Queue.prototype.pushFront = function(object) {
 };
 
 //
+// LinkedList
+//
+
+function LinkedList() {
+    this._head = null;
+    this._tail = null;
+}
+
+LinkedList.prototype.first = function() {
+    return this._head;
+};
+
+LinkedList.prototype.last = function() {
+    return this._tail;
+};
+
+LinkedList.prototype.pushFront = function(val) {
+    if(this._head) {
+        var node = { prev: null, next: this._head, value: val };
+        this._head = node;
+        return node;
+    } else {
+        var node = { prev: null, next: null, value: val };
+        this._head = this._tail = node;
+        return node;
+    }
+};
+
+LinkedList.prototype.pushBack = function(val) {
+    if(this._tail) {
+        var node = { prev: this._tail, next: null, value: val };
+        this._tail = node;
+        return node;
+    } else {
+        var node = { prev: null, next: null, value: val };
+        this._head = this._tail = node;
+        return node;
+    }
+};
+
+LinkedList.prototype.remove = function(node) {
+    if(node.prev) {
+        node.prev.next = node.next;
+    } else {
+        this._head = node.next;
+    }
+    if(node.next) {
+        node.next.prev = node.prev;
+    } else {
+        this._tail = node.prev;
+    }
+    return node.value;
+};
+
+//
 // Pipe
 //
 

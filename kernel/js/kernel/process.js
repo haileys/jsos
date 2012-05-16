@@ -194,8 +194,8 @@ Process = (function() {
         // 
         // fd:      The file descriptor to call the method on
         // method:  The method to call. This is a device-specific string
-        // args:    An argument to pass to the method. May be undefined.
-        g.OS.ioctl = vm.exposeFunction(function(fd, method, args) {
+        // ...:     Arguments to pass to the method.
+        g.OS.ioctl = vm.exposeFunction(function(fd, method) {
             expectType("fd",        fd,     "number");
             expectType("method",    method, "string");
             if(!self.fds[fd]) {
@@ -204,7 +204,8 @@ Process = (function() {
             if(typeof self.fds[fd].ioctl !== "object" || !self.fds[fd].ioctl.hasOwnProperty(method)) {
                 throw self.createSystemError("file descriptor does not support this operation");
             }
-            return self.fds[fd].ioctl[method](self, self.fds[fd], args);
+            var args = [self.fds[fd]].concat(arguments.slice(2));
+            return self.fds[fd].ioctl[method].apply(self.fds[fd].ioctl, args);
         });
         
         // Reads all entries from a directory. Each entry is represented as an
@@ -382,6 +383,20 @@ Process = (function() {
         g.OS.pipe = vm.exposeFunction(function() {
             return self.appendFileDescriptor(new Pipe());
         });
+        
+        // Schedules a callback to be executed at some time in the future.
+        // 
+        // timeout:     The number of milliseconds in the future the callback
+        //              should be scheduled
+        // callback:    The callback to call
+        g.OS.alarm = vm.exposeFunction(function(timeout, callback) {
+            expectType("timeout",   timeout,    "number");
+            expectType("callback",  callback,   "function");
+            if(timeout <= 0) {
+                throw self.createSystemError("timeout should be in the future");
+            }
+            Process.alarms.pushBack({ process: self, callback: callback, timeLeft: timeout });
+        });
     };
 
     Process.prototype.enqueueCallback = function(callback, args) {
@@ -393,6 +408,7 @@ Process = (function() {
     };
     
     Process.processes = {};
+    Process.alarms = new LinkedList();
     
     Process.scheduleNext = function() {
         // @TODO check for processes waiting on I/O etcetera
@@ -408,7 +424,9 @@ Process = (function() {
             yielder.process.safeCall(yielder.callback, yielder.args || []);
         } catch(e) {
             // user process threw exception
-            Console.write("[#" + yielder.process.id + "] Unhandled exception: " + String(e) + ", killed.\n");
+            err = "[#" + yielder.process.id + "] Unhandled exception: " + String(e) + ", killed.\n";
+            Console.write(err);
+            Kernel.serial.writeString(err);
             if(typeof e === "object" && e.stack) {
                 Console.write(e.stack + "\n");
             }

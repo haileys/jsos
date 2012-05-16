@@ -66,7 +66,16 @@
     Kernel.serial = new Drivers.Serial(Drivers.Serial.COM1);
     Kernel.serial.init();
     
-//    Drivers.PIT.init(50);
+    Drivers.PIT.init(50); // 50 Hz
+    Drivers.PIT.subscribe(function() {
+        for(var node = Process.alarms.first(); node; node = node.next) {
+            node.value.timeLeft -= 20;
+            if(node.value.timeLeft <= 0) {
+                node.value.process.enqueueCallback(node.value.callback, []);
+                Process.alarms.remove(node);
+            }
+        }
+    });
     
     Kernel.pci = new Drivers.PCI();
     Kernel.pci.init();
