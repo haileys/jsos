@@ -150,6 +150,21 @@ static VAL Kernel_poke32(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL*
     return js_value_undefined();
 }
 
+static VAL Kernel_malloc(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t sz;
+    js_scan_args(vm, argc, argv, "I", &sz);
+    return js_value_make_double((uint32_t)malloc(sz));
+}
+
+static VAL Kernel_free(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t ptr;
+    js_scan_args(vm, argc, argv, "I", &ptr);
+    free((void*)ptr);
+    return js_value_undefined();
+}
+
 static VAL Kernel_hlt(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     __asm__ volatile("hlt");
@@ -206,6 +221,8 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("poke8"), js_value_make_native_function(vm, NULL, js_cstring("poke8"), Kernel_poke8, NULL));
     js_object_put(Kernel, js_cstring("poke16"), js_value_make_native_function(vm, NULL, js_cstring("poke16"), Kernel_poke16, NULL));
     js_object_put(Kernel, js_cstring("poke32"), js_value_make_native_function(vm, NULL, js_cstring("poke32"), Kernel_poke32, NULL));
+    js_object_put(Kernel, js_cstring("malloc"), js_value_make_native_function(vm, NULL, js_cstring("malloc"), Kernel_malloc, NULL));
+    js_object_put(Kernel, js_cstring("free"), js_value_make_native_function(vm, NULL, js_cstring("free"), Kernel_free, NULL));
     js_object_put(Kernel, js_cstring("cli"), js_value_make_native_function(vm, NULL, js_cstring("cli"), Kernel_cli, NULL));
     js_object_put(Kernel, js_cstring("sti"), js_value_make_native_function(vm, NULL, js_cstring("sti"), Kernel_sti, NULL));
     js_object_put(Kernel, js_cstring("hlt"), js_value_make_native_function(vm, NULL, js_cstring("hlt"), Kernel_hlt, NULL));
