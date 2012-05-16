@@ -33,6 +33,10 @@
         }
     };
     
+    Mode13h.prototype.copyBuffer = function(other) {
+        Kernel.memcpy(this.baseAddr, other.baseAddr, 320*200);
+    }
+    
     Mode13h.prototype.rgbTo256 = function(r, g, b) {
         return ((r & 0xc0) >> 0) | ((g & 0xe0) >> 2) | ((b & 0xe0) >> 5);
     };
@@ -176,7 +180,7 @@
             if(openCount === 1) {
                 mode13h.init();
             }
-            return {
+            var file = {
                 openCount: 0,
                 read: function(size, callback) {
                     callback("can't read from /dev/vga");
@@ -188,11 +192,30 @@
                     }
                 },
                 ioctl: {
-                    clear: function() {
-                        mode13h.clear();
+                    drawPixel: function(fd, x, y, r, g, b) {
+                        if( typeof x === "number" && typeof y === "number" &&
+                            typeof r === "number" && typeof g === "number" &&
+                            typeof b === "number") {
+                            mode13h.drawPixel(x, y, buffer.rgbTo256(r, g, b));
+                        }
                     }
                 }
             };
+            var ioctls = {  drawRect: 7, drawCircle: 6, drawLine: 7,
+                            fillCircle: 6, fillRect: 7, clear: 0 };
+            for(var ioctl in ioctls) {
+                (function(ioctl) {
+                    file.ioctl[ioctl] = function() {
+                        if(arguments.length < ioctls[ioctl] + 1) return false;
+                        for(var i = 1; i < arguments.length; i++) {
+                            if(typeof arguments[i] !== "number") return false;
+                        }
+                        mode13h[ioctl].apply(mode13h, arguments.slice(1));
+                        return true;
+                    };  
+                })(ioctl);
+            }
+            return file;
         }
     });
 })();
