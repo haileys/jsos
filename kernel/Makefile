@@ -36,7 +36,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 	@echo "      cc  $<"
 	@${CC} ${CFLAGS} -c -o $@ $<
 
-all: hdd.img install.bin
+all: hdd.img
 
 hdd.img: $(patsubst %, build/%.jmg, $(JSIMGS)) build/kernel.sys \
 	 	build/boot/grub/menu.lst build/etc/fortune.txt
@@ -83,7 +83,3 @@ build/%.256: %.png
 
 build/etc/fortune.txt: /usr/share/fortune/perl
 	@cp /usr/share/fortune/perl build/etc/fortune.txt
-
-install.bin: install.asm	
-	@echo "    nasm  install.asm"
-	@nasm -fbin -o $@ $<
