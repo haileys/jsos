@@ -16,7 +16,7 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils \
 		kernel/process kernel/drivers/bios_hdd kernel/vm kernel/fs \
 		bin/init bin/jsh bin/cowsay bin/ls bin/stat bin/fortune bin/calc \
-		kernel/drivers/pci kernel/devfs bin/graphics
+		kernel/drivers/pci kernel/devfs bin/graphics bin/sleep
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 

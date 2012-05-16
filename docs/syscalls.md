@@ -7,7 +7,7 @@
 
 > **callback:** A function the operating system should return control to
 
-[Source](../kernel/js/kernel/process.js#L101)
+[Source](../kernel/js/kernel/process.js#L107)
 
 ### log(`msg`)
 
@@ -17,21 +17,21 @@
 
 > **msg:** The message to log
 
-[Source](../kernel/js/kernel/process.js#L109)
+[Source](../kernel/js/kernel/process.js#L115)
 
 ### pid()
 
 > 
 > Returns the current process's ID
 
-[Source](../kernel/js/kernel/process.js#L115)
+[Source](../kernel/js/kernel/process.js#L121)
 
 ### parentPid()
 
 > 
 > Returns the process ID of the current process's parent process
 
-[Source](../kernel/js/kernel/process.js#L120)
+[Source](../kernel/js/kernel/process.js#L126)
 
 ### read(`fd`, `size`, `callback`)
 
@@ -45,7 +45,7 @@
 
 > **callback:** The function to be called upon completion of the read.               The callback will be passed two arguments: `error` and `buff`
 
-[Source](../kernel/js/kernel/process.js#L134)
+[Source](../kernel/js/kernel/process.js#L140)
 
 ### write(`fd`, `data`)
 
@@ -57,7 +57,7 @@
 
 > **data:** The data to write
 
-[Source](../kernel/js/kernel/process.js#L151)
+[Source](../kernel/js/kernel/process.js#L157)
 
 ### spawnChild(`image`)
 
@@ -68,7 +68,7 @@
 
 > **image:** The image as a binary buffer to load and execute in the new process
 
-[Source](../kernel/js/kernel/process.js#L164)
+[Source](../kernel/js/kernel/process.js#L170)
 
 ### loadImage(`image`)
 
@@ -78,9 +78,9 @@
 
 > **image:** The image as a binary buffer
 
-[Source](../kernel/js/kernel/process.js#L182)
+[Source](../kernel/js/kernel/process.js#L188)
 
-### ioctl(`fd`, `method`, `args`)
+### ioctl(`fd`, `method`)
 
 > 
 > Calls a device specific method on an open file
@@ -88,11 +88,9 @@
 
 > **fd:** The file descriptor to call the method on
 
-> **method:** The method to call. This is a device-specific string
+> **method:** The method to call. This is a device-specific string  ...:     Arguments to pass to the method.
 
-> **args:** An argument to pass to the method. May be undefined.
-
-[Source](../kernel/js/kernel/process.js#L192)
+[Source](../kernel/js/kernel/process.js#L198)
 
 ### readDirectory(`path`, `callback`)
 
@@ -105,7 +103,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `entries`
 
-[Source](../kernel/js/kernel/process.js#L210)
+[Source](../kernel/js/kernel/process.js#L217)
 
 ### open(`path`, `callback`)
 
@@ -117,7 +115,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two arguments: `error` and `fd`
 
-[Source](../kernel/js/kernel/process.js#L237)
+[Source](../kernel/js/kernel/process.js#L244)
 
 ### close(`fd`)
 
@@ -127,7 +125,7 @@
 
 > **fd:** The file descriptor to close
 
-[Source](../kernel/js/kernel/process.js#L256)
+[Source](../kernel/js/kernel/process.js#L265)
 
 ### stat(`path`, `callback`)
 
@@ -142,7 +140,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two parameters: `error` and `stat`
 
-[Source](../kernel/js/kernel/process.js#L274)
+[Source](../kernel/js/kernel/process.js#L284)
 
 ### env(`name`, `value`)
 
@@ -154,7 +152,7 @@
 
 > **value:** Optional. If omitted, `OS.env` will return the current           value of the environment variable `name`. If set, the           environment variable will be set to this value
 
-[Source](../kernel/js/kernel/process.js#L307)
+[Source](../kernel/js/kernel/process.js#L317)
 
 ### wait(`pid`, `callback`)
 
@@ -166,7 +164,7 @@
 
 > **callback:** The function to call when the process identified by               `pid` exits. This function will be passed the exit status               of the process as its only parameter
 
-[Source](../kernel/js/kernel/process.js#L323)
+[Source](../kernel/js/kernel/process.js#L333)
 
 ### exit()
 
@@ -174,7 +172,7 @@
 > Terminates the current process. This system call will return, but
 > no more callbacks will be scheduled by the system for this process
 
-[Source](../kernel/js/kernel/process.js#L344)
+[Source](../kernel/js/kernel/process.js#L354)
 
 ### dup(`src`, `dest`)
 
@@ -189,7 +187,7 @@
 
 > **returns:** The descriptor number of the alias
 
-[Source](../kernel/js/kernel/process.js#L357)
+[Source](../kernel/js/kernel/process.js#L367)
 
 ### pipe()
 
@@ -199,5 +197,17 @@
 
 > **returns:** The file descriptor the pipe is open on
 
-[Source](../kernel/js/kernel/process.js#L373)
+[Source](../kernel/js/kernel/process.js#L383)
+
+### alarm(`timeout`, `callback`)
+
+> 
+> Schedules a callback to be executed at some time in the future.
+> 
+
+> **timeout:** The number of milliseconds in the future the callback               should be scheduled
+
+> **callback:** The callback to call
+
+[Source](../kernel/js/kernel/process.js#L392)
 
