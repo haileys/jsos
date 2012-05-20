@@ -28,13 +28,8 @@ static void paging_init(uint32_t max_addr)
         page_directory[i] = (uint32_t)page_table | 1 /* present */ | 2 /* read/write */;
         uint32_t j;
         for(j = 0; j < 1024; j++) {
-            if(i == 0 && j == 0) {
-                // page out zero page
-                page_table[j] = 0;
-            }
-            // identity map:
             page_table[j] = (page_base_addr + j * PAGE_SIZE) | 1 /* present */;
-            if(page_base_addr < 0x00120000 /* start of code */ || page_base_addr >= (uint32_t)&end_of_image /* end of code */) {
+            if(!(i == 0 && j == 0) && (page_base_addr < 0x00120000 /* start of code */ || page_base_addr >= (uint32_t)&end_of_image /* end of code */)) {
                 page_table[j] |= 2; // allow writes to non-code pages
             }
         }

@@ -24,9 +24,8 @@ paging_set_directory:
     mov cr3, eax
     ; enable paging
     mov eax, cr0
-    or eax, 0x80000000
+    or eax, (1 << 31) | (1 << 16) ; enable paging & kernel write protection
     mov cr0, eax
-    
     ret
 
 x86_64_support:
