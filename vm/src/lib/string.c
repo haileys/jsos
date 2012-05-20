@@ -81,10 +81,12 @@ static VAL String_fromCharCode(js_vm_t* vm, void* state, VAL this, uint32_t argc
     js_value_t* val = js_alloc(sizeof(js_value_t));
     val->type = JS_T_STRING;
     val->string.length = argc;
+    val->string.buff = js_alloc_no_pointer(val->string.length + 1);
     uint32_t i;
     for(i = 0; i < argc; i++) {
         val->string.buff[i] = (uint8_t)js_value_get_double(js_to_number(argv[i]));
     }
+    val->string.buff[i] = 0;
     return js_value_make_pointer(val);
 }
 
