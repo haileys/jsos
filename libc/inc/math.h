@@ -14,6 +14,7 @@ double fmod(double x, double y);
 double fabs(double x);
 double cos(double x);
 double sin(double x);
+double tan(double x);
 double sqrt(double x);
 double pow(double base, double exponent);
 
