@@ -27,6 +27,26 @@ static VAL Math_cos(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv
     return js_value_make_double(cos(d));
 }
 
+static VAL Math_tan(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    double d = js_value_get_double(js_to_number(argc ? argv[0] : js_value_undefined()));
+    return js_value_make_double(tan(d));
+}
+
+static VAL Math_min(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    double a = js_value_get_double(js_to_number(argc > 0 ? argv[0] : js_value_undefined()));
+    double b = js_value_get_double(js_to_number(argc > 1 ? argv[1] : js_value_undefined()));
+    return js_value_make_double(a < b ? a : b);
+}
+
+static VAL Math_max(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    double a = js_value_get_double(js_to_number(argc > 0 ? argv[0] : js_value_undefined()));
+    double b = js_value_get_double(js_to_number(argc > 1 ? argv[1] : js_value_undefined()));
+    return js_value_make_double(a > b ? a : b);
+}
+
 static VAL Math_sqrt(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     double d = js_value_get_double(js_to_number(argc ? argv[0] : js_value_undefined()));
@@ -99,6 +119,9 @@ void js_lib_math_initialize(js_vm_t* vm)
     js_object_put(Math, js_cstring("round"), js_value_make_native_function(vm, NULL, js_cstring("round"), Math_round, NULL));
     js_object_put(Math, js_cstring("cos"), js_value_make_native_function(vm, NULL, js_cstring("cos"), Math_cos, NULL));
     js_object_put(Math, js_cstring("sin"), js_value_make_native_function(vm, NULL, js_cstring("sin"), Math_sin, NULL));
+    js_object_put(Math, js_cstring("tan"), js_value_make_native_function(vm, NULL, js_cstring("tan"), Math_tan, NULL));
+    js_object_put(Math, js_cstring("min"), js_value_make_native_function(vm, NULL, js_cstring("min"), Math_min, NULL));
+    js_object_put(Math, js_cstring("max"), js_value_make_native_function(vm, NULL, js_cstring("max"), Math_max, NULL));
     js_object_put(Math, js_cstring("sqrt"), js_value_make_native_function(vm, NULL, js_cstring("sqrt"), Math_sqrt, NULL));
     js_object_put(Math, js_cstring("pow"), js_value_make_native_function(vm, NULL, js_cstring("pow"), Math_pow, NULL));
     js_object_put(Math, js_cstring("abs"), js_value_make_native_function(vm, NULL, js_cstring("abs"), Math_abs, NULL));

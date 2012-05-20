@@ -1,5 +1,6 @@
 global sin
 global cos
+global tan
 global sqrt
 
 sin:
@@ -10,6 +11,12 @@ sin:
 cos:
     fld qword [esp+4]
     fcos
+    ret
+
+tan:
+    fld qword [esp+4]
+    fsincos
+    fdivp
     ret
 
 sqrt:
