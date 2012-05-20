@@ -38,7 +38,7 @@ static VAL Math_min(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv
     double min = INFINITY;
     uint32_t i;
     for(i = 0; i < argc; i++) {
-        double x = js_value_get_double(js_to_number(argv[0]));
+        double x = js_value_get_double(js_to_number(argv[i]));
         if(x < min) {
             min = x;
         }
@@ -51,7 +51,7 @@ static VAL Math_max(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv
     double max = -INFINITY;
     uint32_t i;
     for(i = 0; i < argc; i++) {
-        double x = js_value_get_double(js_to_number(argv[0]));
+        double x = js_value_get_double(js_to_number(argv[i]));
         if(x > max) {
             max = x;
         }
