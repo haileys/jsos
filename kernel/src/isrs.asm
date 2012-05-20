@@ -50,7 +50,24 @@ asm_isr_init:
 	isr 10, WITH_ERROR
 	isr 11, WITH_ERROR
 	isr 12, WITH_ERROR
-	isr 13, WITH_ERROR
+;	isr 13, WITH_ERROR
+jmp isr_13.fin
+isr_13:
+    pop eax
+    pop ecx
+    pop edx
+    pop ebx
+    push ecx
+    push .msg
+    call panic
+    cli
+    hlt
+    .msg db "General Protection Fault", 0
+.fin:
+push isr_13
+push 13
+call idt_register_handler
+add esp, 8
 	
 ;	isr 14, WITH_ERROR
 jmp isr_14.fin
