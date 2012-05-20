@@ -35,16 +35,28 @@ static VAL Math_tan(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv
 
 static VAL Math_min(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
-    double a = js_value_get_double(js_to_number(argc > 0 ? argv[0] : js_value_undefined()));
-    double b = js_value_get_double(js_to_number(argc > 1 ? argv[1] : js_value_undefined()));
-    return js_value_make_double(a < b ? a : b);
+    double min = INFINITY;
+    uint32_t i;
+    for(i = 0; i < argc; i++) {
+        double x = js_value_get_double(js_to_number(argv[0]));
+        if(x < min) {
+            min = x;
+        }
+    }
+    return js_value_make_double(min);
 }
 
 static VAL Math_max(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
-    double a = js_value_get_double(js_to_number(argc > 0 ? argv[0] : js_value_undefined()));
-    double b = js_value_get_double(js_to_number(argc > 1 ? argv[1] : js_value_undefined()));
-    return js_value_make_double(a > b ? a : b);
+    double max = -INFINITY;
+    uint32_t i;
+    for(i = 0; i < argc; i++) {
+        double x = js_value_get_double(js_to_number(argv[0]));
+        if(x > max) {
+            max = x;
+        }
+    }
+    return js_value_make_double(max);
 }
 
 static VAL Math_sqrt(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
