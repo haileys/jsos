@@ -14,3 +14,4 @@ userland
 kernel/build/jsos.rgb
 *.256
 *.bxrc
+kernel/build/etc/fortune.txt
