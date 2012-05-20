@@ -1,3 +1,5 @@
+-include Makefile.local
+
 CFLAGS=-m32 -Wall -Wextra -iquote inc -g -Wno-unused-parameter -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
 		-fno-stack-protector -I./libc/inc -I./vm/inc
@@ -8,7 +10,7 @@ all: twostroke/LICENSE libc/libc.a vm/libjsvm.a kernel/hdd.img \
 	 docs/syscalls.md
 
 twostroke/LICENSE:
-	git submodule update
+	git submodule update --init
 
 libc/libc.a:
 	@make -C libc libc.a
