@@ -7,7 +7,7 @@
 #include "panic.h"
 
 static idtr_t idtr;
-static idt_entry_t* idt = (idt_entry_t*)0x1000;
+static idt_entry_t* idt = (idt_entry_t*)0x70000;
 
 static VAL js_isr_table;
 
