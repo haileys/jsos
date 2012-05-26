@@ -1,6 +1,6 @@
 #include "gdt.h"
 
-static gdt_entry_t* gdt = (gdt_entry_t*)0xf000;
+static gdt_entry_t* gdt = (gdt_entry_t*)0x71000;
 static gdtr_t gdtr;
 
 static int end_of_image;

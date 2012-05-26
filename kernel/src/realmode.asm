@@ -77,7 +77,7 @@ idt_real:
 	dd 0
 gdt_prot:
 	dw 0x1000
-	dd 0xf000
+	dd 0x71000
 idt_prot:
 	dw (256*8)-1
 	dd 0x70000
