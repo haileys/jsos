@@ -1,8 +1,10 @@
 *.img
+*.hdd
 *.jmg
 *.o
 *.a
 *.dSYM
+*.swp
 vm/disasm
 vm/runner
 vm/compile
