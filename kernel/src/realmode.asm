@@ -80,4 +80,4 @@ gdt_prot:
 	dd 0xf000
 idt_prot:
 	dw (256*8)-1
-	dd 0x00001600
+	dd 0x1000
