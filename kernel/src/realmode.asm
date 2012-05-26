@@ -7,7 +7,7 @@ entry:
 	mov [saved_esp], esp
 	mov eax, cr0
 	mov [saved_cr0], eax
-	mov eax, 0xeff0
+	mov eax, 0x7ff0
 	mov esp, eax
 	jmp 0x18:move_to_real
 
@@ -33,7 +33,7 @@ in_real:
 	mov fs, ax
 	mov gs, ax
 	mov ss, ax
-	mov sp, 0xeff0
+	mov sp, 0x7ff0
 
 	lidt [idt_real]
 	sti
@@ -80,4 +80,4 @@ gdt_prot:
 	dd 0xf000
 idt_prot:
 	dw (256*8)-1
-	dd 0x1000
+	dd 0x70000
