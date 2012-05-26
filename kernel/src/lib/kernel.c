@@ -44,20 +44,12 @@ static VAL Kernel_real_exec(js_vm_t* vm, void* state, VAL this, uint32_t argc, V
     }
     js_string_t* str = js_to_js_string_t(argv[0]);
     
-    // create a backup of the IDT and GDT
-    char idt_backup[256*8];
-    memcpy(idt_backup, (void*)0x1600, sizeof(idt_backup));
-    
     // copy 16 bit code to 0x9000
     memcpy((void*)0x9000, str->buff, str->length);
     
     // call 32<->16 bit handler which in turn calls into 0x9000
     memcpy((void*)0x8000, &_binary_src_realmode_bin_start, 0x1000);
     ((void(*)())0x8000)();
-    
-    // restore IDT backup
-    memcpy((void*)0x1600, idt_backup, sizeof(idt_backup));
-    __asm__ volatile("sti");
     
     return js_value_undefined();
 }
