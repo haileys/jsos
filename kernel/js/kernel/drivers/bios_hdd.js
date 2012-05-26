@@ -19,7 +19,7 @@
         Kernel.poke8(0xa000 + 0, 16 /* packet size */);
         Kernel.poke8(0xa000 + 1, 0 /* reserved */);
         Kernel.poke16(0xa000 + 2, 1 /* number of sectors */);
-        Kernel.poke32(0xa000 + 4, 0x1000 /* read buffer address */);
+        Kernel.poke32(0xa000 + 4, 0xb000 /* read buffer address */);
         Kernel.poke32(0xa000 + 8, lba);
         Kernel.poke32(0xa000 + 12, 0 /* upper part of 48 bit lba - ignore */);
         
@@ -29,9 +29,12 @@
                     /* mov dl, 0x80 */   "\xB2" + String.fromCharCode(this.driveNumber) +
                     /* int 0x13 */       "\xCD\x13" +
                     /* ret */            "\xC3";
+        if(code.length !== 13) {
+            Kernel.panic("In BiosHDD.prototype.readSector, code.length !== 13");
+        }
+        Kernel.memset(0xb000, 0, 512);
         Kernel.realExec(code);
-        
-        return Kernel.readMemory(0x1000, 512);
+        return Kernel.readMemory(0xb000, 512);
     };
     
     BiosHDD.prototype.writeSector = function() {
