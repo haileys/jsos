@@ -10,7 +10,7 @@
         Kernel.filesystem = new Filesystem();
         var hdd = new Drivers.BiosHDD(Kernel.bootDevice);
         var mbr = new Drivers.MBR(hdd);
-        Kernel.filesystem.mount("/", new Drivers.FAT16(mbr.partitions[0]));  
+        Kernel.filesystem.mount("/", new Drivers.FAT16(mbr.partitions[0]));
     })();
     
     (function() {
