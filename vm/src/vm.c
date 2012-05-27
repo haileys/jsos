@@ -621,36 +621,36 @@ static VAL vm_exec(struct vm_locals* L)
             }
         
             case JS_OP_SAL: {
-                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
-                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t r = js_to_uint32(POP());
+                uint32_t l = js_to_uint32(POP());
                 PUSH(js_value_make_double(l << r));
                 break;
             }
         
             case JS_OP_OR: {
-                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
-                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t r = js_to_uint32(POP());
+                uint32_t l = js_to_uint32(POP());
                 PUSH(js_value_make_double(l | r));
                 break;
             }
         
             case JS_OP_XOR: {
-                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
-                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t r = js_to_uint32(POP());
+                uint32_t l = js_to_uint32(POP());
                 PUSH(js_value_make_double(l ^ r));
                 break;
             }
         
             case JS_OP_AND: {
-                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
-                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t r = js_to_uint32(POP());
+                uint32_t l = js_to_uint32(POP());
                 PUSH(js_value_make_double(l & r));
                 break;
             }
         
             case JS_OP_SLR: {
-                uint32_t r = (uint32_t)js_value_get_double(js_to_number(POP()));
-                uint32_t l = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t r = js_to_uint32(POP());
+                uint32_t l = js_to_uint32(POP());
                 PUSH(js_value_make_double(l >> r));
                 break;
             }
@@ -662,7 +662,7 @@ static VAL vm_exec(struct vm_locals* L)
             }
         
             case JS_OP_BITNOT: {
-                uint32_t x = (uint32_t)js_value_get_double(js_to_number(POP()));
+                uint32_t x = js_to_uint32(POP());
                 PUSH(js_value_make_double(~x));
                 break;
             }
