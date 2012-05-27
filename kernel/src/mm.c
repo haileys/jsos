@@ -81,7 +81,6 @@ void* sbrk(int32_t increment)
     }
     if(current_increment + increment >= max_size) {
         return NULL;
-        panic("out of memory");
     }
     void* ptr = (void*)(base + current_increment);
     current_increment += increment;
