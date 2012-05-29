@@ -63,6 +63,27 @@ VAL* js_array_items(VAL array, uint32_t* count)
     return out;
 }
 
+uint32_t js_array_length(VAL array)
+{
+    if(js_value_get_type(array) != JS_T_ARRAY) {
+        js_panic("non array passed to js_array_length");
+    }
+    js_array_t* ary = (js_array_t*)js_value_get_pointer(array);
+    return ary->length;
+}
+
+VAL js_array_get(VAL array, uint32_t idx)
+{
+    if(js_value_get_type(array) != JS_T_ARRAY) {
+        js_panic("non array passed to js_array_get");
+    }
+    js_array_t* ary = (js_array_t*)js_value_get_pointer(array);
+    if(idx < ary->items_length) {
+        return ary->items[idx];
+    }
+    return js_value_undefined();
+}
+
 static void array_put(js_array_t* ary, uint32_t index, VAL val)
 {
     if(index >= ary->length) {
