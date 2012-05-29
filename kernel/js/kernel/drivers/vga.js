@@ -196,7 +196,16 @@
                         if( typeof x === "number" && typeof y === "number" &&
                             typeof r === "number" && typeof g === "number" &&
                             typeof b === "number") {
-                            mode13h.drawPixel(x, y, buffer.rgbTo256(r, g, b));
+                            mode13h.drawPixel(x, y, mode13h.rgbTo256(r, g, b));
+                        }
+                    },
+                    drawPixels: function(fd, data) {
+                        var max = Math.max(Math.min(320 * 200, data.length), 0);
+//                        Kernel.writeByteArrayToMemory(mode13h.baseAddr, data, max)
+                        for(var i = 0; i < max; i++) {
+                            if(typeof data[i] === "number") {
+                                Kernel.poke8(mode13h.baseAddr + i, data[i]);
+                            }
                         }
                     }
                 }
