@@ -202,10 +202,10 @@
                     drawPixels: function(fd, data) {
                         var max = Math.max(Math.min(320 * 200, data.length), 0);
 //                        Kernel.writeByteArrayToMemory(mode13h.baseAddr, data, max)
+                        var baseAddr = mode13h.baseAddr;
+                        var poke8 = Kernel.poke8;
                         for(var i = 0; i < max; i++) {
-                            if(typeof data[i] === "number") {
-                                Kernel.poke8(mode13h.baseAddr + i, data[i]);
-                            }
+                            poke8(baseAddr + i, data[i]);
                         }
                     }
                 }

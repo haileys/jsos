@@ -16,7 +16,8 @@ JSIMGS=	kernel/init kernel/keyboard kernel/drivers/ps2kb kernel/console \
 		kernel/drivers/pit kernel/drivers/rtc kernel/utils \
 		kernel/process kernel/drivers/bios_hdd kernel/vm kernel/fs \
 		bin/init bin/jsh bin/cowsay bin/ls bin/stat bin/fortune bin/calc \
-		kernel/drivers/pci kernel/devfs bin/graphics bin/sleep
+		kernel/drivers/pci kernel/devfs bin/graphics bin/sleep lib/gl \
+		bin/gltest
 
 .SUFFIXES: .js .o .asm .o .coffee .js
 
@@ -57,6 +58,7 @@ clean:
 	rm -f build/kernel/*.jmg
 	rm -f build/kernel/*/*.jmg
 	rm -f build/bin/*.jmg
+	rm -f build/lib/*.jmg
 	rm -f build/*.256
 	rm -f src/*/*.o
 	rm -f src/*.o
