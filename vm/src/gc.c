@@ -260,8 +260,16 @@ static void js_gc_sweep()
 }
 
 void js_gc_run()
-{    
+{
+    #ifdef JSOS
+        uint16_t* vram = (uint16_t*)0xb8000;
+        uint16_t indicator = vram[79];
+        vram[79] = ' ' | (5 << 12);
+    #endif
     current_mark_flag = !current_mark_flag;
     js_gc_mark();
     js_gc_sweep();
+    #ifdef JSOS
+        vram[79] = indicator;
+    #endif
 }
