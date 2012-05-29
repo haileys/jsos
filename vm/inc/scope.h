@@ -25,6 +25,7 @@ VAL js_scope_get_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes);
 void js_scope_set_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes, VAL value);
 bool js_scope_has_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes);
 js_scope_t* js_scope_close(js_scope_t* scope, VAL callee);
+js_scope_t* js_scope_close_placement(js_scope_t* new_scope, js_scope_t* scope, VAL callee, uint32_t var_count, VAL* vars);
 
 VAL js_scope_get_global_var(js_scope_t* scope, js_string_t* name);
 void js_scope_set_global_var(js_scope_t* scope, js_string_t* name, VAL value);

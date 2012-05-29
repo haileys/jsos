@@ -26,8 +26,14 @@ js_image_t* js_image_parse(char* buff, uint32_t buff_size)
         sz = *(uint32_t*)buff;
         image->sections[i].instruction_count = sz / 4;
         buff += 4;
-        image->sections[i].instructions = js_alloc_no_pointer(sz);
+        CHECK_AHEAD(4);
+        image->sections[i].flags = *(uint32_t*)buff;
+        buff += 4;
+        CHECK_AHEAD(4);
+        image->sections[i].var_count = *(uint32_t*)buff;
+        buff += 4;
         CHECK_AHEAD(sz);
+        image->sections[i].instructions = js_alloc_no_pointer(sz);
         memcpy(image->sections[i].instructions, buff, sz);
         buff += sz;
     }
