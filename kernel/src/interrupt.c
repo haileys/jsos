@@ -20,6 +20,7 @@ static struct {
 
 static uint32_t queue_front;
 static uint32_t queue_back;
+static uint32_t pit_interrupt_count;
 
 void idt_set_gate(uint8_t gate, idt_entry_t entry)
 {
@@ -77,6 +78,11 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
         panicf("%s", exceptions[interrupt]);
     }
     
+    if(interrupt == 32 /* pit */) {
+        pit_interrupt_count++;
+        return 0;
+    }
+    
     // isr_dispatch is already in a cli/hlt so there's no need to do any locking
     if((queue_back + 1) % MAX_QUEUED_INTERRUPTS == queue_front) {
         // ring buffer is full, this interrupt needs to be dropped
@@ -93,18 +99,16 @@ uint32_t isr_dispatch(uint32_t interrupt, uint32_t error)
 }
 
 void interrupt_dispatch_events()
-{
+{    
+    // lock this region of code so we're not racing potential interrupts
+    cli();
     while(true) {
-        // lock this region of code so we're not racing potential interrupts
-        cli();
         if(queue_front == queue_back) {
-            sti();
-            return;
+            break;
         }
         uint32_t interrupt = queued_interrupts[queue_front].interrupt;
         uint32_t error = queued_interrupts[queue_front].error;
         queue_front = (queue_front + 1) % MAX_QUEUED_INTERRUPTS;
-        sti();
         
         char buff[8];
         itoa(interrupt, buff, 10);
@@ -114,6 +118,16 @@ void interrupt_dispatch_events()
             js_call(isr, js_isr_table, 1, &errcode);
         }
     }
+    VAL isr = js_object_get(js_isr_table, js_cstring("32"));
+    VAL errcode = js_value_make_double(0);
+    if(js_value_get_type(isr) == JS_T_FUNCTION) {
+        while(pit_interrupt_count > 0) {
+            js_call(isr, js_isr_table, 1, &errcode);
+            pit_interrupt_count--;
+        }
+    }
+    pit_interrupt_count = 0;
+    sti();
 }
 
 static VAL Kernel_dispatch_interrupts(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
