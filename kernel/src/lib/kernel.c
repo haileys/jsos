@@ -97,6 +97,28 @@ static VAL Kernel_write_memory(js_vm_t* vm, void* state, VAL this, uint32_t argc
     return js_value_undefined();
 }
 
+static VAL Kernel_write_byte_array_to_memory(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
+{
+    uint32_t addr, max, i;
+    if(argc < 2) {
+        js_throw_error(vm->lib.TypeError, "Expected 2 arguments to Kernel.writeNumberArrayToMemory()");
+    }
+    addr = js_to_uint32(argv[0]);
+    if(js_value_get_type(argv[1]) != JS_T_ARRAY) {
+        js_throw_error(vm->lib.TypeError, "Expected array in argument 2 of Kernel.writeNumberArrayToMemory()");
+    }
+    if(argc > 2) {
+        max = js_to_uint32(argv[2]);
+    } else {
+        max = js_array_length(argv[1]);
+    }
+    uint8_t* ptr = (uint8_t*)addr;
+    for(i = 0; i < max; i++) {
+        ptr[i] = (uint8_t)js_to_uint32(js_array_get(argv[1], i));
+    }
+    return js_value_undefined();
+}
+
 static VAL Kernel_peek8(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     uint32_t addr;
@@ -207,6 +229,7 @@ void lib_kernel_init(js_vm_t* vm)
     js_object_put(Kernel, js_cstring("memset"), js_value_make_native_function(vm, NULL, js_cstring("memset"), Kernel_memset, NULL));
     js_object_put(Kernel, js_cstring("readMemory"), js_value_make_native_function(vm, NULL, js_cstring("readMemory"), Kernel_read_memory, NULL));
     js_object_put(Kernel, js_cstring("writeMemory"), js_value_make_native_function(vm, NULL, js_cstring("writeMemory"), Kernel_write_memory, NULL));
+    js_object_put(Kernel, js_cstring("writeByteArrayToMemory"), js_value_make_native_function(vm, NULL, js_cstring("writeByteArrayToMemory"), Kernel_write_byte_array_to_memory, NULL));
     js_object_put(Kernel, js_cstring("peek8"), js_value_make_native_function(vm, NULL, js_cstring("peek8"), Kernel_peek8, NULL));
     js_object_put(Kernel, js_cstring("peek16"), js_value_make_native_function(vm, NULL, js_cstring("peek16"), Kernel_peek16, NULL));
     js_object_put(Kernel, js_cstring("peek32"), js_value_make_native_function(vm, NULL, js_cstring("peek32"), Kernel_peek32, NULL));
