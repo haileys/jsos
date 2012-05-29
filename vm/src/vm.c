@@ -320,7 +320,7 @@ static VAL vm_exec(struct vm_locals* L)
     
             case JS_OP_METHCALL: {
                 uint32_t i, argc = NEXT_UINT32();
-                VAL* argv = js_alloc(sizeof(VAL) * argc);
+                VAL argv[argc];
                 VAL method, obj, fn;
                 for(i = 0; i < argc; i++) {
                     argv[argc - i - 1] = POP();
@@ -493,7 +493,7 @@ static VAL vm_exec(struct vm_locals* L)
         
             case JS_OP_ARRAY: {
                 uint32_t i, count = NEXT_UINT32();
-                VAL* items = js_alloc(sizeof(VAL) * count);
+                VAL items[count];
                 for(i = 0; i < count; i++) {
                     items[count - i - 1] = POP();
                 }
@@ -503,7 +503,7 @@ static VAL vm_exec(struct vm_locals* L)
         
             case JS_OP_NEWCALL: {
                 uint32_t i, argc = NEXT_UINT32();
-                VAL* argv = js_alloc(sizeof(VAL) * argc);
+                VAL argv[argc];
                 VAL fn;
                 for(i = 0; i < argc; i++) {
                     argv[argc - i - 1] = POP();
@@ -789,7 +789,7 @@ static VAL vm_exec(struct vm_locals* L)
             
             case JS_OP_DUPN: {
                 uint32_t n = NEXT_UINT32();
-                VAL* dup = js_alloc(sizeof(VAL) * n);
+                VAL dup[n];
                 uint32_t i;
                 for(i = 0; i < n; i++) {
                     dup[i] = POP();
