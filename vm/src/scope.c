@@ -51,16 +51,20 @@ void js_scope_set_var(js_scope_t* scope, uint32_t index, uint32_t upper_scopes, 
 }
 
 js_scope_t* js_scope_close(js_scope_t* scope, VAL callee)
-{    
+{
+    return js_scope_close_placement(js_alloc(sizeof(js_scope_t)), scope, callee, 4, js_alloc(4 * sizeof(VAL)));
+}
+
+js_scope_t* js_scope_close_placement(js_scope_t* new_scope, js_scope_t* scope, VAL callee, uint32_t var_count, VAL* vars)
+{
     uint32_t i;
-    js_scope_t* new_scope = js_alloc(sizeof(js_scope_t));
     new_scope->vm = scope->vm;
     new_scope->parent = scope;
     new_scope->global = scope->global;
     new_scope->locals.callee = callee;
-    new_scope->locals.count = 4;
-    new_scope->locals.vars = js_alloc(4 * sizeof(VAL));
-    for(i = 0; i < 4; i++) {
+    new_scope->locals.count = var_count;
+    new_scope->locals.vars = vars;
+    for(i = 0; i < var_count; i++) {
         new_scope->locals.vars[i] = js_value_undefined();
     }
     return new_scope;

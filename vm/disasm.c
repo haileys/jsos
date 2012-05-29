@@ -35,7 +35,7 @@ int main()
     image = js_image_parse(buff, len);
     printf("read %d sections\n", image->section_count);
     for(i = 0; i < image->section_count; i++) {
-        printf("\nsection %d:\n", i);
+        printf("\nsection %d (flags %d, var count: %d):\n", i, image->sections[i].flags, image->sections[i].var_count);
         for(j = 0; j < image->sections[i].instruction_count; j++) {
             op = image->sections[i].instructions[j];
             printf("    %04d  %-12s", j, js_instruction(op)->name);

@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include "value.h"
 
+#define JS_FLAG_HAS_INNER_FUNCS (1)
+
 typedef struct {
     uint32_t instruction_count;
+    uint32_t flags;
+    uint32_t var_count;
     uint32_t* instructions;
 } js_section_t;
 

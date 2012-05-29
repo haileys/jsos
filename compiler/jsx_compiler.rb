@@ -5,6 +5,7 @@ module JSOS
     def initialize(ast, filename = "")
       @ast = ast
       @sections = [[]]
+      @section_flags = [{ var_count: 0, flags: 0 }]
       @section_stack = [0]
       @scope_stack = []
       @interned_strings = {}
@@ -21,6 +22,10 @@ module JSOS
       output :ret
       generate_bytecode
     end
+    
+    SECTION_FLAGS = {
+      has_inner_funcs: 1
+    }
   
     OPCODES = {
       undefined:  0,
@@ -103,8 +108,11 @@ module JSOS
       bytecode << [intern_string(@filename)].pack("L<")
       # how many sections exist as LE uint32_t:
       bytecode << [@sections.size].pack("L<")
-      @sections.map(&method(:generate_bytecode_for_section)).each do |sect|
-        bytecode << [sect.size].pack("L<") << sect
+      @sections.map(&method(:generate_bytecode_for_section)).each_with_index do |sect, idx|
+        bytecode << [sect.size].pack("L<")
+        bytecode << [@section_flags[idx][:flags]].pack("L<")
+        bytecode << [@section_flags[idx][:var_count]].pack("L<")
+        bytecode << sect
       end
       bytecode << [@interned_strings.count].pack("L<")
       @interned_strings.each do |str,idx|
@@ -134,11 +142,16 @@ module JSOS
     def current_section
       @sections[@section_stack.last]
     end
+    
+    def current_section_flags
+      @section_flags[@section_stack.last]
+    end
 
     def push_section(section = nil)
       unless section
         @section_stack << @sections.size
         @sections << []
+        @section_flags << { var_count: 0, flags: 0 }
       else
         @section_stack << section
       end  
@@ -164,6 +177,10 @@ module JSOS
     def create_local_var(var)
       if @scope_stack.any?
         @scope_stack.last[var] ||= @scope_stack.last.count
+        if @scope_stack.last[var] >= current_section_flags[:var_count]
+          current_section_flags[:var_count] = @scope_stack.last[var] + 1
+        end
+        @scope_stack.last[var]
       end
     end
   
@@ -226,6 +243,7 @@ module JSOS
             output :arguments, create_local_var("arguments")
           end
         elsif node.is_a? Twostroke::AST::Function
+          current_section_flags[:flags] |= SECTION_FLAGS[:has_inner_funcs]
           if node.name
             create_local_var node.name
             # because javascript is odd, entire function bodies need to be hoisted, not just their declarations

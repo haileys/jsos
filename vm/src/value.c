@@ -522,7 +522,15 @@ VAL js_call(VAL fn, VAL this, uint32_t argc, VAL* argv)
             js_throw_error(function->vm->lib.TypeError, "Can't call constructor in non-constructor context");
         }
     } else {
-        return js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
+        js_section_t* section = &function->js.image->sections[function->js.section];
+        if(section->flags & JS_FLAG_HAS_INNER_FUNCS) {
+            return js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
+        } else {
+            js_scope_t scope;
+            VAL locals[section->var_count];
+            js_scope_close_placement(&scope, function->js.outer_scope, fn, section->var_count, locals);
+            return js_vm_exec(function->vm, function->js.image, function->js.section, &scope, this, argc, argv);
+        }
     }
 }
 
@@ -542,7 +550,15 @@ VAL js_construct(VAL fn, uint32_t argc, VAL* argv)
             js_throw_error(function->vm->lib.TypeError, "Can't call function in constructor context");
         }
     } else {
-        retn = js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
+        js_section_t* section = &function->js.image->sections[function->js.section];
+        if(section->flags & JS_FLAG_HAS_INNER_FUNCS) {
+            retn = js_vm_exec(function->vm, function->js.image, function->js.section, js_scope_close(function->js.outer_scope, fn), this, argc, argv);
+        } else {
+            js_scope_t scope;
+            VAL locals[section->var_count];
+            js_scope_close_placement(&scope, function->js.outer_scope, fn, section->var_count, locals);
+            retn = js_vm_exec(function->vm, function->js.image, function->js.section, &scope, this, argc, argv);
+        }
     }
     if(js_value_get_type(retn) == JS_T_UNDEFINED) {
         return this;
