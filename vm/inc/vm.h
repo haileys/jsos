@@ -7,7 +7,7 @@
 #include "value.h"
 #include "lib.h"
 
-#define VM_CYCLES_PER_COLLECTION 20000
+#define VM_CYCLES_PER_COLLECTION 50000
 
 typedef struct js_vm {
     js_scope_t* global_scope;
