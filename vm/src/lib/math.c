@@ -3,6 +3,10 @@
 #include <limits.h>
 #include "lib.h"
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 static VAL Math_floor(js_vm_t* vm, void* state, VAL this, uint32_t argc, VAL* argv)
 {
     double d = js_value_get_double(js_to_number(argc ? argv[0] : js_value_undefined()));
