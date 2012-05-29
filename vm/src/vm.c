@@ -424,7 +424,7 @@ static VAL vm_exec(struct vm_locals* L)
 
             case JS_OP_CALL: {
                 uint32_t i, argc = NEXT_UINT32();
-                VAL* argv = js_alloc(sizeof(VAL) * argc);
+                VAL argv[argc];
                 VAL fn;
                 for(i = 0; i < argc; i++) {
                     argv[argc - i - 1] = POP();
