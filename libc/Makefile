@@ -1,6 +1,6 @@
 CFLAGS=-m32 -Wall -Wextra -iquote inc -Wno-unused-parameter -nostdlib \
 		-nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions \
-		-fno-stack-protector -static -fno-pic -Werror -g
+		-fno-stack-protector -static -fno-pic -Werror -O3
 OBJS=	src/string.o src/setjmp.o src/stdio.o src/stdlib.o src/math.o src/x87math.o
 
 libc.a: $(OBJS)
