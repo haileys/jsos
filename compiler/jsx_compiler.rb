@@ -471,9 +471,7 @@ module JSOS
     
     def ExpressionStatement(node)
       compile_node node.expr
-      if node.expr.is_a? Twostroke::AST::Call
-        output :pop
-      end
+      output :pop
     end
   
     def MultiExpression(node)
@@ -587,6 +585,7 @@ module JSOS
         else
           output :setglobal, node.left.name
         end
+        output :pop if type(node.left) == :Declaration
       elsif type(node.left) == :MemberAccess
         compile_node node.left.object
         compile_node node.right
@@ -689,7 +688,10 @@ module JSOS
       @break_stack.push end_label
       compile_node node.body if node.body
       output [:label, next_label]
-      compile_node node.increment if node.increment
+      if node.increment
+        compile_node node.increment
+        output :pop
+      end
       output :jmp, [:ref, start_label]
       output [:label, end_label]
       @continue_stack.pop
