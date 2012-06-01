@@ -42,6 +42,10 @@
     };
     
     Mode13h.prototype.drawRgb = function(x, y, width, height, data) {
+        x >>= 0;
+        y >>= 0;
+        width >>= 0;
+        height >>= 0;
         var maxy = y + height;
         var maxx = x + width;
         var base = this.baseAddr;
@@ -60,6 +64,10 @@
     };
     
     Mode13h.prototype.draw256 = function(x, y, width, height, data) {
+        x >>= 0;
+        y >>= 0;
+        width >>= 0;
+        height >>= 0;
         var base = this.baseAddr;
         var writeMemory = Kernel.writeMemory;
         for(var iy = 0; iy < height; iy++) {
@@ -68,11 +76,17 @@
     };
     
     Mode13h.prototype.drawPixel = function(x, y, color) {
+        x >>= 0;
+        y >>= 0;
         var addr = y * 320 + x;
         Kernel.poke8(this.baseAddr + addr, color);
     };
     
     Mode13h.prototype.drawRect = function(x1, y1, x2, y2, r, g, b) {
+        x1 >>= 0;
+        y1 >>= 0;
+        x2 >>= 0;
+        y2 >>= 0;
         var base = this.baseAddr;
         var poke8 = Kernel.poke8;
         var color = this.rgbTo256(r, g, b);
@@ -87,6 +101,9 @@
     };
     
     Mode13h.prototype.drawCircle = function(cx, cy, radius, r, g, b) {
+        cx >>= 0;
+        cy >>= 0;
+        radius >>= 0;
         var base = this.baseAddr;
         var poke8 = Kernel.poke8;
         var color = this.rgbTo256(r, g, b);
@@ -103,6 +120,10 @@
     };
     
     Mode13h.prototype.drawLine = function(x1, x2, y1, y2, r, g, b) {
+        x1 >>= 0;
+        y1 >>= 0;
+        x2 >>= 0;
+        y2 >>= 0;
         var base = this.baseAddr;
         var color = this.rgbTo256(r, g, b);
         var dx = Math.abs(x2 - x1);
@@ -134,6 +155,9 @@
     }
     
     Mode13h.prototype.fillCircle = function(cx, cy, radius, r, g, b) {
+        cx >>= 0;
+        cy >>= 0;
+        radius >>= 0;
         var base = this.baseAddr;
         var poke8 = Kernel.poke8;
         var color = this.rgbTo256(r, g, b);
@@ -148,12 +172,16 @@
                 break;
             }
             var lineMiddle = base + 320 * (ycy) + cx;
-            var lineWidth = sqrt(radius * radius - y * y);
+            var lineWidth = Math.round(sqrt(radius * radius - y * y));
             memset(lineMiddle - lineWidth, color, lineWidth * 2);
         }
     };
     
     Mode13h.prototype.fillRect = function(x1, y1, x2, y2, r, g, b) {
+        x1 >>= 0;
+        y1 >>= 0;
+        x2 >>= 0;
+        y2 >>= 0;
         var base = this.baseAddr;
         var poke8 = Kernel.poke8;
         var color = this.rgbTo256(r, g, b);
