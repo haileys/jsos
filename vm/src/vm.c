@@ -131,6 +131,10 @@ static int comparison_oper(VAL left, VAL right)
 #define NEXT_DOUBLE() (L->IP += 2, *(double*)&L->INSNS[L->IP - 2])
 #define NEXT_STRING() (L->image->strings[NEXT_UINT32()])
 
+static int popped_under_zero_hack() {
+    js_panic("popped SP < 0");
+}
+
 #define PUSH(v) do { \
                     if(L->SP >= L->SMAX) { \
                         L->SMAX *= 2; \
@@ -139,7 +143,7 @@ static int comparison_oper(VAL left, VAL right)
                     } \
                     L->STACK[L->SP++] = (v); \
                 } while(false)
-#define POP()   (L->STACK[--L->SP])
+#define POP()   (L->STACK[--L->SP < 0 ? popped_under_zero_hack() : L->SP])
 #define PEEK()  (L->STACK[L->SP - 1])
 
 static uint32_t global_instruction_counter = 0;
@@ -168,8 +172,8 @@ struct vm_locals {
     
     uint32_t IP;
     uint32_t* INSNS;
-    uint32_t SP;
-    uint32_t SMAX;
+    int32_t SP;
+    int32_t SMAX;
     bool STACK_CSTACK;
     VAL* STACK;
     VAL temp_slot;
@@ -768,7 +772,7 @@ static VAL vm_exec(struct vm_locals* L)
                 if(js_value_is_primitive(object)) {
                     object = js_to_object(L->vm, object);
                 }
-                js_object_delete(object, js_to_js_string_t(index));
+                PUSH(js_value_make_boolean(js_object_delete(object, js_to_js_string_t(index))));
                 break;
             }
             
