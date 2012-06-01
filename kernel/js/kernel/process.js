@@ -39,7 +39,7 @@ Process = (function() {
             var waiter = this.waiters[i];
             waiter.process.enqueueCallback(waiter.callback, [this.exitStatus]);
         }
-        for(var i = 0; i < this.fds.length; i++) {
+        for(var i in this.fds) {
             if(--this.fds[i].openCount === 0) {
                 this.fds[i].close();
             }
@@ -255,6 +255,9 @@ Process = (function() {
                 return;
             }
             var f = file.open();
+            if(typeof f.openCount !== "number") {
+                f.openCount = 0;
+            }
             f.openCount++;
             self.enqueueCallback(callback, [false, self.appendFileDescriptor(f)]);
         });
