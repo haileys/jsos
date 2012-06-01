@@ -125,7 +125,7 @@
 
 > **fd:** The file descriptor to close
 
-[Source](../kernel/js/kernel/process.js#L265)
+[Source](../kernel/js/kernel/process.js#L268)
 
 ### stat(`path`, `callback`)
 
@@ -140,7 +140,7 @@
 
 > **callback:** The function to be called upon completion of the operation.               The callback will be passed two parameters: `error` and `stat`
 
-[Source](../kernel/js/kernel/process.js#L284)
+[Source](../kernel/js/kernel/process.js#L287)
 
 ### env(`name`, `value`)
 
@@ -152,7 +152,7 @@
 
 > **value:** Optional. If omitted, `OS.env` will return the current           value of the environment variable `name`. If set, the           environment variable will be set to this value
 
-[Source](../kernel/js/kernel/process.js#L317)
+[Source](../kernel/js/kernel/process.js#L320)
 
 ### wait(`pid`, `callback`)
 
@@ -164,7 +164,7 @@
 
 > **callback:** The function to call when the process identified by               `pid` exits. This function will be passed the exit status               of the process as its only parameter
 
-[Source](../kernel/js/kernel/process.js#L333)
+[Source](../kernel/js/kernel/process.js#L336)
 
 ### exit()
 
@@ -172,7 +172,7 @@
 > Terminates the current process. This system call will return, but
 > no more callbacks will be scheduled by the system for this process
 
-[Source](../kernel/js/kernel/process.js#L354)
+[Source](../kernel/js/kernel/process.js#L357)
 
 ### dup(`src`, `dest`)
 
@@ -187,7 +187,7 @@
 
 > **returns:** The descriptor number of the alias
 
-[Source](../kernel/js/kernel/process.js#L367)
+[Source](../kernel/js/kernel/process.js#L370)
 
 ### pipe()
 
@@ -197,7 +197,7 @@
 
 > **returns:** The file descriptor the pipe is open on
 
-[Source](../kernel/js/kernel/process.js#L383)
+[Source](../kernel/js/kernel/process.js#L386)
 
 ### alarm(`timeout`, `callback`)
 
@@ -209,5 +209,5 @@
 
 > **callback:** The callback to call
 
-[Source](../kernel/js/kernel/process.js#L392)
+[Source](../kernel/js/kernel/process.js#L395)
 
