@@ -131,9 +131,9 @@ static int comparison_oper(VAL left, VAL right)
 #define NEXT_DOUBLE() (L->IP += 2, *(double*)&L->INSNS[L->IP - 2])
 #define NEXT_STRING() (L->image->strings[NEXT_UINT32()])
 
-static int popped_under_zero_hack() {
+/*static int popped_under_zero_hack() {
     js_panic("popped SP < 0");
-}
+}*/
 
 #define PUSH(v) do { \
                     if(L->SP >= L->SMAX) { \
@@ -143,7 +143,7 @@ static int popped_under_zero_hack() {
                     } \
                     L->STACK[L->SP++] = (v); \
                 } while(false)
-#define POP()   (L->STACK[--L->SP < 0 ? popped_under_zero_hack() : L->SP])
+#define POP()   (L->STACK[--L->SP/* < 0 ? popped_under_zero_hack() : L->SP*/])
 #define PEEK()  (L->STACK[L->SP - 1])
 
 static uint32_t global_instruction_counter = 0;
@@ -229,7 +229,7 @@ VAL js_vm_exec(js_vm_t* vm, js_image_t* image, uint32_t section, js_scope_t* sco
     
     L.enum_stack = NULL;
     
-    if((uint32_t)&L < (uint32_t)stack_limit) {
+    if((intptr_t)&L < (intptr_t)stack_limit) {
         js_throw_error(vm->lib.RangeError, "Stack overflow");
     }
     
