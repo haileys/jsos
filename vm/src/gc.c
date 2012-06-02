@@ -231,11 +231,11 @@ NOINLINE static void js_gc_mark()
     global_t* g;
     while((intptr_t)ptrptr > (intptr_t)&stack_dummy) {
         if(((intptr_t)*ptrptr & 3) == 0) {
-            intptr_t p = *ptrptr;
+            intptr_t p = (intptr_t)*ptrptr;
             if(sizeof(intptr_t) == 8) {
                 p &= 0x7ffffffffffful;
             }
-            alloc = allocs_lookup(p);
+            alloc = allocs_lookup((intptr_t*)p);
             if(alloc) {
                 js_gc_mark_allocation(alloc);
             }
