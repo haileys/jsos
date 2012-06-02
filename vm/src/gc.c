@@ -32,12 +32,13 @@ typedef struct global {
 
 static bool current_mark_flag;
 static alloc_t* allocs[ALLOC_MAX_BUCKETS];
+
 static global_t* globals;
 static intptr_t* stack_top;
 static size_t memory_usage;
 
 static alloc_t* allocs_lookup(void* ptr)
-{    
+{
     uint16_t h = pointer_hash(ptr);
     alloc_t* st = allocs[h];
     while(st) {
@@ -216,7 +217,13 @@ static void js_gc_mark_allocation(alloc_t* alloc)
     }
 }
 
-static void js_gc_mark()
+#ifdef __GNUC__
+    #define NOINLINE __attribute__((noinline))
+#else
+    #define NOINLINE
+#endif
+
+NOINLINE static void js_gc_mark()
 {
     uint32_t stack_dummy;
     intptr_t** ptrptr = (intptr_t**)stack_top;
@@ -224,7 +231,11 @@ static void js_gc_mark()
     global_t* g;
     while((intptr_t)ptrptr > (intptr_t)&stack_dummy) {
         if(((intptr_t)*ptrptr & 3) == 0) {
-            alloc = allocs_lookup(*ptrptr);
+            intptr_t p = *ptrptr;
+            if(sizeof(intptr_t) == 8) {
+                p &= 0x7ffffffffffful;
+            }
+            alloc = allocs_lookup(p);
             if(alloc) {
                 js_gc_mark_allocation(alloc);
             }
@@ -242,7 +253,7 @@ static void js_gc_mark()
     }
 }
 
-static void js_gc_sweep()
+NOINLINE static void js_gc_sweep()
 {
     uint32_t i;
     alloc_t* alloc;
