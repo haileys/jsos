@@ -9,9 +9,11 @@
                 throw new RangeError("PIT frequency too low");
             }
             
+            Kernel.cli();
             Kernel.outb(0x43, 0x36);
             Kernel.outb(0x40, divisor & 0xff);
             Kernel.outb(0x40, (divisor >> 8) & 0xff);
+            Kernel.sti();
             
             Kernel.isrs[32] = function() {
                 for(var i = 0; i < listeners.length; i++) {
