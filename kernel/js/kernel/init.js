@@ -49,7 +49,7 @@
     
     var images = [  "utils", "keyboard", "devfs", "drivers/ps2kb", "console",
                     "drivers/serial", "drivers/pit", "vm", "process",
-                    "drivers/rtc", "drivers/vga", "drivers/pci" ];
+                    "drivers/rtc", "drivers/vga", "drivers/pci", "drivers/pcspk" ];
     for(var i = 0; i < images.length; i++) {
         var path = "/kernel/" + images[i] + ".jmg";
         Console.write("Loading " + path + "... ");
