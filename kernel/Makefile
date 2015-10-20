@@ -83,5 +83,9 @@ build/%.256: %.png
 	@ruby scripts/rgb-to-256indexed.rb tmp.rgb > $@
 	@rm -f tmp.rgb
 
-build/etc/fortune.txt: /usr/share/fortune/perl
-	@cp /usr/share/fortune/perl build/etc/fortune.txt
+build/etc/fortune.txt:
+ifneq ("$(wildcard /usr/share/fortune/perl)","")
+	cp /usr/share/fortune/perl build/etc/fortune.txt
+else
+	touch build/etc/fortune.txt
+endif
