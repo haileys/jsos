@@ -1,3 +1,5 @@
+/* Header files */
+
 #include <gc.h>
 #include <vm.h>
 #include <value.h>
@@ -15,6 +17,8 @@
 bool x86_64_support();
 uint32_t rdtsc();
 
+/* This method is to read name, size, data of all the modules to be loaded. */
+
 void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
 {
     kprintf("Loading %d modules:\n", count);
@@ -28,6 +32,7 @@ void load_modules(VAL object, multiboot_module_t* modules, uint32_t count)
     }
 }
 
+/* This method displays the stack trace for unhandled exception */
 static void unhandled_exception(VAL exception)
 {
     if(js_value_is_object(exception) && js_value_get_pointer(exception)->object.stack_trace) {
@@ -39,6 +44,7 @@ static void unhandled_exception(VAL exception)
     }
 }
 
+/* This method is the main function to load the OS and all its components from boot device to memory. */
 void kmain_(struct multiboot_info* mbd, uint32_t magic)
 {
     console_clear();
@@ -102,6 +108,7 @@ void kmain_(struct multiboot_info* mbd, uint32_t magic)
 
 extern int kstack_max;
 
+/* This method checks for all the requirements of the OS before install and if all correct then calls the kmain_() method. */
 void kmain(struct multiboot_info* mbd, uint32_t magic)
 {    
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC)         panic("multiboot did not pass correct magic number");
