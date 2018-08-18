@@ -2,23 +2,25 @@
 // Queue
 //
 
+'use strict';
+
 function Queue() {
     this._head = null;
     this._tail = null;
 }
 
-Queue.prototype.isEmpty = function() {
+Queue.prototype.isEmpty = function () {
     return this._head === null;
 };
 
-Queue.prototype.front = function() {
+Queue.prototype.front = function () {
     if(this.isEmpty()) {
         throw new RangeError("Can't pop object from empty queue");
     }
     return this._head.object;
 };
 
-Queue.prototype.push = function(object) {
+Queue.prototype.push = function (object) {
     if(!this.isEmpty()) {
         this._tail.next = { next: null, object: object };
         this._tail = this._tail.next;
@@ -27,7 +29,7 @@ Queue.prototype.push = function(object) {
     }
 };
 
-Queue.prototype.pop = function() {
+Queue.prototype.pop = function () {
     if(this.isEmpty()) {
         throw new RangeError("Can't pop object from empty queue");
     }
@@ -39,7 +41,7 @@ Queue.prototype.pop = function() {
     return obj;
 };
 
-Queue.prototype.pushFront = function(object) {
+Queue.prototype.pushFront = function (object) {
     if(!this.isEmpty()) {
         this._head = { next: this._head, object: object };
     } else {
@@ -51,20 +53,20 @@ Queue.prototype.pushFront = function(object) {
 // LinkedList
 //
 
-function LinkedList() {
+function LinkedList () {
     this._head = null;
     this._tail = null;
 }
 
-LinkedList.prototype.first = function() {
+LinkedList.prototype.first = function () {
     return this._head;
 };
 
-LinkedList.prototype.last = function() {
+LinkedList.prototype.last = function () {
     return this._tail;
 };
 
-LinkedList.prototype.pushFront = function(val) {
+LinkedList.prototype.pushFront = function (val) {
     if(this._head) {
         var node = { prev: null, next: this._head, value: val };
         this._head = node;
@@ -76,7 +78,7 @@ LinkedList.prototype.pushFront = function(val) {
     }
 };
 
-LinkedList.prototype.pushBack = function(val) {
+LinkedList.prototype.pushBack = function (val) {
     if(this._tail) {
         var node = { prev: this._tail, next: null, value: val };
         this._tail = node;
@@ -88,7 +90,7 @@ LinkedList.prototype.pushBack = function(val) {
     }
 };
 
-LinkedList.prototype.remove = function(node) {
+LinkedList.prototype.remove = function (node) {
     if(node.prev) {
         node.prev.next = node.next;
     } else {
@@ -106,14 +108,14 @@ LinkedList.prototype.remove = function(node) {
 // Pipe
 //
 
-function Pipe() {
+function Pipe () {
     this._buffer = "";
     this._readers = new Queue();
     this.ioctl = {};
     this.openCount = 0;
 }
 
-Pipe.prototype.read = function(size, callback) {
+Pipe.prototype.read = function (size, callback) {
     if(callback === undefined) {
         callback = size;
         size = undefined;
@@ -125,14 +127,14 @@ Pipe.prototype.read = function(size, callback) {
     this._trigger();
 };
 
-Pipe.prototype.write = function(object) {
+Pipe.prototype.write = function (object) {
     this._buffer += object.toString();
     this._trigger();
 };
 
-Pipe.prototype.close = function() {};
+Pipe.prototype.close = function () {};
 
-Pipe.prototype._trigger = function() {
+Pipe.prototype._trigger = function () {
     if(this._readers.isEmpty()) {
         return;
     }
@@ -157,40 +159,40 @@ Pipe.prototype._trigger = function() {
 // Pipe.Sink
 //
 
-Pipe.Sink = function(fn) {
+Pipe.Sink = function (fn) {
     this.fn = fn;
     this.ioctl = {};
     this.openCount = 0;
 };
 
-Pipe.Sink.prototype.read = function(size, callback) {
+Pipe.Sink.prototype.read = function (size, callback) {
     callback("not open for reading");
 };
 
-Pipe.Sink.prototype.write = function(object) {
+Pipe.Sink.prototype.write = function (object) {
     this.fn(object);
 };
 
-Pipe.Sink.prototype.close = function() {};
+Pipe.Sink.prototype.close = function () {};
 
 //
 // Pipe.Source
 //
 
-Pipe.Source = function(fn) {
+Pipe.Source = function (fn) {
     this.fn = fn;
     this.ioctl = {};
     this.openCount = 0;
 };
 
-Pipe.Source.prototype.read = function(size, callback) {
-    this.fn(function(err, data) {
+Pipe.Source.prototype.read = function (size, callback) {
+    this.fn(function (err, data) {
         callback(err, data);
     });
 };
 
-Pipe.Source.prototype.write = function(object) {
+Pipe.Source.prototype.write = function (object) {
     callback("not open for writing");
 };
 
-Pipe.Source.prototype.close = function() {};
+Pipe.Source.prototype.close = function () {};
